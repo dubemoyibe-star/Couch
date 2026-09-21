@@ -41,6 +41,11 @@ describe("chat.send", () => {
     expect(text(send("line one\nline two"))).toBe("line one\nline two");
   });
 
+  it("accepts other Unicode: it applies no bidi or zero-width rules", () => {
+    const value = "a​b ‮abc \u{1F468}‍\u{1F469}‍\u{1F467} é́";
+    expect(text(send(value))).toBe(value);
+  });
+
   it("accepts exactly CHAT_MAX_LENGTH characters, counted after trimming", () => {
     expect(send("a".repeat(CHAT_MAX_LENGTH)).ok).toBe(true);
     expect(send(`   ${"a".repeat(CHAT_MAX_LENGTH)}   `).ok).toBe(true);
@@ -66,6 +71,8 @@ describe("chat.send", () => {
     ["a tab at the edge", "hello\t"],
     ["a CRLF pair", "a\r\nb"],
     ["the last C0 control", "a\u001fb"],
+    ["DEL", "a\u007fb"],
+    ["DEL at the edge", "hello\u007f"],
     ["an escape character", "a\u001b[31mred"],
   ])("rejects text that is %s", (_name, value) => {
     expect(code(send(value))).toBe("invalid_payload");
@@ -133,6 +140,8 @@ describe("chat.message", () => {
     ["empty text", { text: "   " }],
     ["text over the limit", { text: "a".repeat(CHAT_MAX_LENGTH + 1) }],
     ["text with a control character", { text: "a\u0007b" }],
+    ["text with DEL", { text: "a\u007fb" }],
+    ["a displayName with a newline", { displayName: "a\nb" }],
     ["a missing userId", { userId: undefined }],
   ])("rejects %s", (_name, patch) => {
     expect(code(receive({ ...valid, ...patch }))).toBe("invalid_payload");

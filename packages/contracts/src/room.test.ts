@@ -258,6 +258,118 @@ describe("room.mediaChanged", () => {
   });
 });
 
+describe("room.memberJoined", () => {
+  const joined = { userId: "user-3", displayName: "Linus", role: "participant", online: true };
+
+  it("round-trips", () => {
+    expect(parseServer("room.memberJoined", { member: joined })).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.memberJoined", payload: { member: joined } },
+    });
+  });
+
+  it("accepts a host and an offline member", () => {
+    const host = { ...joined, role: "host", online: false };
+    expect(parseServer("room.memberJoined", { member: host }).ok).toBe(true);
+  });
+
+  it("strips unknown keys, at the payload and member level", () => {
+    const noisy = { extra: 1, member: { ...joined, extra: 1 } };
+    expect(parseServer("room.memberJoined", noisy)).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.memberJoined", payload: { member: joined } },
+    });
+  });
+
+  it.each<[string, unknown]>([
+    ["a missing member", {}],
+    ["a null member", { member: null }],
+    ["a member without a role", { member: { ...joined, role: undefined } }],
+    ["a member with an unknown role", { member: { ...joined, role: "owner" } }],
+    ["a member with a string online", { member: { ...joined, online: "yes" } }],
+    ["a member without online", { member: { ...joined, online: undefined } }],
+    ["a member with an empty displayName", { member: { ...joined, displayName: " " } }],
+    [
+      "a member with a displayName over the limit",
+      { member: { ...joined, displayName: "a".repeat(DISPLAY_NAME_MAX_LENGTH + 1) } },
+    ],
+    ["a member with a padded userId", { member: { ...joined, userId: " user-3" } }],
+    ["the member fields at the top level", joined],
+  ])("rejects %s", (_name, payload) => {
+    expect(code(parseServer("room.memberJoined", payload))).toBe("invalid_payload");
+  });
+
+  it("cannot be sent by a client", () => {
+    expect(code(parseClient("room.memberJoined", { member: joined }))).toBe("unknown_type");
+  });
+});
+
+describe("room.memberLeft", () => {
+  it("round-trips", () => {
+    expect(parseServer("room.memberLeft", { userId: "user-2" })).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.memberLeft", payload: { userId: "user-2" } },
+    });
+  });
+
+  it("strips an unknown key", () => {
+    expect(parseServer("room.memberLeft", { userId: "user-2", reason: "kicked" })).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.memberLeft", payload: { userId: "user-2" } },
+    });
+  });
+
+  it.each(idCases(USER_ID_MAX_LENGTH))("rejects a userId that is %s", (_name, userId) => {
+    expect(code(parseServer("room.memberLeft", { userId }))).toBe("invalid_payload");
+  });
+
+  it("rejects a missing userId", () => {
+    expect(code(parseServer("room.memberLeft", {}))).toBe("invalid_payload");
+  });
+
+  it("cannot be sent by a client", () => {
+    expect(code(parseClient("room.memberLeft", { userId: "user-2" }))).toBe("unknown_type");
+  });
+});
+
+describe("single-line labels: displayName and couch name", () => {
+  const withMember = (displayName: string) => ({
+    ...roomState,
+    members: [{ ...member, displayName }],
+  });
+  const withCouchName = (name: string) => ({ ...roomState, couch: { id: "couch-1", name } });
+  const joinedWith = (displayName: string) => ({ member: { ...member, displayName } });
+
+  const controls: [string, string][] = [
+    ["a newline inside", "a\nb"],
+    ["a tab inside", "a\tb"],
+    ["a carriage return inside", "a\rb"],
+    ["a NUL inside", "a\u0000b"],
+    ["an escape character inside", "a\u001bb"],
+    ["DEL inside", "a\u007fb"],
+    ["a newline at the edge", "name\n"],
+    ["a tab at the edge", "\tname"],
+  ];
+
+  it.each(controls)("rejects a displayName with %s", (_name, displayName) => {
+    expect(code(parseServer("room.state", withMember(displayName)))).toBe("invalid_payload");
+    expect(code(parseServer("room.memberJoined", joinedWith(displayName)))).toBe("invalid_payload");
+  });
+
+  it.each(controls)("rejects a couch name with %s", (_name, name) => {
+    expect(code(parseServer("room.state", withCouchName(name)))).toBe("invalid_payload");
+  });
+
+  it("still trims spaces and keeps spaces, non-ASCII text and other Unicode inside a name", () => {
+    const name = "  Zoë 中文 \u{1F600}‍\u{1F600}  ";
+    const parsed = parseServer("room.state", { ...withMember(name), couch: { id: "c", name } });
+    if (!parsed.ok) throw new Error("expected ok:true");
+    const payload = parsed.data.payload as typeof roomState;
+    expect(payload.members[0]!.displayName).toBe(name.trim());
+    expect(payload.couch.name).toBe(name.trim());
+  });
+});
+
 describe("presence.update", () => {
   it("round-trips", () => {
     expect(parseServer("presence.update", { userId: "user-2", online: false })).toEqual({

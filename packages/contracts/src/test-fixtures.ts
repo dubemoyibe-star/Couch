@@ -66,6 +66,10 @@ export const validPayloads: Record<string, unknown> = {
   "playback.setRate": { rate: 1.25 },
   "room.state": roomState,
   "room.mediaChanged": { media: catalogMedia, playback: playbackState },
+  "room.memberJoined": {
+    member: { userId: "user-3", displayName: "Linus", role: "participant", online: true },
+  },
+  "room.memberLeft": { userId: "user-2" },
   "presence.update": { userId: "user-2", online: true },
   "chat.message": {
     id: "msg-1",
@@ -79,19 +83,26 @@ export const validPayloads: Record<string, unknown> = {
   error: { code: "forbidden", message: "Not allowed.", replyTo: "c-1" },
 };
 
-const filled = (length: number, char = "a") => char.repeat(length);
+/** ASCII, 1 byte per code point in UTF-8. */
+export const ASCII_CHAR = "a";
 
-/** An https URL of exactly `MEDIA_LIMITS.url` characters. */
-const longUrl = () => {
-  const prefix = "https://example.com/";
-  return prefix + filled(MEDIA_LIMITS.url - prefix.length);
-};
+/** U+1F600, 1 code point and 4 bytes in UTF-8: the most bytes a code point can take. */
+export const FOUR_BYTE_CHAR = "\u{1F600}";
 
-/** A `CatalogMedia` with every field at its maximum, in ASCII. */
-export function maxCatalogMedia(): CatalogMedia {
+/**
+ * A `CatalogMedia` with every field at its maximum. Every free-text field, every id and
+ * the tail of every url is built from `char`. `providerId` is a lowercase slug and each url
+ * starts with `https://example.com/`, so those parts stay ASCII.
+ */
+export function maxCatalogMedia(char: string = ASCII_CHAR): CatalogMedia {
+  const filled = (length: number) => char.repeat(length);
+  const longUrl = () => {
+    const prefix = "https://example.com/";
+    return prefix + filled(MEDIA_LIMITS.url - prefix.length);
+  };
   return {
     id: filled(MEDIA_LIMITS.catalogId),
-    providerId: filled(MEDIA_LIMITS.providerId),
+    providerId: ASCII_CHAR.repeat(MEDIA_LIMITS.providerId),
     providerMediaId: filled(MEDIA_LIMITS.providerMediaId),
     title: filled(MEDIA_LIMITS.title),
     description: filled(MEDIA_LIMITS.description),

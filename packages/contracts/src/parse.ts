@@ -1,8 +1,34 @@
 import { MAX_ID_LENGTH, SUPPORTED_VERSIONS, type AnyEvent, type MessageOf } from "./envelope";
 import type { ParseErrorCode } from "./errors";
 
-/** Largest accepted raw message, in UTF-8 bytes. */
-export const MAX_MESSAGE_BYTES = 64 * 1024;
+/**
+ * Largest raw message the server accepts from a client, in UTF-8 bytes. Client messages are
+ * untrusted input and small: the largest legitimate one is a chat message of a few
+ * kilobytes. This cap protects the server from oversized input.
+ */
+export const MAX_CLIENT_MESSAGE_BYTES = 64 * 1024;
+
+/**
+ * Largest raw message a client accepts from the server, in UTF-8 bytes. The server is
+ * trusted, and its largest message is a `room.state` snapshot. With every field at its
+ * limit and every character taking 4 bytes in UTF-8, that snapshot is well over
+ * `MAX_CLIENT_MESSAGE_BYTES` (the size test in `catalog.test.ts` keeps the exact number).
+ * 256 KiB leaves room for that worst case and for the snapshot to grow, while still bounding
+ * what a client has to buffer and parse. This cap protects the client from a broken server
+ * or a proxy that injects data.
+ */
+export const MAX_SERVER_MESSAGE_BYTES = 256 * 1024;
+
+/**
+ * The size limit for a list of event definitions. It follows their direction: the client
+ * cap for client events, the server cap for server events. A list that mixes directions
+ * gets the smaller cap, so a message is never held to a looser limit than its strictest
+ * event. An empty list also gets the smaller cap.
+ */
+function maxBytesFor(events: readonly AnyEvent[]): number {
+  const hasClientEvent = events.some((event) => event.direction === "client");
+  return hasClientEvent || events.length === 0 ? MAX_CLIENT_MESSAGE_BYTES : MAX_SERVER_MESSAGE_BYTES;
+}
 
 export interface ParseError {
   code: ParseErrorCode;
@@ -65,7 +91,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  * size, JSON, top-level object, version, type, payload.
  *
  * `events` is the list of event definitions this side accepts (the client events on the
- * server, the server events on a client). The known types are read from that same list,
+ * server, the server events on a client). Their direction also picks the size limit. The known types are read from that same list,
  * and each definition's envelope schema does the payload validation, so there is no
  * second list of types to keep in sync.
  */
@@ -73,9 +99,11 @@ export function parseMessage<TEvent extends AnyEvent>(
   raw: string,
   events: readonly TEvent[],
 ): ParseResult<MessageOf<TEvent>> {
-  // 1. Size, in bytes. A UTF-16 unit is at least one byte, so length alone can reject early.
+  // 1. Size, in bytes, against the cap for the events' direction. A UTF-16 unit is at least
+  // one byte, so length alone can reject early.
   if (typeof raw !== "string") return fail("invalid_json");
-  if (raw.length > MAX_MESSAGE_BYTES || utf8ByteLength(raw) > MAX_MESSAGE_BYTES) {
+  const maxBytes = maxBytesFor(events);
+  if (raw.length > maxBytes || utf8ByteLength(raw) > maxBytes) {
     return fail("message_too_large");
   }
 

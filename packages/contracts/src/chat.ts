@@ -5,19 +5,22 @@ import { opaqueId } from "./fields";
 
 /**
  * Longest chat message, in Unicode code points, counted after trimming. This is how Zod
- * measures string length, so an emoji counts as 1 and not as the 2 UTF-16 units that
- * `string.length` reports. In UTF-8 a code point takes 1 to 4 bytes.
+ * measures string length, so an emoji counts as 1, and a combining mark or a ZWJ sequence
+ * is several. In UTF-8 a code point takes 1 to 4 bytes.
  */
 export const CHAT_MAX_LENGTH = 500;
 
 /** Longest chat message id, in Unicode code points. */
 export const CHAT_MESSAGE_ID_MAX_LENGTH = 128;
 
-/** True when `text` has a C0 control character (U+0000 to U+001F) other than newline (U+000A). */
+/**
+ * True when `text` has a C0 control character (U+0000 to U+001F) other than newline
+ * (U+000A), or DEL (U+007F).
+ */
 function hasDisallowedControl(text: string): boolean {
   for (let i = 0; i < text.length; i++) {
     const unit = text.charCodeAt(i);
-    if (unit <= 0x1f && unit !== 0x0a) return true;
+    if ((unit <= 0x1f && unit !== 0x0a) || unit === 0x7f) return true;
   }
   return false;
 }
@@ -25,13 +28,14 @@ function hasDisallowedControl(text: string): boolean {
 /**
  * The text of a chat message. The control character check runs on the text as sent, before
  * trimming, so a stray tab or carriage return at the edge is rejected and not silently
- * trimmed away. Only newline is allowed. The value is then trimmed, must be non-empty, and
- * must be at most `CHAT_MAX_LENGTH`.
+ * trimmed away. Only newline is allowed: every other ASCII control character, DEL included,
+ * is rejected. The value is then trimmed, must be non-empty, and must be at most
+ * `CHAT_MAX_LENGTH`.
  */
 export const chatTextSchema = z
   .string()
   .refine((text) => !hasDisallowedControl(text), {
-    error: "text must not contain control characters other than newline",
+    error: "text must not contain control characters other than newline, or DEL",
   })
   .trim()
   .min(1)
