@@ -1,14 +1,10 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
-// Vitest does not copy dotenv files into process.env, so the setup file loads
-// .env.test. Suites that touch the database still have to call
-// assertDatabaseEnv(process.env, "test-suite") themselves.
+// `pnpm test`: unit tests only. Files named *.db.test.ts touch a database and
+// run through vitest.db.config.ts (`pnpm test:db`) instead. No env file is
+// loaded, so this passes on a fresh clone with no database.
 export default defineConfig({
   test: {
-    setupFiles: ["./src/vitest-setup.ts"],
-    // Database suites talk to Neon over the network, and the first connection
-    // can wait for the compute to wake, so the 5s default is too short.
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
+    exclude: [...configDefaults.exclude, "**/*.db.test.ts"],
   },
 });
