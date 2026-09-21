@@ -15,8 +15,9 @@ export const MAX_ID_LENGTH = 64;
  */
 export type Direction = "client" | "server";
 
-// domain.action, lowercase, one dot. "error" is the single reserved exception.
-const TYPE_PATTERN = /^[a-z][a-z0-9]*\.[a-z][a-z0-9]*$/;
+// domain.action: a lowercase-letters domain, one dot, and a camelCase action that starts
+// with a lowercase letter. Matching is case-sensitive. "error" is the single reserved exception.
+const TYPE_PATTERN = /^[a-z]+\.[a-z][a-zA-Z0-9]*$/;
 const ERROR_TYPE = "error";
 
 export const idSchema = z.string().min(1).max(MAX_ID_LENGTH);
@@ -78,7 +79,7 @@ export function defineEvent<
   const { type, direction, payload: shape } = definition;
   if (type !== ERROR_TYPE && !TYPE_PATTERN.test(type)) {
     // A programmer error at module load, never a reaction to wire input.
-    throw new Error(`Invalid event type "${type}": use lowercase domain.action`);
+    throw new Error(`Invalid event type "${type}": use a lowercase domain and a camelCase action (domain.actionName)`);
   }
   const strict = direction === "client";
   const payload: PayloadSchema<TShape> = strict ? z.strictObject(shape) : z.object(shape);

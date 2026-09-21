@@ -39,16 +39,40 @@ describe("defineEvent", () => {
     expectTypeOf<ErrorMessage["payload"]["replyTo"]>().toEqualTypeOf<string | undefined>();
   });
 
-  it.each(["room.join", "playback.seek", "chat.send", "error"])("accepts type %s", (type) => {
+  it.each([
+    "playback.play",
+    "playback.setRate",
+    "room.mediaChanged",
+    "chat.send",
+    "room.join",
+    "error",
+  ])("accepts type %s", (type) => {
     expect(() => defineEvent({ type, direction: "client", payload: {} })).not.toThrow();
   });
 
-  it.each(["Room.join", "room", "room.join.now", "room_join", "room.", ".join", "1room.join", ""])(
-    "rejects type %j",
-    (type) => {
-      expect(() => defineEvent({ type, direction: "client", payload: {} })).toThrow();
-    },
-  );
+  it.each([
+    "Playback.play",
+    "playback.SetRate",
+    "playback.set_rate",
+    "playback.set-rate",
+    "playback",
+    "a.b.c",
+    "playback.",
+    ".play",
+    "playback.9play",
+    "play1back.play",
+    "room_join",
+    "1room.join",
+    "playback.play now",
+    "play back.play",
+    " playback.play",
+    "playback.play\n",
+    "",
+  ])("rejects type %j", (type) => {
+    expect(() => defineEvent({ type, direction: "client", payload: {} })).toThrow(
+      /Invalid event type/,
+    );
+  });
 
   it("rejects unknown keys for client direction, at envelope and payload level", () => {
     const valid = { v: 1, type: "test.echo", payload: { text: "hi" } };
