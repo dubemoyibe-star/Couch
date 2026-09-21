@@ -1,5 +1,6 @@
 import * as z from "zod";
-import { MEDIA_LIMITS, httpsUrl, trimmedText } from "./fields";
+import { MEDIA_LIMITS, httpsUrl, opaqueId, trimmedText } from "./fields";
+import { PLAYBACK_POSITION_MAX_SECONDS } from "./playback";
 import { licenseRecordSchema, licenseRecordWireSchema } from "./license";
 
 /**
@@ -14,12 +15,19 @@ const mediaBaseShape = {
   providerId: trimmedText(MEDIA_LIMITS.providerId).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     error: "providerId must be a lowercase slug",
   }),
-  /** The provider's own id for the item. Opaque: Couch never interprets it. */
-  providerMediaId: trimmedText(MEDIA_LIMITS.providerMediaId),
+  /**
+   * The provider's own id for the item. Opaque: Couch never interprets it, so it is never
+   * changed either. Leading or trailing whitespace and control characters are rejected.
+   */
+  providerMediaId: opaqueId(MEDIA_LIMITS.providerMediaId),
   title: trimmedText(MEDIA_LIMITS.title),
   description: trimmedText(MEDIA_LIMITS.description).nullable(),
-  /** Length of the media in SECONDS. Positive and finite, or null when unknown. */
-  durationSeconds: z.number().positive().nullable(),
+  /**
+   * Length of the media in SECONDS, or null when unknown. Positive, finite, and at most
+   * `PLAYBACK_POSITION_MAX_SECONDS`, the largest position playback can seek to, so an item
+   * can never be longer than the playback schema can address.
+   */
+  durationSeconds: z.number().positive().max(PLAYBACK_POSITION_MAX_SECONDS).nullable(),
   posterUrl: httpsUrl.nullable(),
   /** A calendar year within the sanity range in `MEDIA_LIMITS`, or null when unknown. */
   releaseYear: z
@@ -50,7 +58,7 @@ export const mediaWithLicenseSchema = z.strictObject(withLicense(licenseRecordSc
  * are rejected. Use it for database upserts and anything else that authors catalog data.
  */
 export const catalogMediaSchema = z.strictObject({
-  id: trimmedText(MEDIA_LIMITS.catalogId),
+  id: opaqueId(MEDIA_LIMITS.catalogId),
   ...withLicense(licenseRecordSchema),
 });
 
@@ -60,7 +68,7 @@ export const catalogMediaSchema = z.strictObject({
  * never breaks an older client. Same fields and same rules as the ingest flavor.
  */
 export const catalogMediaWireSchema = z.object({
-  id: trimmedText(MEDIA_LIMITS.catalogId),
+  id: opaqueId(MEDIA_LIMITS.catalogId),
   ...withLicense(licenseRecordWireSchema),
 });
 

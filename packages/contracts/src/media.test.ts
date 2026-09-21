@@ -9,7 +9,11 @@ import {
   licenseRecordWireSchema,
   mediaRefSchema,
   mediaWithLicenseSchema,
+  PLAYBACK_POSITION_MAX_SECONDS,
   playbackSourceSchema,
+  playbackSourceWireSchema,
+  playbackStateSchema,
+  type PlaybackState,
   type CatalogMedia,
   type LicenseRecord,
   type MediaRef,
@@ -45,6 +49,14 @@ const mediaWithLicense: MediaWithLicense = {
 };
 
 const catalogMedia: CatalogMedia = { id: "cat-1", ...mediaWithLicense };
+
+const playbackState: PlaybackState = {
+  status: "paused",
+  position: 0,
+  playbackRate: 1,
+  revision: 0,
+  serverTimestamp: 0,
+};
 
 const ok = (schema: z.ZodType, value: unknown) => schema.safeParse(value).success;
 
@@ -281,10 +293,69 @@ describe("mediaWithLicenseSchema and catalogMediaSchema", () => {
     );
   });
 
-  it("requires a non-empty providerMediaId and trims it", () => {
-    expect(ok(catalogMediaSchema, { ...catalogMedia, providerMediaId: "" })).toBe(false);
-    expect(ok(catalogMediaSchema, { ...catalogMedia, providerMediaId: "  " })).toBe(false);
-    expect(catalogMediaSchema.parse({ ...catalogMedia, providerMediaId: " x " }).providerMediaId).toBe("x");
+  describe("opaque ids (providerMediaId and catalog id)", () => {
+    // Each case builds the same media object with the id under test in the given field.
+    const flavors = [
+      ["catalogMediaSchema", catalogMediaSchema],
+      ["catalogMediaWireSchema", catalogMediaWireSchema],
+    ] as const;
+    const fields = ["providerMediaId", "id"] as const;
+
+    it.each(["abc", "a b", "id/with:chars-1_2", "über", "0", "a".repeat(MEDIA_LIMITS.catalogId)])(
+      "accepts %j and returns it exactly",
+      (id) => {
+        for (const [name, schema] of flavors) {
+          const result = schema.parse({ ...catalogMedia, providerMediaId: id, id });
+          expect(result.providerMediaId, name).toBe(id);
+          expect(result.id, name).toBe(id);
+        }
+        expect(mediaRefSchema.parse({ providerId: "test-provider", providerMediaId: id }).providerMediaId).toBe(id);
+      },
+    );
+
+    it.each([
+      ["a leading space", " abc"],
+      ["a trailing space", "abc "],
+      ["both", " abc "],
+      ["a leading no-break space", " abc"],
+      ["a trailing ideographic space", "abc　"],
+      ["only spaces", "   "],
+      ["empty", ""],
+      ["a NUL", "a\u0000b"],
+      ["a tab inside", "a\tb"],
+      ["a newline inside", "a\nb"],
+      ["a carriage return inside", "a\rb"],
+      ["an escape character", "a\u001bb"],
+      ["the last C0 control", "a\u001fb"],
+      ["DEL", "a\u007fb"],
+      ["a leading control character", "\u0001abc"],
+      ["a trailing newline", "abc\n"],
+    ])("rejects an id with %s", (_label, id) => {
+      for (const [name, schema] of flavors) {
+        for (const field of fields) {
+          expect(ok(schema, { ...catalogMedia, [field]: id }), `${name} ${field}`).toBe(false);
+        }
+      }
+      expect(ok(mediaRefSchema, { providerId: "test-provider", providerMediaId: id })).toBe(false);
+      expect(ok(mediaWithLicenseSchema, { ...mediaWithLicense, providerMediaId: id })).toBe(false);
+    });
+
+    it("accepts an id at its limit and rejects one over it", () => {
+      expect(ok(catalogMediaSchema, { ...catalogMedia, providerMediaId: "a".repeat(MEDIA_LIMITS.providerMediaId) })).toBe(
+        true,
+      );
+      expect(ok(catalogMediaSchema, { ...catalogMedia, providerMediaId: "a".repeat(MEDIA_LIMITS.providerMediaId + 1) })).toBe(
+        false,
+      );
+      expect(ok(catalogMediaSchema, { ...catalogMedia, id: "a".repeat(MEDIA_LIMITS.catalogId + 1) })).toBe(false);
+      expect(ok(catalogMediaSchema, { ...catalogMedia, id: "a".repeat(MEDIA_LIMITS.catalogId) })).toBe(true);
+    });
+  });
+
+  it("still trims free-text fields", () => {
+    const parsed = catalogMediaSchema.parse({ ...catalogMedia, title: "  TEST FIXTURE Title  ", description: " d " });
+    expect(parsed.title).toBe("TEST FIXTURE Title");
+    expect(parsed.description).toBe("d");
   });
 
   it("requires a non-empty title and a non-empty description when present", () => {
@@ -297,12 +368,35 @@ describe("mediaWithLicenseSchema and catalogMediaSchema", () => {
   });
 
   describe("durationSeconds", () => {
-    it.each([0.5, 1, 5400])("accepts %s", (durationSeconds) => {
+    it.each([0.5, 1, 5400, PLAYBACK_POSITION_MAX_SECONDS])("accepts %s", (durationSeconds) => {
       expect(ok(catalogMediaSchema, { ...catalogMedia, durationSeconds })).toBe(true);
     });
 
-    it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, "90"])("rejects %s", (durationSeconds) => {
+    it.each([
+      0,
+      -1,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      "90",
+      PLAYBACK_POSITION_MAX_SECONDS + 1,
+      PLAYBACK_POSITION_MAX_SECONDS + 0.001,
+    ])("rejects %s", (durationSeconds) => {
       expect(ok(catalogMediaSchema, { ...catalogMedia, durationSeconds })).toBe(false);
+    });
+
+    it("uses the playback cap in every flavor, so an item is never longer than playback can seek to", () => {
+      const atCap = { ...catalogMedia, durationSeconds: PLAYBACK_POSITION_MAX_SECONDS };
+      const overCap = { ...catalogMedia, durationSeconds: PLAYBACK_POSITION_MAX_SECONDS + 1 };
+      for (const schema of [catalogMediaSchema, catalogMediaWireSchema]) {
+        expect(ok(schema, atCap)).toBe(true);
+        expect(ok(schema, overCap)).toBe(false);
+      }
+      expect(ok(mediaWithLicenseSchema, { ...mediaWithLicense, durationSeconds: PLAYBACK_POSITION_MAX_SECONDS })).toBe(true);
+      expect(ok(mediaWithLicenseSchema, { ...mediaWithLicense, durationSeconds: PLAYBACK_POSITION_MAX_SECONDS + 1 })).toBe(
+        false,
+      );
+      // The duration that is accepted is a position playback accepts.
+      expect(ok(playbackStateSchema, { ...playbackState, position: PLAYBACK_POSITION_MAX_SECONDS })).toBe(true);
     });
   });
 
@@ -359,6 +453,45 @@ describe("playbackSourceSchema", () => {
     expect(ok(playbackSourceSchema, { kind: "mp4" })).toBe(false);
     expect(ok(playbackSourceSchema, { url: "https://example.invalid/m" })).toBe(false);
     expect(ok(playbackSourceSchema, { kind: "mp4", url: "https://example.invalid/m", extra: 1 })).toBe(false);
+  });
+
+  describe("wire flavor", () => {
+    const source = { kind: "hls", url: "https://example.invalid/m", expiresAt: 1_700_000_000_000 } as const;
+
+    it("strips an unknown key that the ingest flavor rejects", () => {
+      const withExtra = { ...source, extra: 1 };
+      expect(playbackSourceSchema.safeParse(withExtra).success).toBe(false);
+      const result = playbackSourceWireSchema.parse(withExtra);
+      expect(result).toEqual(source);
+      expect(result).not.toHaveProperty("extra");
+    });
+
+    it.each(["mp4", "hls", "dash", "embed"] as const)("strips an unknown key on kind %s", (kind) => {
+      const result = playbackSourceWireSchema.parse({ kind, url: "https://example.invalid/m", extra: 1 });
+      expect(result).toEqual({ kind, url: "https://example.invalid/m" });
+    });
+
+    it("gives the same output as the ingest flavor for valid input", () => {
+      expect(playbackSourceWireSchema.parse(source)).toEqual(playbackSourceSchema.parse(source));
+    });
+
+    it("enforces every rule except unknown keys", () => {
+      const url = "https://example.invalid/m";
+      expect(ok(playbackSourceWireSchema, { kind: "rtmp", url })).toBe(false);
+      expect(ok(playbackSourceWireSchema, { kind: "mp4" })).toBe(false);
+      expect(ok(playbackSourceWireSchema, { kind: "mp4", url: "http://example.invalid/m" })).toBe(false);
+      expect(ok(playbackSourceWireSchema, { kind: "mp4", url: "https://u:p@example.invalid/m" })).toBe(false);
+      expect(ok(playbackSourceWireSchema, { kind: "mp4", url, expiresAt: -1 })).toBe(false);
+      expect(ok(playbackSourceWireSchema, { kind: "mp4", url, expiresAt: 1.5 })).toBe(false);
+    });
+
+    it("is built from the same kinds and the same output type as the ingest flavor", () => {
+      const kinds = (schema: typeof playbackSourceSchema | typeof playbackSourceWireSchema) =>
+        schema.options.map((option) => option.shape.kind.value);
+      expect(kinds(playbackSourceWireSchema)).toEqual(kinds(playbackSourceSchema));
+      expect(kinds(playbackSourceWireSchema)).toEqual(["mp4", "hls", "dash", "embed"]);
+      expectTypeOf<z.infer<typeof playbackSourceWireSchema>>().toEqualTypeOf<PlaybackSource>();
+    });
   });
 
   it("narrows on kind", () => {

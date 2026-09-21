@@ -12,15 +12,34 @@ const sourceShape = <K extends string>(kind: K) => ({
   expiresAt: z.number().int().min(0).optional(),
 });
 
+// One field map per kind. Both flavors below are built from these, so they cannot drift.
+const mp4 = sourceShape("mp4");
+const hls = sourceShape("hls");
+const dash = sourceShape("dash");
+const embed = sourceShape("embed");
+
 /**
  * A resolved way to play a media item, discriminated on `kind`: a direct `mp4` file, an
- * `hls` or `dash` manifest, or an `embed` page. Unknown keys are rejected.
+ * `hls` or `dash` manifest, or an `embed` page. INGEST flavor: unknown keys are rejected.
+ * Use it for provider output.
  */
 export const playbackSourceSchema = z.discriminatedUnion("kind", [
-  z.strictObject(sourceShape("mp4")),
-  z.strictObject(sourceShape("hls")),
-  z.strictObject(sourceShape("dash")),
-  z.strictObject(sourceShape("embed")),
+  z.strictObject(mp4),
+  z.strictObject(hls),
+  z.strictObject(dash),
+  z.strictObject(embed),
+]);
+
+/**
+ * `PlaybackSource`, WIRE flavor: unknown keys are stripped. Use it for a source received
+ * from the server, so an additive server change never breaks an older client. Same fields
+ * and same rules as the ingest flavor.
+ */
+export const playbackSourceWireSchema = z.discriminatedUnion("kind", [
+  z.object(mp4),
+  z.object(hls),
+  z.object(dash),
+  z.object(embed),
 ]);
 
 export type PlaybackSource = z.infer<typeof playbackSourceSchema>;
