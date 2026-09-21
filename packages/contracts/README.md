@@ -98,6 +98,43 @@ Stages run in this order and the first failure wins:
 
 The byte count uses a small pure function (`utf8ByteLength`) instead of `TextEncoder` or `Buffer`, because this package's TypeScript config exposes neither DOM nor Node globals. A test checks it against `TextEncoder`.
 
+## Playback
+
+`playbackStateSchema` is a standalone object schema, so other server messages can embed it. It holds no media id: media belongs to room state. Units are part of the contract, so every field states one.
+
+| Field | Type | Unit and meaning |
+| --- | --- | --- |
+| `status` | `"playing"` or `"paused"` | Whether the media is advancing. |
+| `position` | number | SECONDS from the start of the media, as of `serverTimestamp`. Finite, 0 to `PLAYBACK_POSITION_MAX_SECONDS`. |
+| `playbackRate` | number | Multiplier of normal speed. From `PLAYBACK_RATE_MIN` to `PLAYBACK_RATE_MAX`, both inclusive. |
+| `revision` | non-negative safe integer | Unitless counter the server increments on every state change. |
+| `serverTimestamp` | non-negative safe integer | Epoch MILLISECONDS on the SERVER clock at which `position` was true. |
+
+Constants:
+
+| Constant | Value | Notes |
+| --- | --- | --- |
+| `PLAYBACK_POSITION_MAX_SECONDS` | `86400` | A sanity cap that only rejects garbage on the wire. The server clamps a position to the real media duration. |
+| `PLAYBACK_RATE_MIN` | `0.5` | Half speed. |
+| `PLAYBACK_RATE_MAX` | `2` | Double speed. The 0.5 to 2 range is what mainstream players offer and keeps extrapolation between syncs accurate. |
+
+Client to server commands (`playbackClientEvents`):
+
+| Type | Payload | Notes |
+| --- | --- | --- |
+| `playback.play` | `{ position }` | `position` is the client-reported position in seconds. The server validates it and stays authoritative. |
+| `playback.pause` | `{ position }` | Same as `playback.play`. |
+| `playback.seek` | `{ position }` | Target position in seconds. |
+| `playback.setrate` | `{ rate }` | Multiplier of normal speed. |
+
+Commands never carry a revision, a timestamp, a user id or a role. Unknown keys are rejected, as for every client event.
+
+Server to client (`playbackServerEvents`): `playback.sync` with `payload: { state: PlaybackState }`. Unknown keys are stripped.
+
+Revision rule: a client discards a `playback.sync` whose `revision` is lower than the one it holds, and treats an equal `revision` as idempotent (applying it again changes nothing). A stale sync that arrives late therefore never rewinds the client.
+
+The arrays are in the shape `parseMessage` takes, and the message types are exported (`PlaybackPlay`, `PlaybackPause`, `PlaybackSeek`, `PlaybackSetRate`, `PlaybackSync`, `PlaybackClientMessage`, `PlaybackServerMessage`, `PlaybackState`), all inferred from the schemas.
+
 ## Error codes
 
 Sent by the server as the `error` event (server direction): `payload: { code, message, replyTo? }`.
