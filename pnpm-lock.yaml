@@ -96,7 +96,11 @@ importers:
 
   packages/providers: {}
 
-  packages/shared: {}
+  packages/shared:
+    dependencies:
+      '@couch/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
 packages:
 
