@@ -34,9 +34,36 @@ Switching environment switches `DATABASE_URL`, `DIRECT_URL` and `COUCH_DB_ENV` t
 | Prisma CLI (`db:*` scripts) | `.env.local` | default `prisma.config.ts` |
 | Prisma CLI (`db:*:test` scripts) | `.env.test` | `--config prisma.config.test.ts` |
 | Next.js (`next dev`) | `.env.local` at the repo root | `apps/web/next.config.ts`. Next itself only reads files inside `apps/web`, and skips `.env.local` when `NODE_ENV=test`. |
-| Vitest in `packages/database` | `.env.test` | `vitest.config.ts` setup file |
+| `pnpm test` (unit tests) | no env file | `packages/database/vitest.config.ts` |
+| `pnpm test:db` (database tests) | `.env.test` | `packages/database/vitest.db.config.ts` global setup |
 
 The Prisma CLI does not load dotenv files by itself, so `prisma.config.ts` loads the file before doing anything else. Production builds and servers read no local file.
+
+A fresh clone needs no env file and no database variable to install, type check, lint, run `pnpm test`, or build `@couch/web`. `pnpm install` runs `prisma generate`, which needs no database. Only `pnpm test:db` and the `db:*` scripts need env values.
+
+## Tests
+
+Tests that touch a database are named `*.db.test.ts`. Every other test is a unit test.
+
+| Command | Runs | Needs |
+| --- | --- | --- |
+| `pnpm test` | Every test except `*.db.test.ts` | Nothing. No database, no env file. |
+| `pnpm test:db` | Only `*.db.test.ts` | `.env.test` with `COUCH_DB_ENV=test` and both URLs naming the database `testing` |
+
+`pnpm test:db` runs `test:db` in every package that defines it (`pnpm -r`). In `packages/database` it uses `vitest.db.config.ts`, which:
+
+- loads `.env.test` and runs the `COUCH_DB_ENV` guard once, before any test file. If the file is missing or the guard refuses, the run stops with a message naming the rule and the variable, and exits non-zero. It never skips silently, and an empty match is a failure, not a pass.
+- runs test files one at a time, because they share one database.
+
+Every database suite also starts with `assertDatabaseEnv(process.env, "test-suite")`, so a suite refuses to run even if it is started some other way.
+
+A database test creates its own data with values unique to the run (for example a random email) and removes it in its teardown, so the `testing` database is empty between runs. `packages/database/src/user.db.test.ts` is the reference example. The unit tests for the guard itself, in `env-guard.test.ts`, run under `pnpm test`.
+
+CI runs both `pnpm test` and `pnpm test:db`.
+
+## AI agents and destructive Prisma commands
+
+Prisma Migrate has a built-in safeguard: when it detects that it was started by an AI agent, it refuses destructive commands such as `migrate reset` unless the `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` environment variable is set, which is meant to record the user's explicit consent. An agent that hits this refusal must stop and ask the maintainer. It must never set that variable itself, and the maintainer's consent applies to that one action only. The `COUCH_DB_ENV` guard applies as well and is not replaced by the safeguard.
 
 ## Migrations
 
@@ -71,11 +98,11 @@ It refuses to continue unless all of these hold:
 
 Failure messages name the rule and the variable. They never include a URL, host, user or password.
 
-A test suite that touches the database must start with `assertDatabaseEnv(process.env, "test-suite")`, exported from `@couch/database`.
+A test suite that touches the database (a `*.db.test.ts` file, see [Tests](#tests)) must start with `assertDatabaseEnv(process.env, "test-suite")`, exported from `@couch/database`.
 
 ## Client and IDs
 
 - **Driver**: the client uses `@prisma/adapter-pg`, the standard `pg` driver over TCP. It connects to Neon through the pooled URL and works the same against any plain Postgres server, so CI can use a Postgres service container. `@prisma/adapter-neon` uses Neon's HTTP and WebSocket protocol and would not.
 - **Exports**: `createPrismaClient({ connectionString })` builds a client. `getPrismaClient()` returns one shared instance kept on `globalThis`, so Next.js hot reload does not open a new pool on every reload. It reads `DATABASE_URL` on first use.
-- **First connection**: Neon computes scale to zero and can take a few seconds to wake. The `pg` driver waits forever by default, so the factory sets `connectionTimeoutMillis` to 15 seconds. The database package's Vitest config sets 30 second test and hook timeouts for the same reason. A failed first connect can simply be retried.
+- **First connection**: Neon computes scale to zero and can take a few seconds to wake. The `pg` driver waits forever by default, so the factory sets `connectionTimeoutMillis` to 15 seconds. The database Vitest config (`vitest.db.config.ts`) sets 30 second test and hook timeouts for the same reason. A failed first connect can simply be retried.
 - **IDs**: every model uses `String @id @default(uuid(7))`. Prisma generates the value. The Prisma docs do not name a recommended generator, so this is a choice: UUIDv7 values are time-ordered, so inserts stay at the end of the primary key index, and they are opaque, so ids do not reveal row counts. Use the same declaration on every new model.

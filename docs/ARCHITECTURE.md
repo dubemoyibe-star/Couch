@@ -66,4 +66,4 @@ Why not build packages to `dist`: it adds a build graph, watch-mode ordering, an
 - **TypeScript**: `tsconfig.base.json` at the root sets `strict: true` and shared options. Every package extends it and has a `typecheck` script. `apps/web` keeps Next's own options (`jsx`, `plugins`, `paths`, `include`, `lib`) locally.
 - **Tests**: Vitest, one per package, run through `pnpm -r`. Packages without tests pass (`--passWithNoTests`). Vitest 5 requires Node 22.12 or newer, recorded in the root `engines`.
 - **Lint**: ESLint 9 flat config. `apps/web` keeps its Next config. The root `eslint.config.mjs` reuses `eslint-config-next/typescript` for `apps/realtime` and `packages/*`. There is no formatter configured yet.
-- **Scripts**: root `typecheck`, `lint` and `test` run `pnpm -r <script>`. No Turborepo or Nx.
+- **Scripts**: root `typecheck`, `lint`, `test` and `test:db` run `pnpm -r <script>`. `test` excludes tests that touch a database (`*.db.test.ts`); `test:db` runs only those. No Turborepo or Nx.
