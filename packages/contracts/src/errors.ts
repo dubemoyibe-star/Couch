@@ -1,13 +1,37 @@
 import * as z from "zod";
 import { defineEvent, idSchema } from "./envelope";
 
-/** Stable error codes. Add new codes here; never rename or remove one. */
-export const ERROR_CODES = [
+/** The codes `parseMessage` itself can return: a message that could not be parsed. */
+export const PARSE_ERROR_CODES = [
   "invalid_json",
   "message_too_large",
   "unsupported_version",
   "unknown_type",
   "invalid_payload",
+] as const;
+
+export type ParseErrorCode = (typeof PARSE_ERROR_CODES)[number];
+
+/**
+ * Stable error codes. Add new codes here; never rename or remove one.
+ *
+ * The parse codes come first. The rest are sent by the server after a message parsed but
+ * could not be acted on:
+ * - `not_a_member`: the user is not a member of the couch named in `room.join`.
+ * - `not_joined`: the connection has not joined a couch, and the message needs one.
+ * - `forbidden`: the user is in the couch but their role does not allow the action, for
+ *   example a participant sending `room.setMedia` or `room.kick`.
+ * - `couch_not_found`: `room.join` named a couch that does not exist.
+ * - `media_unavailable`: `room.setMedia` named media that is not in the catalog or cannot
+ *   be played right now.
+ */
+export const ERROR_CODES = [
+  ...PARSE_ERROR_CODES,
+  "not_a_member",
+  "not_joined",
+  "forbidden",
+  "couch_not_found",
+  "media_unavailable",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

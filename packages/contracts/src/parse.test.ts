@@ -9,8 +9,10 @@ import {
   MAX_ID_LENGTH,
   MAX_MESSAGE_BYTES,
   parseMessage,
+  PARSE_ERROR_CODES,
   utf8ByteLength,
   type ErrorCode,
+  type ParseErrorCode,
 } from "./index";
 
 const echo = defineEvent({
@@ -123,7 +125,7 @@ describe("error message: tolerant code", () => {
 });
 
 describe("parseMessage: every error code", () => {
-  const table: { name: string; raw: string; code: ErrorCode }[] = [
+  const table: { name: string; raw: string; code: ParseErrorCode }[] = [
     { name: "oversized", raw: "x".repeat(MAX_MESSAGE_BYTES + 1), code: "message_too_large" },
     { name: "not JSON", raw: "{nope", code: "invalid_json" },
     { name: "empty string", raw: "", code: "invalid_json" },
@@ -147,9 +149,9 @@ describe("parseMessage: every error code", () => {
     expect(error.message.length).toBeGreaterThan(0);
   });
 
-  it("covers every ErrorCode", () => {
+  it("covers every ParseErrorCode", () => {
     const covered = new Set(table.map((row) => row.code));
-    expect([...covered].sort()).toEqual([...ERROR_CODES].sort());
+    expect([...covered].sort()).toEqual([...PARSE_ERROR_CODES].sort());
   });
 });
 

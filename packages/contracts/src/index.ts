@@ -8,14 +8,39 @@ export {
   type EventDefinition,
   type MessageOf,
 } from "./envelope";
+export { clientEvents, serverEvents, type ClientMessage, type ServerMessage } from "./catalog";
+export {
+  CHAT_MAX_LENGTH,
+  CHAT_MESSAGE_ID_MAX_LENGTH,
+  chatClientEvents,
+  chatMessageEvent,
+  chatSendEvent,
+  chatServerEvents,
+  chatTextSchema,
+  type ChatMessage,
+  type ChatSend,
+} from "./chat";
 export {
   ERROR_CODES,
   MAX_ERROR_CODE_LENGTH,
+  PARSE_ERROR_CODES,
   errorCodeSchema,
   errorEvent,
   isKnownErrorCode,
   type ErrorCode,
+  type ParseErrorCode,
 } from "./errors";
+export {
+  COUCH_ID_MAX_LENGTH,
+  DISPLAY_NAME_MAX_LENGTH,
+  USER_ID_MAX_LENGTH,
+  couchIdSchema,
+  displayNameSchema,
+  mediaIdSchema,
+  roleSchema,
+  userIdSchema,
+  type Role,
+} from "./identity";
 export { MEDIA_LIMITS } from "./fields";
 export { licenseRecordSchema, licenseRecordWireSchema, type LicenseRecord } from "./license";
 export {
@@ -55,4 +80,29 @@ export {
   type PlaybackState,
   type PlaybackSync,
 } from "./playback";
+export {
+  COUCH_NAME_MAX_LENGTH,
+  KICK_REASON_MAX_LENGTH,
+  ROOM_MEMBERS_MAX,
+  presenceUpdateEvent,
+  roomClientEvents,
+  roomJoinEvent,
+  roomKickEvent,
+  roomKickedEvent,
+  roomLeaveEvent,
+  roomMediaChangedEvent,
+  roomMemberSchema,
+  roomServerEvents,
+  roomSetMediaEvent,
+  roomStateEvent,
+  type PresenceUpdate,
+  type RoomJoin,
+  type RoomKick,
+  type RoomKicked,
+  type RoomLeave,
+  type RoomMediaChanged,
+  type RoomMember,
+  type RoomSetMedia,
+  type RoomState,
+} from "./room";
 export { playbackSourceSchema, playbackSourceWireSchema, type PlaybackSource } from "./source";

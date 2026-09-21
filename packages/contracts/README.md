@@ -249,19 +249,95 @@ Exported as `MEDIA_LIMITS`. String lengths count UTF-16 code units. Free-text st
 | `verificationNotes`      | 2000 |
 | every url                | 2048 |
 
+## Message catalog
+
+`clientEvents` and `serverEvents` list every event definition, in the shape `parseMessage` takes. They are the single source of truth for the catalog: the server parses with `clientEvents` and a client parses with `serverEvents`. `ClientMessage` and `ServerMessage` are the parsed message types. Each domain also exports its own list (`roomClientEvents`, `roomServerEvents`, `chatClientEvents`, `chatServerEvents`, `playbackClientEvents`, `playbackServerEvents`).
+
+| Direction | Type                | Payload                                                          | Purpose                                                    | Who may send it                                       |
+| --------- | ------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------- |
+| client    | `room.join`         | `{ couchId }`                                                    | Join a couch.                                              | Any authenticated connection.                         |
+| client    | `room.leave`        | `{}`                                                             | Leave the joined couch.                                    | A joined member.                                      |
+| client    | `chat.send`         | `{ text }`                                                       | Send a chat message to the room.                           | A joined member.                                      |
+| client    | `room.setMedia`     | `{ mediaId }`                                                    | Change the media the room is watching.                     | Host only. The server enforces it.                    |
+| client    | `room.kick`         | `{ userId }`                                                     | Remove a member. `userId` is the target, never the sender. | Host only. The server enforces it.                    |
+| client    | `playback.play`     | `{ position }`                                                   | Start or resume playback.                                  | A joined member. The server decides which roles may.  |
+| client    | `playback.pause`    | `{ position }`                                                   | Pause playback.                                            | A joined member. The server decides which roles may.  |
+| client    | `playback.seek`     | `{ position }`                                                   | Jump to a position.                                        | A joined member. The server decides which roles may.  |
+| client    | `playback.setRate`  | `{ rate }`                                                       | Change the playback speed.                                 | A joined member. The server decides which roles may.  |
+| server    | `room.state`        | `{ couch, self, members, media, playback }`                      | Full room snapshot, sent on join and on reconnect.         | Server only.                                          |
+| server    | `room.mediaChanged` | `{ media, playback }`                                            | The room switched to another media item.                   | Server only.                                          |
+| server    | `presence.update`   | `{ userId, online }`                                             | A member went online or offline.                           | Server only.                                          |
+| server    | `chat.message`      | `{ id, userId, displayName, text, sentAt }`                      | A chat message, with the sender and time set by the server. | Server only.                                          |
+| server    | `room.kicked`       | `{ reason? }`                                                    | The recipient was removed from the room.                   | Server only.                                          |
+| server    | `playback.sync`     | `{ state }`                                                      | The authoritative playback state.                          | Server only.                                          |
+| server    | `error`             | `{ code, message, replyTo? }`                                    | A message was rejected or could not be acted on.           | Server only.                                          |
+
+Roles are `"host"` and `"participant"`. "Host only" is a rule the server applies. The contract only shapes the message, so a participant's `room.setMedia` parses and the server answers it with `forbidden`.
+
+A client message never carries the sender's identity, a role or a timestamp. The server takes identity from the authenticated connection and stamps `id` and `sentAt` itself. `room.kick.userId` is the one `userId` a client sends, and it names the member to remove.
+
+There is no client-sent presence message. Presence is derived by the server from connections: a member is online while at least one of their connections is open. `presence.update` and the `online` flag in `room.state` are how clients learn it.
+
+### `room.state`
+
+| Field      | Type                     | Meaning                                                                             |
+| ---------- | ------------------------ | ----------------------------------------------------------------------------------- |
+| `couch`    | `{ id, name }`           | The couch. `name` is trimmed and non-empty.                                         |
+| `self`     | `{ userId, role }`       | The recipient's own identity and role, as the server knows them.                    |
+| `members`  | array, at most `ROOM_MEMBERS_MAX` | Each is `{ userId, displayName, role, online }`.                           |
+| `media`    | `CatalogMedia` or null   | The current media item, wire flavor (unknown keys stripped). Present, never omitted. |
+| `playback` | `PlaybackState` or null  | The current playback state. Present, never omitted.                                 |
+
+Invariant: `media` is null exactly when `playback` is null. A room with no media has no playback, and a room with media always has a playback state. The schema does not enforce this on purpose. A server bug that breaks it should not make a client drop the whole snapshot, so the client decides how to render a mismatch. It is covered by a test on valid examples instead.
+
+`room.mediaChanged` carries a non-null `media` and `playback`, so a room that already has media switches to another item in one message.
+
+### Identity, names and text
+
+Ids (`couchId`, `mediaId`, `userId`, and the chat message `id`) are opaque and follow the Opaque ids rules above: no leading or trailing whitespace, no ASCII control characters, non-empty, and within the limit. `mediaId` uses the catalog id limit.
+
+Lengths in this section count Unicode code points, which is how Zod measures string length. An emoji counts as 1, and in UTF-8 a code point takes 1 to 4 bytes.
+
+| Export                       | Value | Applies to                                                                |
+| ---------------------------- | ----- | ------------------------------------------------------------------------- |
+| `COUCH_ID_MAX_LENGTH`        | 128   | `couchId`, `couch.id`.                                                    |
+| `USER_ID_MAX_LENGTH`         | 128   | Every `userId`.                                                           |
+| `CHAT_MESSAGE_ID_MAX_LENGTH` | 128   | `chat.message.id`.                                                        |
+| `MEDIA_LIMITS.catalogId`     | 128   | `mediaId`.                                                                |
+| `DISPLAY_NAME_MAX_LENGTH`    | 50    | `displayName`. Trimmed, non-empty after trimming.                         |
+| `COUCH_NAME_MAX_LENGTH`      | 100   | `couch.name`. Trimmed, non-empty after trimming.                          |
+| `CHAT_MAX_LENGTH`            | 500   | Chat `text`, counted after trimming.                                      |
+| `KICK_REASON_MAX_LENGTH`     | 200   | `room.kicked.reason`. Trimmed, non-empty after trimming when present.     |
+| `ROOM_MEMBERS_MAX`           | 100   | Length of `room.state.members`.                                           |
+
+Chat text is checked in this order: any C0 control character (U+0000 to U+001F) other than newline (U+000A) rejects the message, then the text is trimmed, then it must be non-empty and at most `CHAT_MAX_LENGTH`. The control check runs on the text as sent, so a tab or carriage return at the edge is rejected and not trimmed away. Newlines inside the text are kept. `chat.send` and `chat.message` use the same text schema.
+
+`sentAt` is epoch MILLISECONDS on the SERVER clock, a non-negative safe integer.
+
+### Size
+
+The largest `room.state` the schema allows is `ROOM_MEMBERS_MAX` members with maximum-length ids and names, plus a `CatalogMedia` with every field at its `MEDIA_LIMITS` maximum. With ASCII text that message is about 43,000 bytes, under the 65,536 byte `MAX_MESSAGE_BYTES`, and a test keeps it there.
+
+The cap is a byte count, and the field limits are code point counts, so the headroom depends on the text. Non-ASCII text takes 2 to 4 bytes per code point, and a JSON escape such as `\"` takes 2. The limits that fit with ASCII text can exceed the cap with text that is mostly non-ASCII.
+
 ## Error codes
 
 Sent by the server as the `error` event (server direction): `payload: { code, message, replyTo? }`.
 
-| Code                  | Meaning                             |
-| --------------------- | ----------------------------------- |
-| `invalid_json`        | Not JSON, or not a JSON object.     |
-| `message_too_large`   | Over `MAX_MESSAGE_BYTES`.           |
-| `unsupported_version` | `v` is not in `SUPPORTED_VERSIONS`. |
-| `unknown_type`        | `type` is not a known event.        |
-| `invalid_payload`     | Right type, wrong shape.            |
+| Code                  | Meaning and when the server sends it                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_json`        | Not JSON, or not a JSON object.                                                                                                                            |
+| `message_too_large`   | Over `MAX_MESSAGE_BYTES`.                                                                                                                                  |
+| `unsupported_version` | `v` is not in `SUPPORTED_VERSIONS`.                                                                                                                        |
+| `unknown_type`        | `type` is not a known event.                                                                                                                               |
+| `invalid_payload`     | Right type, wrong shape.                                                                                                                                   |
+| `not_a_member`        | The message parsed, but the user is not a member of the couch it names. Sent in answer to `room.join`.                                                     |
+| `not_joined`          | The message parsed, but this connection has not joined a couch and the message needs one, such as `chat.send`, `room.setMedia` or a playback command.      |
+| `forbidden`           | The connection is in a couch, but the user's role does not allow the action. For example a participant sends `room.setMedia` or `room.kick`.              |
+| `couch_not_found`     | `room.join` names a couch that does not exist.                                                                                                             |
+| `media_unavailable`   | `room.setMedia` names media that is not in the catalog, or that cannot be played right now.                                                                |
 
-New codes are added to `ERROR_CODES`. Never rename or remove a code.
+The first five come from `parseMessage` (`PARSE_ERROR_CODES`). The rest are sent after a message parsed, when the server cannot act on it. New codes are added to `ERROR_CODES`. Never rename or remove a code.
 
 On the wire, `code` is any non-empty string of at most `MAX_ERROR_CODE_LENGTH` (64) characters, not a strict enum. A client built before a new code was added therefore still parses the `error` message instead of rejecting it as `invalid_payload`. A client MUST treat a code it does not know as a generic error: show or log the message and carry on.
 
@@ -275,4 +351,4 @@ if (isKnownErrorCode(payload.code)) {
 }
 ```
 
-The inferred type of `code` still lists the known codes, so editors offer them as completions. The failures `parseMessage` itself returns are typed with the strict `ErrorCode` union, since this package only ever produces known codes. `errorCodeSchema` remains a strict enum, for code that validates a code it produces.
+The inferred type of `code` still lists the known codes, so editors offer them as completions. The failures `parseMessage` itself returns are typed with the strict `ParseErrorCode` union (the first five codes), since this package only ever produces those. `errorCodeSchema` remains a strict enum, for code that validates a code it produces.
