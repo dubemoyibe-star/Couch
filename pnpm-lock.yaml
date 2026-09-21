@@ -86,7 +86,11 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  packages/contracts: {}
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/database: {}
 
