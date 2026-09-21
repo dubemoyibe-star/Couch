@@ -52,8 +52,9 @@ An unknown `type` from the server is reported as `unknown_type`, so a client can
 
 ## Naming
 
-- `type` is `domain.action`: lowercase, one dot, letters and digits (`room.join`, `playback.seek`, `chat.send`). `defineEvent` throws at definition time if the name does not match.
+- `type` is `domain.actionName`: exactly two segments separated by one dot. The domain is lowercase letters only. The action starts with a lowercase letter and may then contain letters and digits, so it is camelCase (`room.join`, `playback.setRate`, `room.mediaChanged`). `defineEvent` throws at definition time, with a message naming the rule, if the name does not match.
 - The one exception is the reserved type `error`.
+- Types are case-sensitive on the wire and matched exactly: `playback.setrate` and `playback.SETRATE` do not match `playback.setRate` and are reported as `unknown_type`. No two types may differ only by case, because clients and servers could then confuse them.
 - Client to server messages are intents (commands): "I want to do this." The server decides the outcome.
 - Server to client messages are facts (state or events): "this is now true." Clients render them.
 
@@ -125,7 +126,7 @@ Client to server commands (`playbackClientEvents`):
 | `playback.play` | `{ position }` | `position` is the client-reported position in seconds. The server validates it and stays authoritative. |
 | `playback.pause` | `{ position }` | Same as `playback.play`. |
 | `playback.seek` | `{ position }` | Target position in seconds. |
-| `playback.setrate` | `{ rate }` | Multiplier of normal speed. |
+| `playback.setRate` | `{ rate }` | Multiplier of normal speed. |
 
 Commands never carry a revision, a timestamp, a user id or a role. Unknown keys are rejected, as for every client event.
 

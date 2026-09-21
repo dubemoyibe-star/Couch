@@ -74,7 +74,7 @@ export const playbackSeekEvent = defineEvent({
 
 /** Client to server: change the playback speed. `rate` is a multiplier of normal speed. */
 export const playbackSetRateEvent = defineEvent({
-  type: "playback.setrate",
+  type: "playback.setRate",
   direction: "client",
   payload: { rate: rateSchema },
 });

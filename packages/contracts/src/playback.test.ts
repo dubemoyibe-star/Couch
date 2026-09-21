@@ -161,15 +161,15 @@ describe("client commands", () => {
     });
   });
 
-  describe("playback.setrate", () => {
+  describe("playback.setRate", () => {
     it("round-trips through parseMessage", () => {
-      const message = { v: 1, type: "playback.setrate", payload: { rate: 1.5 } };
+      const message = { v: 1, type: "playback.setRate", payload: { rate: 1.5 } };
       expect(parseClient(json(message))).toEqual({ ok: true, data: message });
     });
 
     it("accepts exactly the bounds", () => {
-      expect(parseClient(command("playback.setrate", { rate: PLAYBACK_RATE_MIN })).ok).toBe(true);
-      expect(parseClient(command("playback.setrate", { rate: PLAYBACK_RATE_MAX })).ok).toBe(true);
+      expect(parseClient(command("playback.setRate", { rate: PLAYBACK_RATE_MIN })).ok).toBe(true);
+      expect(parseClient(command("playback.setRate", { rate: PLAYBACK_RATE_MAX })).ok).toBe(true);
     });
 
     it.each([
@@ -179,19 +179,26 @@ describe("client commands", () => {
       ["negative", -1],
       ["a string", "1"],
     ])("rejects %s with invalid_payload", (_name, rate) => {
-      expect(code(parseClient(command("playback.setrate", { rate })))).toBe("invalid_payload");
+      expect(code(parseClient(command("playback.setRate", { rate })))).toBe("invalid_payload");
     });
 
     it("rejects 1e999 in raw JSON", () => {
-      const raw = '{"v":1,"type":"playback.setrate","payload":{"rate":1e999}}';
+      const raw = '{"v":1,"type":"playback.setRate","payload":{"rate":1e999}}';
       expect(code(parseClient(raw))).toBe("invalid_payload");
     });
 
+    it.each(["playback.setrate", "playback.SETRATE", "playback.SetRate", "Playback.setRate"])(
+      "does not match the differently cased type %s",
+      (type) => {
+        expect(code(parseClient(command(type, { rate: 1 })))).toBe("unknown_type");
+      },
+    );
+
     it("rejects an extra key and a missing rate", () => {
-      expect(code(parseClient(command("playback.setrate", { rate: 1, extra: 1 })))).toBe(
+      expect(code(parseClient(command("playback.setRate", { rate: 1, extra: 1 })))).toBe(
         "invalid_payload",
       );
-      expect(code(parseClient(command("playback.setrate", {})))).toBe("invalid_payload");
+      expect(code(parseClient(command("playback.setRate", {})))).toBe("invalid_payload");
     });
   });
 
