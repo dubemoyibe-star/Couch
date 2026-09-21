@@ -6,9 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@couch/contracts": "workspace:*",
+    "@couch/database": "workspace:*",
+    "@couch/providers": "workspace:*",
+    "@couch/shared": "workspace:*",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
