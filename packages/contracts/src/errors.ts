@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { defineEvent, idSchema } from "./envelope";
 
-/** Stable error codes. Later issues extend this list; never rename or remove one. */
+/** Stable error codes. Add new codes here; never rename or remove one. */
 export const ERROR_CODES = [
   "invalid_json",
   "message_too_large",

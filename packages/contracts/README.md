@@ -2,7 +2,7 @@
 
 Wire schemas and the types derived from them. This is the validation boundary for all external input. It depends only on `zod` and runs in the browser and in Node.
 
-This package defines the envelope every realtime message uses, how messages are named and versioned, and how raw input is parsed safely. It defines no concrete room, playback or chat event yet; later issues declare those with `defineEvent`.
+This package defines the envelope every realtime message uses, how messages are named and versioned, and how raw input is parsed safely. Concrete events (room, playback, chat and so on) are declared with `defineEvent`.
 
 ## Envelope
 
@@ -14,7 +14,7 @@ Every message is one JSON object:
 
 | Field | Meaning |
 | --- | --- |
-| `v` | Protocol version. `1` today. |
+| `v` | Protocol version. Currently `1`. |
 | `type` | Event name, `domain.action`. Selects the payload schema. |
 | `id` | Optional client-generated correlation id, 1 to 64 characters (`MAX_ID_LENGTH`). |
 | `payload` | Always an object, so it can gain optional fields later. |
@@ -110,6 +110,6 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | `unknown_type` | `type` is not a known event. |
 | `invalid_payload` | Right type, wrong shape. |
 
-Later issues extend `ERROR_CODES`. Never rename or remove a code.
+New codes are added to `ERROR_CODES`. Never rename or remove a code.
 
 Caveat: `code` is a strict enum, so a client built before a new code was added rejects that `error` message as `invalid_payload`. Clients should treat any failure to parse an `error` message as a generic error.
