@@ -8,3 +8,6 @@ coverage
 .env
 .env.*
 !.env.example
+
+# generated Prisma client
+packages/database/src/generated/
