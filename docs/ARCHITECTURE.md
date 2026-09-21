@@ -6,7 +6,7 @@ Couch is a pnpm workspace of two apps and four packages, all under the `@couch/*
 
 | Package | Path | Responsibility |
 | --- | --- | --- |
-| `@couch/contracts` | packages/contracts | Wire schemas and the types derived from them (Zod, added in a later issue). The validation boundary for all external input. |
+| `@couch/contracts` | packages/contracts | Wire schemas and the types derived from them (Zod). The validation boundary for all external input. |
 | `@couch/shared` | packages/shared | Pure cross-runtime logic, such as sync and reducer code. Runs in the browser and in Node, so no Node-only or DOM-only APIs. |
 | `@couch/providers` | packages/providers | Content provider layer. Metadata and links only, and every item carries a documented licensing basis. |
 | `@couch/database` | packages/database | Prisma and repositories over hosted Neon Postgres. |
@@ -15,7 +15,7 @@ Couch is a pnpm workspace of two apps and four packages, all under the `@couch/*
 
 ## Dependency direction
 
-- contracts: leaf. Depends only on zod (added in a later issue).
+- contracts: leaf. Depends only on zod.
 - shared: may depend on contracts. Runtime-agnostic (browser and Node). No Node-only or DOM-only APIs.
 - providers: may depend on contracts and shared.
 - database: may depend on contracts and shared. Never on providers.
