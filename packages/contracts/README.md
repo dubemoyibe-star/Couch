@@ -72,7 +72,7 @@ Additive (no bump):
 
 - A new type.
 - A new optional field.
-- A new `ErrorCode` (see the caveat below).
+- A new `ErrorCode`. Clients treat a code they do not know as a generic error (see Error codes).
 
 Clients that receive a `v` they do not support get `unsupported_version` before any other check, so a future payload shape is never misreported as `invalid_payload`.
 
@@ -170,10 +170,10 @@ The date is not compared with today, because this package has no clock.
 | Field             | Type              | Meaning                                                                                |
 | ----------------- | ----------------- | -------------------------------------------------------------------------------------- |
 | `providerId`      | lowercase slug    | Lowercase letters and digits in groups joined by single hyphens.                       |
-| `providerMediaId` | string            | The provider's own id. Opaque: it is never interpreted.                                |
+| `providerMediaId` | string            | The provider's own id. Opaque, so it is never interpreted or changed. See Opaque ids.  |
 | `title`           | string            |                                                                                        |
 | `description`     | string or null    |                                                                                        |
-| `durationSeconds` | number or null    | SECONDS. Positive and finite.                                                          |
+| `durationSeconds` | number or null    | SECONDS. Positive, at most `PLAYBACK_POSITION_MAX_SECONDS` (86400).                    |
 | `posterUrl`       | https URL or null |                                                                                        |
 | `releaseYear`     | integer or null   | `MEDIA_LIMITS.releaseYearMin` to `releaseYearMax` (1800 to 2100), a sanity range only. |
 | `license`         | `LicenseRecord`   | Required.                                                                              |
@@ -181,12 +181,32 @@ The date is not compared with today, because this package has no clock.
 | Export                                        | Contains                        | Notes                                                                                                         |
 | --------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `mediaWithLicenseSchema` / `MediaWithLicense` | The media fields and `license`  | What a provider returns and a manifest contains. No internal id.                                              |
-| `catalogMediaSchema` / `CatalogMedia`         | `MediaWithLicense` plus `id`    | `id` is the internal catalog id, a non-empty string. It goes over the wire so the UI can display attribution. |
+| `catalogMediaSchema` / `CatalogMedia`         | `MediaWithLicense` plus `id`    | `id` is the internal catalog id, an opaque id. It goes over the wire so the UI can display attribution.       |
 | `mediaRefSchema` / `MediaRef`                 | `providerId`, `providerMediaId` | Identifies an item on its provider.                                                                           |
+
+### Opaque ids
+
+`providerMediaId` and the catalog `id` are opaque: Couch never interprets them, so it never changes them either. An id that is trimmed or rewritten can stop matching the id the provider knows, so these fields are checked and returned exactly as given:
+
+- Leading or trailing whitespace is rejected, not trimmed. Unicode whitespace counts, so a leading no-break space fails.
+- ASCII control characters (U+0000 to U+001F and U+007F) are rejected anywhere in the id.
+- Spaces inside an id are allowed.
+- Empty is rejected, and so is an id over its limit.
+
+`providerId` keeps its slug rule. Every other free-text field is still trimmed.
+
+### Duration
+
+`durationSeconds` is at most `PLAYBACK_POSITION_MAX_SECONDS`, the same exported constant that caps a playback position. It is the single source of truth, so an item can never be longer than the playback schema can seek to.
 
 ### `PlaybackSource`
 
-`playbackSourceSchema` is a union discriminated on `kind`: `mp4`, `hls`, `dash` or `embed`. Each has an https `url` and an optional `expiresAt`, epoch MILLISECONDS as a non-negative safe integer. A resolved source can expire, so it is re-resolved on reconnect. Unknown keys are rejected.
+A source is a union discriminated on `kind`: `mp4`, `hls`, `dash` or `embed`. Each has an https `url` and an optional `expiresAt`, epoch MILLISECONDS as a non-negative safe integer. A resolved source can expire, so it is re-resolved on reconnect.
+
+- `playbackSourceSchema` is the ingest flavor. Unknown keys are rejected.
+- `playbackSourceWireSchema` is the wire flavor. Unknown keys are stripped.
+
+Both are built from the same field map for each kind, so they cannot drift. They infer the same `PlaybackSource` type.
 
 ### Strict and tolerant
 
@@ -195,11 +215,11 @@ The same rule as for messages applies, decided by where the data comes from.
 | Flavor          | Exports                                                                                                         | Unknown keys             | Use it for                                                                        |
 | --------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
 | Ingest (strict) | `licenseRecordSchema`, `mediaWithLicenseSchema`, `catalogMediaSchema`, `mediaRefSchema`, `playbackSourceSchema` | Rejected, at every level | Provider output, catalog manifests, database upserts. Anything that authors data. |
-| Wire (tolerant) | `licenseRecordWireSchema`, `catalogMediaWireSchema`                                                             | Stripped, at every level | Catalog media received from the server.                                           |
+| Wire (tolerant) | `licenseRecordWireSchema`, `catalogMediaWireSchema`, `playbackSourceWireSchema`                                 | Stripped, at every level | Catalog media and playback sources received from the server.                      |
 
 A misspelled key such as `additionalRestrictons` must fail loudly on the ingest path, because a stripped restriction is a licensing bug. On the wire the server evolves first, so stripping keeps an older client working when a field is added.
 
-Both flavors are built from one field map: `z.strictObject(shape)` for ingest and `z.object(shape)` for wire, with the attribution rule applied to each by one shared function. They cannot drift, and the wire flavor enforces every rule except the unknown-key one. Media takes its license schema as a parameter, so a strict media object nests the strict license and a wire media object nests the tolerant one. Both flavors infer the same TypeScript type, which is exported once (`LicenseRecord`, `CatalogMedia`).
+Both flavors are built from one field map: `z.strictObject(shape)` for ingest and `z.object(shape)` for wire, with the attribution rule applied to each by one shared function. A playback source does the same with one field map per `kind`. They cannot drift, and the wire flavor enforces every rule except the unknown-key one. Media takes its license schema as a parameter, so a strict media object nests the strict license and a wire media object nests the tolerant one. Both flavors infer the same TypeScript type, which is exported once (`LicenseRecord`, `CatalogMedia`, `PlaybackSource`).
 
 ### URLs
 
@@ -212,7 +232,7 @@ Every url field must be an `https` URL with no embedded credentials.
 
 ### Limits
 
-Exported as `MEDIA_LIMITS`. String lengths count UTF-16 code units. Strings are trimmed, and a present value must be non-empty after trimming, so absence is always `null` and never `""`.
+Exported as `MEDIA_LIMITS`. String lengths count UTF-16 code units. Free-text strings are trimmed, and a present value must be non-empty after trimming, so absence is always `null` and never `""`. Opaque ids are not trimmed (see Opaque ids).
 
 | Field                    | Max  |
 | ------------------------ | ---- |
@@ -243,4 +263,16 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 
 New codes are added to `ERROR_CODES`. Never rename or remove a code.
 
-Caveat: `code` is a strict enum, so a client built before a new code was added rejects that `error` message as `invalid_payload`. Clients should treat any failure to parse an `error` message as a generic error.
+On the wire, `code` is any non-empty string of at most `MAX_ERROR_CODE_LENGTH` (64) characters, not a strict enum. A client built before a new code was added therefore still parses the `error` message instead of rejecting it as `invalid_payload`. A client MUST treat a code it does not know as a generic error: show or log the message and carry on.
+
+`isKnownErrorCode(code)` is a type guard that narrows a `string` to `ErrorCode`:
+
+```ts
+if (isKnownErrorCode(payload.code)) {
+  // payload.code is an ErrorCode here: handle it specifically
+} else {
+  // A code from a newer server: treat it as a generic error
+}
+```
+
+The inferred type of `code` still lists the known codes, so editors offer them as completions. The failures `parseMessage` itself returns are typed with the strict `ErrorCode` union, since this package only ever produces known codes. `errorCodeSchema` remains a strict enum, for code that validates a code it produces.

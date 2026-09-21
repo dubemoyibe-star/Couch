@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import * as z from "zod";
-import { defineEvent, errorEvent, ERROR_CODES, type MessageOf } from "./index";
+import { defineEvent, errorEvent, type ErrorCode, type MessageOf } from "./index";
 
 const echo = defineEvent({
   type: "test.echo",
@@ -34,7 +34,11 @@ describe("defineEvent", () => {
 
   it("infers the error message type", () => {
     type ErrorMessage = MessageOf<typeof errorEvent>;
-    expectTypeOf<ErrorMessage["payload"]["code"]>().toEqualTypeOf<(typeof ERROR_CODES)[number]>();
+    // Any string is accepted on the wire, and the known codes stay in the type for autocomplete.
+    type WireCode = ErrorMessage["payload"]["code"];
+    expectTypeOf<ErrorCode>().toExtend<WireCode>();
+    expectTypeOf<string>().toExtend<WireCode>();
+    expectTypeOf<WireCode>().not.toEqualTypeOf<ErrorCode>();
     expectTypeOf<ErrorMessage["payload"]["message"]>().toEqualTypeOf<string>();
     expectTypeOf<ErrorMessage["payload"]["replyTo"]>().toEqualTypeOf<string | undefined>();
   });

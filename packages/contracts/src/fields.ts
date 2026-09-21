@@ -33,7 +33,33 @@ export const MEDIA_LIMITS = {
 /** A trimmed string with at least one character after trimming, up to `max`. */
 export const trimmedText = (max: number) => z.string().trim().min(1).max(max);
 
-const HTTPS_PREFIX = /^https:\/\//i;
+function hasAsciiControl(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const unit = value.charCodeAt(i);
+    if (unit <= 0x1f || unit === 0x7f) return true;
+  }
+  return false;
+}
+
+/**
+ * An opaque id, up to `max` characters. It is checked and never changed: an id that is
+ * trimmed or rewritten can stop matching the id the provider knows. So leading or trailing
+ * whitespace is rejected instead of trimmed, and so is any ASCII control character
+ * (U+0000 to U+001F and U+007F). Spaces inside the id are allowed.
+ */
+export const opaqueId = (max: number) =>
+  z
+    .string()
+    .min(1)
+    .max(max)
+    .refine((value) => value === value.trim(), {
+      error: "id must not have leading or trailing whitespace",
+    })
+    .refine((value) => !hasAsciiControl(value), {
+      error: "id must not contain control characters",
+    });
+
+const HTTPS_PREFIX =/^https:\/\//i;
 
 /**
  * The authority (host, and any userinfo) of a URL that starts with `https://`. The URL

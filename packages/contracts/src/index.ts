@@ -8,7 +8,14 @@ export {
   type EventDefinition,
   type MessageOf,
 } from "./envelope";
-export { ERROR_CODES, errorCodeSchema, errorEvent, type ErrorCode } from "./errors";
+export {
+  ERROR_CODES,
+  MAX_ERROR_CODE_LENGTH,
+  errorCodeSchema,
+  errorEvent,
+  isKnownErrorCode,
+  type ErrorCode,
+} from "./errors";
 export { MEDIA_LIMITS } from "./fields";
 export { licenseRecordSchema, licenseRecordWireSchema, type LicenseRecord } from "./license";
 export {
@@ -48,4 +55,4 @@ export {
   type PlaybackState,
   type PlaybackSync,
 } from "./playback";
-export { playbackSourceSchema, type PlaybackSource } from "./source";
+export { playbackSourceSchema, playbackSourceWireSchema, type PlaybackSource } from "./source";

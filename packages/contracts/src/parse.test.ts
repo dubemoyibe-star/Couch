@@ -4,6 +4,8 @@ import {
   defineEvent,
   ERROR_CODES,
   errorEvent,
+  isKnownErrorCode,
+  MAX_ERROR_CODE_LENGTH,
   MAX_ID_LENGTH,
   MAX_MESSAGE_BYTES,
   parseMessage,
@@ -52,6 +54,71 @@ describe("parseMessage: success", () => {
       payload: { code: "invalid_json", message: "bad", replyTo: "abc" },
     };
     expect(parseMessage(json(message), serverEvents)).toEqual({ ok: true, data: message });
+  });
+});
+
+describe("error message: tolerant code", () => {
+  const errorMessage = (code: unknown) =>
+    json({ v: 1, type: "error", payload: { code, message: "bad" } });
+
+  it("parses every known code", () => {
+    for (const code of ERROR_CODES) {
+      expect(parseMessage(errorMessage(code), serverEvents).ok, code).toBe(true);
+    }
+  });
+
+  it("parses a code this build does not know, and keeps it", () => {
+    const result = parseMessage(errorMessage("code_from_a_newer_server"), serverEvents);
+    expect(result).toEqual({
+      ok: true,
+      data: { v: 1, type: "error", payload: { code: "code_from_a_newer_server", message: "bad" } },
+    });
+  });
+
+  it("isKnownErrorCode tells the two apart", () => {
+    for (const code of ERROR_CODES) expect(isKnownErrorCode(code), code).toBe(true);
+    expect(isKnownErrorCode("code_from_a_newer_server")).toBe(false);
+    expect(isKnownErrorCode("")).toBe(false);
+    expect(isKnownErrorCode("Invalid_JSON")).toBe(false);
+    // Names on the prototype chain are not codes.
+    expect(isKnownErrorCode("toString")).toBe(false);
+    expect(isKnownErrorCode("constructor")).toBe(false);
+  });
+
+  it("narrows an unknown code so a client can branch on it", () => {
+    const result = parseMessage(errorMessage("code_from_a_newer_server"), serverEvents);
+    if (!result.ok || result.data.type !== "error") throw new Error("expected an error message");
+    const code = result.data.payload.code;
+    const label: ErrorCode | "generic" = isKnownErrorCode(code) ? code : "generic";
+    expect(label).toBe("generic");
+  });
+
+  it("accepts a code at the length limit and rejects one above it", () => {
+    expect(parseMessage(errorMessage("a".repeat(MAX_ERROR_CODE_LENGTH)), serverEvents).ok).toBe(true);
+    const tooLong = failure(parseMessage(errorMessage("a".repeat(MAX_ERROR_CODE_LENGTH + 1)), serverEvents));
+    expect(tooLong.code).toBe("invalid_payload");
+  });
+
+  it.each([
+    ["an empty string", ""],
+    ["a number", 5],
+    ["null", null],
+    ["an object", {}],
+  ])("rejects %s", (_label, code) => {
+    expect(failure(parseMessage(errorMessage(code), serverEvents)).code).toBe("invalid_payload");
+  });
+
+  it("rejects a missing code", () => {
+    const raw = json({ v: 1, type: "error", payload: { message: "bad" } });
+    expect(failure(parseMessage(raw, serverEvents)).code).toBe("invalid_payload");
+  });
+
+  it("still strips unknown keys, as for every server message", () => {
+    const raw = json({ v: 1, type: "error", payload: { code: "x_new", message: "bad", extra: 1 } });
+    expect(parseMessage(raw, serverEvents)).toEqual({
+      ok: true,
+      data: { v: 1, type: "error", payload: { code: "x_new", message: "bad" } },
+    });
   });
 });
 
