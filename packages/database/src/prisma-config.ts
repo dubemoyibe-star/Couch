@@ -3,7 +3,7 @@ import { assertDatabaseEnv } from "./env-guard";
 import { loadEnvFile } from "./env-files";
 import { classifyPrismaCommand } from "./prisma-command";
 
-// Shared by prisma.config.ts (dev, .env.local) and prisma.config.test.ts
+// Shared by prisma.config.ts (dev, .env.local) and prisma.test.config.ts
 // (test, .env.test). The Prisma CLI does not read dotenv files on its own, so
 // the chosen file is loaded here, then the guard runs for every command that
 // can reach a database, including a `prisma` command typed by hand. The CLI

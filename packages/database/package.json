@@ -16,10 +16,12 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
-    "db:migrate:deploy:test": "prisma migrate deploy --config prisma.config.test.ts",
-    "db:reset:test": "prisma migrate reset --config prisma.config.test.ts"
+    "db:migrate:deploy:test": "prisma migrate deploy --config prisma.test.config.ts",
+    "db:reset:test": "prisma migrate reset --config prisma.test.config.ts"
   },
   "dependencies": {
+    "@couch/contracts": "workspace:*",
+    "@couch/shared": "workspace:*",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0"
   },
