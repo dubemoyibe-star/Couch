@@ -1,11 +1,11 @@
 import { MAX_ID_LENGTH, SUPPORTED_VERSIONS, type AnyEvent, type MessageOf } from "./envelope";
-import type { ErrorCode } from "./errors";
+import type { ParseErrorCode } from "./errors";
 
 /** Largest accepted raw message, in UTF-8 bytes. */
 export const MAX_MESSAGE_BYTES = 64 * 1024;
 
 export interface ParseError {
-  code: ErrorCode;
+  code: ParseErrorCode;
   /** Fixed text per code. Never echoes input, so it is safe to send back. */
   message: string;
   /** The `id` of the offending message, when it had a usable one. */
@@ -14,7 +14,7 @@ export interface ParseError {
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; error: ParseError };
 
-const MESSAGES: Record<ErrorCode, string> = {
+const MESSAGES: Record<ParseErrorCode, string> = {
   invalid_json: "Message is not a valid JSON object.",
   message_too_large: "Message exceeds the maximum size.",
   unsupported_version: "Unsupported protocol version.",
@@ -50,7 +50,7 @@ export function utf8ByteLength(text: string): number {
   return bytes;
 }
 
-function fail(code: ErrorCode, replyTo?: string): { ok: false; error: ParseError } {
+function fail(code: ParseErrorCode, replyTo?: string): { ok: false; error: ParseError } {
   const error: ParseError = { code, message: MESSAGES[code] };
   if (replyTo !== undefined) error.replyTo = replyTo;
   return { ok: false, error };

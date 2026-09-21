@@ -571,8 +571,12 @@ describe("public exports", () => {
       "MEDIA_LIMITS",
       "catalogMediaSchema",
       "catalogMediaWireSchema",
+      "mediaIdSchema",
       "mediaRefSchema",
       "mediaWithLicenseSchema",
+      // Room events named after the media action. They carry an id or a licensed CatalogMedia.
+      "roomMediaChangedEvent",
+      "roomSetMediaEvent",
     ]);
   });
 
