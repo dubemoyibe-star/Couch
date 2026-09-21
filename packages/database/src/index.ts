@@ -15,3 +15,16 @@ export {
   type DbGuardRule,
   type DbPurpose,
 } from "./env-guard";
+export {
+  deactivateMissing,
+  getCatalogMedia,
+  listCatalogMedia,
+  MAX_CATALOG_PAGE_SIZE,
+  upsertCatalogMedia,
+  type CatalogExclusion,
+  type CatalogPage,
+  type GetCatalogMediaOptions,
+  type ListCatalogMediaOptions,
+  type OnExcluded,
+} from "./catalog";
+export type { ExclusionReason } from "./catalog-mapping";

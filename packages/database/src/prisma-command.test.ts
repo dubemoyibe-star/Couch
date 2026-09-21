@@ -13,7 +13,7 @@ describe("classifyPrismaCommand", () => {
     [[]],
     [["migrate", "reset", "--help"]],
     [["migrate", "dev", "-h"]],
-    [["generate", "--config", "prisma.config.test.ts"]],
+    [["generate", "--config", "prisma.test.config.ts"]],
   ])("treats %j as offline", (args) => {
     expect(classifyPrismaCommand(argv(...args))).toBeNull();
   });
@@ -21,7 +21,7 @@ describe("classifyPrismaCommand", () => {
   it("treats migrate deploy as deploy", () => {
     expect(classifyPrismaCommand(argv("migrate", "deploy"))).toBe("deploy");
     expect(
-      classifyPrismaCommand(argv("migrate", "deploy", "--config", "prisma.config.test.ts")),
+      classifyPrismaCommand(argv("migrate", "deploy", "--config", "prisma.test.config.ts")),
     ).toBe("deploy");
     expect(classifyPrismaCommand(argv("--config", "x.ts", "migrate", "deploy"))).toBe(
       "deploy",

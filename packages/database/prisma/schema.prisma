@@ -21,3 +21,66 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// The verified licensing basis of one media item. The fields mirror the
+// contracts `LicenseRecord`, and every value is entered by someone who verified
+// the source: nothing is guessed or filled in by code.
+//
+// Deletes: a license row is owned by exactly one Media row and is never deleted
+// on its own. The relation from Media uses `onDelete: Restrict`, so the database
+// refuses to delete a license row that a media row still references.
+model LicenseRecord {
+  id                     String   @id @default(uuid(7))
+  licenseName            String
+  licenseVersion         String?
+  licenseUrl             String
+  sourceUrl              String
+  rightsholder           String?
+  attributionRequired    Boolean
+  attribution            String?
+  intendedUseAllowed     Boolean
+  commercialUseAllowed   Boolean
+  additionalRestrictions String?
+  // A calendar date (Postgres `date`, no time part). Prisma hands it over as a
+  // JavaScript Date at UTC midnight, so it is always read and written through
+  // the UTC date parts, never the process time zone.
+  verifiedAt             DateTime @db.Date
+  verificationNotes      String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  media Media?
+}
+
+// One item a provider offers. The catalog stores metadata and a link to the
+// poster only. It never stores a playback URL: playback sources are resolved
+// through the provider at request time because they can expire.
+//
+// A media row cannot exist without a license row: `licenseRecordId` is required
+// and unique, so the link is one-to-one and enforced by the database.
+//
+// Deletes: there is no hard delete of Media. A takedown sets `isActive` to
+// false, and the row and its license stay as a record. The catalog repository
+// exports no delete. Should a delete ever be added, it must remove the media row
+// first and its license row in the same transaction, because the license
+// relation is `onDelete: Restrict` and cannot be removed while media points at it.
+model Media {
+  id              String   @id @default(uuid(7))
+  providerId      String
+  // The provider's own id. Opaque: it is stored exactly as given.
+  providerMediaId String
+  title           String
+  description     String?
+  // SECONDS. Prisma `Float` is Postgres double precision.
+  durationSeconds Float?
+  posterUrl       String?
+  releaseYear     Int?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  licenseRecordId String        @unique
+  licenseRecord   LicenseRecord @relation(fields: [licenseRecordId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, providerMediaId])
+}

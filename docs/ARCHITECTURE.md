@@ -43,8 +43,9 @@ The lists are deliberately minimal. Declared today:
 - `@couch/web`: contracts, shared, providers, database.
 - `@couch/realtime`: contracts, shared, database.
 - `@couch/shared`: contracts, for types only (`import type`), so it has no runtime dependency on zod.
+- `@couch/database`: contracts and shared. The catalog repository validates rows with the contracts schemas and the shared `isUseAuthorized`.
 
-The other packages declare no `@couch/*` dependencies yet because they contain no code that uses one. Add each dependency where it is first used.
+`@couch/contracts` and `@couch/providers` declare no `@couch/*` dependencies because they contain no code that uses one. Add each dependency where it is first used.
 
 The base tsconfig sets `lib: ["ES2022"]` and `types: []`, so a package sees neither DOM nor Node globals unless it opts in. `apps/web` opts in to DOM and `@types/node`; `apps/realtime` opts in to `@types/node`. This is what keeps `shared` runtime-agnostic.
 

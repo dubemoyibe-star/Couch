@@ -32,7 +32,7 @@ Switching environment switches `DATABASE_URL`, `DIRECT_URL` and `COUCH_DB_ENV` t
 | Tool | Reads | Selected by |
 | --- | --- | --- |
 | Prisma CLI (`db:*` scripts) | `.env.local` | default `prisma.config.ts` |
-| Prisma CLI (`db:*:test` scripts) | `.env.test` | `--config prisma.config.test.ts` |
+| Prisma CLI (`db:*:test` scripts) | `.env.test` | `--config prisma.test.config.ts` |
 | Next.js (`next dev`) | `.env.local` at the repo root | `apps/web/next.config.ts`. Next itself only reads files inside `apps/web`, and skips `.env.local` when `NODE_ENV=test`. |
 | `pnpm test` (unit tests) | no env file | `packages/database/vitest.config.ts` |
 | `pnpm test:db` (database tests) | `.env.test` | `packages/database/vitest.db.config.ts` global setup |
