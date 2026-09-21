@@ -7,7 +7,8 @@ import {
   isKnownErrorCode,
   MAX_ERROR_CODE_LENGTH,
   MAX_ID_LENGTH,
-  MAX_MESSAGE_BYTES,
+  MAX_CLIENT_MESSAGE_BYTES,
+  MAX_SERVER_MESSAGE_BYTES,
   parseMessage,
   PARSE_ERROR_CODES,
   utf8ByteLength,
@@ -126,7 +127,7 @@ describe("error message: tolerant code", () => {
 
 describe("parseMessage: every error code", () => {
   const table: { name: string; raw: string; code: ParseErrorCode }[] = [
-    { name: "oversized", raw: "x".repeat(MAX_MESSAGE_BYTES + 1), code: "message_too_large" },
+    { name: "oversized", raw: "x".repeat(MAX_CLIENT_MESSAGE_BYTES + 1), code: "message_too_large" },
     { name: "not JSON", raw: "{nope", code: "invalid_json" },
     { name: "empty string", raw: "", code: "invalid_json" },
     { name: "top level array", raw: "[]", code: "invalid_json" },
@@ -172,15 +173,15 @@ describe("parseMessage: stage order", () => {
   });
 
   it("an oversized message that is also invalid JSON is message_too_large", () => {
-    const raw = "{" + "x".repeat(MAX_MESSAGE_BYTES + 1);
+    const raw = "{" + "x".repeat(MAX_CLIENT_MESSAGE_BYTES + 1);
     expect(failure(parseMessage(raw, clientEvents)).code).toBe("message_too_large");
   });
 
   it("a multi-byte string under the limit in characters but over it in bytes is message_too_large", () => {
     // 3 bytes each in UTF-8; 30000 characters < 65536 but 90000 bytes > 65536.
     const raw = "€".repeat(30_000);
-    expect(raw.length).toBeLessThan(MAX_MESSAGE_BYTES);
-    expect(utf8ByteLength(raw)).toBeGreaterThan(MAX_MESSAGE_BYTES);
+    expect(raw.length).toBeLessThan(MAX_CLIENT_MESSAGE_BYTES);
+    expect(utf8ByteLength(raw)).toBeGreaterThan(MAX_CLIENT_MESSAGE_BYTES);
     expect(failure(parseMessage(raw, clientEvents)).code).toBe("message_too_large");
   });
 
@@ -188,15 +189,73 @@ describe("parseMessage: stage order", () => {
     const pad = (n: number) => json({ ...validEcho, payload: { text: "€".repeat(n) } });
     // Build a valid message whose byte size is exactly the limit, then one byte over.
     const base = utf8ByteLength(pad(0));
-    const fit = Math.floor((MAX_MESSAGE_BYTES - base) / 3);
-    const atLimit = pad(fit) + " ".repeat(MAX_MESSAGE_BYTES - utf8ByteLength(pad(fit)));
-    expect(utf8ByteLength(atLimit)).toBe(MAX_MESSAGE_BYTES);
+    const fit = Math.floor((MAX_CLIENT_MESSAGE_BYTES - base) / 3);
+    const atLimit = pad(fit) + " ".repeat(MAX_CLIENT_MESSAGE_BYTES - utf8ByteLength(pad(fit)));
+    expect(utf8ByteLength(atLimit)).toBe(MAX_CLIENT_MESSAGE_BYTES);
     expect(parseMessage(atLimit, clientEvents).ok).toBe(true);
     expect(failure(parseMessage(atLimit + " ", clientEvents)).code).toBe("message_too_large");
   });
 
   it("invalid JSON with a non-object top level is not reported past step 3", () => {
     expect(failure(parseMessage("null", clientEvents)).code).toBe("invalid_json");
+  });
+});
+
+describe("parseMessage: size limit by direction", () => {
+  const withText = (type: string, bytes: number) => json({ v: 1, type, payload: { text: "x".repeat(bytes) } });
+
+  it("has a server cap larger than the client cap, and a client cap of 64 KiB", () => {
+    expect(MAX_CLIENT_MESSAGE_BYTES).toBe(64 * 1024);
+    expect(MAX_SERVER_MESSAGE_BYTES).toBeGreaterThan(MAX_CLIENT_MESSAGE_BYTES);
+  });
+
+  it("rejects the same oversized payload in the client direction and accepts it in the server direction", () => {
+    const size = MAX_CLIENT_MESSAGE_BYTES + 1_000;
+    const asClient = withText("test.echo", size);
+    const asServer = withText("test.notice", size);
+    expect(utf8ByteLength(asClient)).toBeGreaterThan(MAX_CLIENT_MESSAGE_BYTES);
+    expect(utf8ByteLength(asServer)).toBeGreaterThan(MAX_CLIENT_MESSAGE_BYTES);
+    expect(failure(parseMessage(asClient, clientEvents)).code).toBe("message_too_large");
+    expect(parseMessage(asServer, serverEvents).ok).toBe(true);
+  });
+
+  it("rejects a raw string of the same size in the client direction and accepts it in the server direction", () => {
+    const raw = json({ v: 1, type: "test.notice", payload: { text: "x".repeat(MAX_CLIENT_MESSAGE_BYTES + 1) } });
+    expect(failure(parseMessage(raw, clientEvents)).code).toBe("message_too_large");
+    expect(failure(parseMessage(raw, clientEvents)).code).not.toBe("unknown_type");
+    expect(parseMessage(raw, serverEvents).ok).toBe(true);
+  });
+
+  it("holds the server direction to its own cap, inclusive in bytes", () => {
+    const base = utf8ByteLength(withText("test.notice", 0));
+    const atCap = withText("test.notice", MAX_SERVER_MESSAGE_BYTES - base);
+    expect(utf8ByteLength(atCap)).toBe(MAX_SERVER_MESSAGE_BYTES);
+    expect(parseMessage(atCap, serverEvents).ok).toBe(true);
+    expect(failure(parseMessage(atCap + " ", serverEvents)).code).toBe("message_too_large");
+  });
+
+  it("measures the server cap in bytes, not characters", () => {
+    // 4 bytes each in UTF-8, so the string length is a quarter of the byte size.
+    const raw = "\u{1F600}".repeat(MAX_SERVER_MESSAGE_BYTES / 4 + 1);
+    expect(raw.length).toBeLessThan(MAX_SERVER_MESSAGE_BYTES + 1);
+    expect(utf8ByteLength(raw)).toBeGreaterThan(MAX_SERVER_MESSAGE_BYTES);
+    expect(failure(parseMessage(raw, serverEvents)).code).toBe("message_too_large");
+  });
+
+  it("uses the smaller cap when the list mixes directions, whatever the order", () => {
+    const oversized = withText("test.notice", MAX_CLIENT_MESSAGE_BYTES + 1_000);
+    expect(failure(parseMessage(oversized, [echo, notice])).code).toBe("message_too_large");
+    expect(failure(parseMessage(oversized, [notice, echo])).code).toBe("message_too_large");
+  });
+
+  it("uses the smaller cap for an empty list", () => {
+    const oversized = "x".repeat(MAX_CLIENT_MESSAGE_BYTES + 1);
+    expect(failure(parseMessage(oversized, [])).code).toBe("message_too_large");
+  });
+
+  it("keeps the stage order: a message over the server cap is message_too_large before JSON", () => {
+    const raw = "{" + "x".repeat(MAX_SERVER_MESSAGE_BYTES + 1);
+    expect(failure(parseMessage(raw, serverEvents)).code).toBe("message_too_large");
   });
 });
 
@@ -266,7 +325,7 @@ describe("parseMessage: replyTo", () => {
   });
 
   it.each([
-    { name: "message_too_large", raw: "x".repeat(MAX_MESSAGE_BYTES + 1) },
+    { name: "message_too_large", raw: "x".repeat(MAX_CLIENT_MESSAGE_BYTES + 1) },
     { name: "invalid_json (not JSON)", raw: "{nope" },
     { name: "invalid_json (array)", raw: json([{ id: "r1" }]) },
   ])("is absent for $name, which fails before step 3 completes", ({ raw }) => {

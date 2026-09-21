@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   ERROR_CODES,
+  MAX_CLIENT_MESSAGE_BYTES,
   MAX_ID_LENGTH,
-  MAX_MESSAGE_BYTES,
+  MAX_SERVER_MESSAGE_BYTES,
+  MEDIA_LIMITS,
   ROOM_MEMBERS_MAX,
   USER_ID_MAX_LENGTH,
   COUCH_ID_MAX_LENGTH,
@@ -16,7 +18,13 @@ import {
   type AnyEvent,
   type ParseResult,
 } from "./index";
-import { maxCatalogMedia, playbackState, validPayloads } from "./test-fixtures";
+import {
+  ASCII_CHAR,
+  FOUR_BYTE_CHAR,
+  maxCatalogMedia,
+  playbackState,
+  validPayloads,
+} from "./test-fixtures";
 
 const json = (value: unknown) => JSON.stringify(value);
 
@@ -49,6 +57,8 @@ describe("the message catalog", () => {
       [
         "room.state",
         "room.mediaChanged",
+        "room.memberJoined",
+        "room.memberLeft",
         "presence.update",
         "chat.message",
         "room.kicked",
@@ -158,45 +168,76 @@ describe("error codes", () => {
 });
 
 describe("worst-case room.state size", () => {
-  // Every string is ASCII and at its documented maximum, so bytes equal characters.
-  const at = (length: number) => "a".repeat(length);
-  const member = {
-    userId: at(USER_ID_MAX_LENGTH),
-    displayName: at(DISPLAY_NAME_MAX_LENGTH),
-    role: "participant", // the longer of the two roles
-    online: false, // the longer of the two booleans
-  };
-  const message = {
-    v: 1,
-    type: "room.state",
-    id: at(MAX_ID_LENGTH),
-    payload: {
-      couch: { id: at(COUCH_ID_MAX_LENGTH), name: at(COUCH_NAME_MAX_LENGTH) },
-      self: { userId: at(USER_ID_MAX_LENGTH), role: "participant" },
-      members: Array.from({ length: ROOM_MEMBERS_MAX }, () => member),
-      media: maxCatalogMedia(),
-      playback: {
-        ...playbackState,
-        position: 86_399.999_999_999_99,
-        playbackRate: 1.999_999_999_999_999_8,
-        revision: Number.MAX_SAFE_INTEGER,
-        serverTimestamp: Number.MAX_SAFE_INTEGER,
+  // Every free-text field and every id is filled to its maximum with `char`. The parts the
+  // schema restricts to ASCII stay ASCII: the role and boolean literals, each url prefix and
+  // providerId (a slug).
+  function worstCase(char: string) {
+    const at = (length: number) => char.repeat(length);
+    const member = {
+      userId: at(USER_ID_MAX_LENGTH),
+      displayName: at(DISPLAY_NAME_MAX_LENGTH),
+      role: "participant", // the longer of the two roles
+      online: false, // the longer of the two booleans
+    };
+    const message = {
+      v: 1,
+      type: "room.state",
+      id: at(MAX_ID_LENGTH),
+      payload: {
+        couch: { id: at(COUCH_ID_MAX_LENGTH), name: at(COUCH_NAME_MAX_LENGTH) },
+        self: { userId: at(USER_ID_MAX_LENGTH), role: "participant" },
+        members: Array.from({ length: ROOM_MEMBERS_MAX }, () => member),
+        media: maxCatalogMedia(char),
+        playback: {
+          ...playbackState,
+          position: 86_399.999_999_999_99,
+          playbackRate: 1.999_999_999_999_999_8,
+          revision: Number.MAX_SAFE_INTEGER,
+          serverTimestamp: Number.MAX_SAFE_INTEGER,
+        },
       },
-    },
-  };
-  const raw = json(message);
-  const bytes = utf8ByteLength(raw);
+    };
+    const raw = json(message);
+    return { message, raw, bytes: utf8ByteLength(raw) };
+  }
 
-  it(`is ${bytes} bytes, under the ${MAX_MESSAGE_BYTES} byte cap`, () => {
-    expect(bytes).toBeLessThan(MAX_MESSAGE_BYTES);
+  const ascii = worstCase(ASCII_CHAR);
+  const fourByte = worstCase(FOUR_BYTE_CHAR);
+
+  describe.each([
+    ["ASCII", ascii],
+    ["4-byte characters", fourByte],
+  ])("with %s", (_name, { message, raw, bytes }) => {
+    it(`is ${bytes} bytes, under the ${MAX_SERVER_MESSAGE_BYTES} byte server cap`, () => {
+      expect(bytes).toBeLessThan(MAX_SERVER_MESSAGE_BYTES);
+    });
+
+    it("is accepted by parseMessage with every field intact", () => {
+      expect(parseMessage(raw, serverEvents)).toEqual({ ok: true, data: message });
+    });
+
+    it("has exactly ROOM_MEMBERS_MAX members and full-length fields, counted in code points", () => {
+      const codePoints = (text: string) => Array.from(text).length;
+      expect(message.payload.members).toHaveLength(ROOM_MEMBERS_MAX);
+      expect(codePoints(message.payload.media.title)).toBe(MEDIA_LIMITS.title);
+      expect(codePoints(message.payload.media.description!)).toBe(MEDIA_LIMITS.description);
+      expect(codePoints(message.payload.members[0]!.displayName)).toBe(DISPLAY_NAME_MAX_LENGTH);
+      expect(codePoints(message.payload.couch.name)).toBe(COUCH_NAME_MAX_LENGTH);
+      expect(codePoints(message.payload.self.userId)).toBe(USER_ID_MAX_LENGTH);
+    });
   });
 
-  it("is accepted by parseMessage with every field intact", () => {
-    expect(parseMessage(raw, serverEvents)).toEqual({ ok: true, data: message });
+  it(`fits the ${MAX_CLIENT_MESSAGE_BYTES} byte client cap with ASCII, at ${ascii.bytes} bytes`, () => {
+    expect(ascii.bytes).toBeLessThan(MAX_CLIENT_MESSAGE_BYTES);
   });
 
-  it("has exactly ROOM_MEMBERS_MAX members and a full-length media title", () => {
-    expect(message.payload.members).toHaveLength(ROOM_MEMBERS_MAX);
-    expect(message.payload.media.title).toHaveLength(200);
+  it(`exceeds the ${MAX_CLIENT_MESSAGE_BYTES} byte client cap with 4-byte characters, at ${fourByte.bytes} bytes`, () => {
+    expect(fourByte.bytes).toBeGreaterThan(MAX_CLIENT_MESSAGE_BYTES);
+  });
+
+  it("is rejected by the client-direction parser and accepted by the server-direction parser", () => {
+    // The same oversized, otherwise valid message: only the direction's cap differs.
+    expect(code(parseMessage(fourByte.raw, clientEvents))).toBe("message_too_large");
+    expect(parseMessage(fourByte.raw, serverEvents).ok).toBe(true);
   });
 });

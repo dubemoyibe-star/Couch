@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { MEDIA_LIMITS, opaqueId, trimmedText } from "./fields";
+import { MEDIA_LIMITS, opaqueId, singleLineText } from "./fields";
 
 /** Longest couch id, in Unicode code points (how Zod measures string length). */
 export const COUCH_ID_MAX_LENGTH = 128;
@@ -21,8 +21,12 @@ export const userIdSchema = opaqueId(USER_ID_MAX_LENGTH);
 /** A catalog media id, with the same limit as `CatalogMedia.id`. */
 export const mediaIdSchema = opaqueId(MEDIA_LIMITS.catalogId);
 
-/** A person's display name: trimmed, non-empty after trimming, at most `DISPLAY_NAME_MAX_LENGTH`. */
-export const displayNameSchema = trimmedText(DISPLAY_NAME_MAX_LENGTH);
+/**
+ * A person's display name, a single-line label: trimmed, non-empty after trimming, at most
+ * `DISPLAY_NAME_MAX_LENGTH`, and free of ASCII control characters (newline, tab and DEL
+ * included).
+ */
+export const displayNameSchema = singleLineText(DISPLAY_NAME_MAX_LENGTH);
 
 /** A member's role in a couch. */
 export const roleSchema = z.enum(["host", "participant"]);

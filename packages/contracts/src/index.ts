@@ -53,7 +53,8 @@ export {
   type MediaWithLicense,
 } from "./media";
 export {
-  MAX_MESSAGE_BYTES,
+  MAX_CLIENT_MESSAGE_BYTES,
+  MAX_SERVER_MESSAGE_BYTES,
   parseMessage,
   utf8ByteLength,
   type ParseError,
@@ -91,6 +92,8 @@ export {
   roomKickedEvent,
   roomLeaveEvent,
   roomMediaChangedEvent,
+  roomMemberJoinedEvent,
+  roomMemberLeftEvent,
   roomMemberSchema,
   roomServerEvents,
   roomSetMediaEvent,
@@ -102,6 +105,8 @@ export {
   type RoomLeave,
   type RoomMediaChanged,
   type RoomMember,
+  type RoomMemberJoined,
+  type RoomMemberLeft,
   type RoomSetMedia,
   type RoomState,
 } from "./room";

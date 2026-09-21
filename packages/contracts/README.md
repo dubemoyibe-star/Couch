@@ -86,7 +86,7 @@ Stages run in this order and the first failure wins:
 
 | #   | Check                                                                                                                                                          | Failure code          |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| 1   | Size in UTF-8 bytes is at most `MAX_MESSAGE_BYTES` (64 KiB). Measured in bytes, not string length.                                                             | `message_too_large`   |
+| 1   | Size in UTF-8 bytes is at most the cap for the events' direction (see Size caps). Measured in bytes, not string length.                                        | `message_too_large`   |
 | 2   | Valid JSON.                                                                                                                                                    | `invalid_json`        |
 | 3   | Top level is a plain object. Arrays, `null` and scalars are `invalid_json`: they are not a message, and a separate code would add nothing a client can act on. | `invalid_json`        |
 | 4   | `v` is a supported version. A missing or non-numeric `v` counts as unsupported.                                                                                | `unsupported_version` |
@@ -96,6 +96,21 @@ Stages run in this order and the first failure wins:
 `invalid_payload` therefore also covers a bad envelope field (an over-long `id`, or an extra top-level key on a client message).
 
 `replyTo` is set on failures after step 3 when the message has an `id` that is a string of 1 to 64 characters. Otherwise it is absent. Failures at steps 1 to 3 never carry it.
+
+### Size caps
+
+The cap depends on which side is parsing. `parseMessage` takes it from the direction of the event definitions it is given.
+
+| Constant                   | Value             | Applies to                                       | Protects                                                                                                                                                                                                 |
+| -------------------------- | ----------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAX_CLIENT_MESSAGE_BYTES` | 64 KiB (65,536)   | Messages a client sends, parsed with `clientEvents` | The server. Client messages are untrusted input and small, so anything larger is refused before it is parsed.                                                                                         |
+| `MAX_SERVER_MESSAGE_BYTES` | 256 KiB (262,144) | Messages the server sends, parsed with `serverEvents` | The client. The server is trusted, so the cap only bounds what a client buffers and parses if the server is broken or a proxy injects data. It is large enough for a legitimate `room.state`.  |
+
+Why 256 KiB: the largest server message is `room.state`. With every field at its limit and every character taking 4 bytes in UTF-8, it is about 149,000 bytes, more than twice the client cap, and a client that refused it could not join the room. 256 KiB holds that case with room to spare for the snapshot to grow, and it is still small enough to buffer without concern.
+
+A list that mixes directions is held to the smaller cap, the client cap, and so is an empty list. A message is never held to a looser limit than the strictest event that could accept it. Only the limit depends on the direction. The stages and their order do not.
+
+The realtime server must configure its WebSocket maximum payload to `MAX_CLIENT_MESSAGE_BYTES`, so the socket layer drops an oversized client frame before it is buffered whole. `parseMessage` then enforces the same cap on what does arrive.
 
 The byte count uses a small pure function (`utf8ByteLength`) instead of `TextEncoder` or `Buffer`, because this package's TypeScript config exposes neither DOM nor Node globals. A test checks it against `TextEncoder`.
 
@@ -232,7 +247,7 @@ Every url field must be an `https` URL with no embedded credentials.
 
 ### Limits
 
-Exported as `MEDIA_LIMITS`. String lengths count UTF-16 code units. Free-text strings are trimmed, and a present value must be non-empty after trimming, so absence is always `null` and never `""`. Opaque ids are not trimmed (see Opaque ids).
+Exported as `MEDIA_LIMITS`. String lengths count Unicode code points, which is how Zod measures them, so an emoji counts as 1. A combining mark counts as a code point of its own, and a ZWJ sequence such as a family emoji counts as several. These are field limits, not byte sizes: a code point takes 1 to 4 bytes in UTF-8, and messages are held to the byte caps in Size caps. Free-text strings are trimmed, and a present value must be non-empty after trimming, so absence is always `null` and never `""`. Opaque ids are not trimmed (see Opaque ids).
 
 | Field                    | Max  |
 | ------------------------ | ---- |
@@ -266,7 +281,9 @@ Exported as `MEDIA_LIMITS`. String lengths count UTF-16 code units. Free-text st
 | client    | `playback.setRate`  | `{ rate }`                                                       | Change the playback speed.                                 | A joined member. The server decides which roles may.  |
 | server    | `room.state`        | `{ couch, self, members, media, playback }`                      | Full room snapshot, sent on join and on reconnect.         | Server only.                                          |
 | server    | `room.mediaChanged` | `{ media, playback }`                                            | The room switched to another media item.                   | Server only.                                          |
-| server    | `presence.update`   | `{ userId, online }`                                             | A member went online or offline.                           | Server only.                                          |
+| server    | `room.memberJoined` | `{ member }`                                                     | Someone became a member. `member` is `{ userId, displayName, role, online }`. | Server only.                                          |
+| server    | `room.memberLeft`   | `{ userId }`                                                     | A member was removed for good: they left or were kicked.   | Server only.                                          |
+| server    | `presence.update`   | `{ userId, online }`                                             | An existing member went online or offline.                 | Server only.                                          |
 | server    | `chat.message`      | `{ id, userId, displayName, text, sentAt }`                      | A chat message, with the sender and time set by the server. | Server only.                                          |
 | server    | `room.kicked`       | `{ reason? }`                                                    | The recipient was removed from the room.                   | Server only.                                          |
 | server    | `playback.sync`     | `{ state }`                                                      | The authoritative playback state.                          | Server only.                                          |
@@ -277,6 +294,19 @@ Roles are `"host"` and `"participant"`. "Host only" is a rule the server applies
 A client message never carries the sender's identity, a role or a timestamp. The server takes identity from the authenticated connection and stamps `id` and `sentAt` itself. `room.kick.userId` is the one `userId` a client sends, and it names the member to remove.
 
 There is no client-sent presence message. Presence is derived by the server from connections: a member is online while at least one of their connections is open. `presence.update` and the `online` flag in `room.state` are how clients learn it.
+
+### Member lifecycle
+
+A client keeps its member list current from four server messages. Each has one job:
+
+| Moment                                                             | Message             | Notes                                                                                                                      |
+| ------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| A member joins, or reconnects                                      | `room.state`        | Sent to the one who joined or reconnected. It replaces everything the client knew and already lists them.                  |
+| Someone becomes a member of the room                               | `room.memberJoined` | Sent to the members already there, with the new member's `userId`, `displayName`, `role` and `online`. Add them to the list. |
+| An existing member connects or drops their last connection         | `presence.update`   | Only for a member the client already has. It changes `online` and nothing else. It never adds or removes a member.         |
+| A member is removed for good, because they left or were kicked     | `room.memberLeft`   | Remove them from the list. A member who only disconnects is not removed: that is a `presence.update`.                       |
+
+A kicked member also receives `room.kicked`, and the others receive `room.memberLeft` for them.
 
 ### `room.state`
 
@@ -296,7 +326,7 @@ Invariant: `media` is null exactly when `playback` is null. A room with no media
 
 Ids (`couchId`, `mediaId`, `userId`, and the chat message `id`) are opaque and follow the Opaque ids rules above: no leading or trailing whitespace, no ASCII control characters, non-empty, and within the limit. `mediaId` uses the catalog id limit.
 
-Lengths in this section count Unicode code points, which is how Zod measures string length. An emoji counts as 1, and in UTF-8 a code point takes 1 to 4 bytes.
+Lengths in this section count Unicode code points, which is how Zod measures string length. An emoji counts as 1. A combining mark counts as a code point of its own, and a ZWJ sequence such as a family emoji counts as several. These are field limits, not byte sizes: a code point takes 1 to 4 bytes in UTF-8, and messages are held to the byte caps in Size caps.
 
 | Export                       | Value | Applies to                                                                |
 | ---------------------------- | ----- | ------------------------------------------------------------------------- |
@@ -310,15 +340,24 @@ Lengths in this section count Unicode code points, which is how Zod measures str
 | `KICK_REASON_MAX_LENGTH`     | 200   | `room.kicked.reason`. Trimmed, non-empty after trimming when present.     |
 | `ROOM_MEMBERS_MAX`           | 100   | Length of `room.state.members`.                                           |
 
-Chat text is checked in this order: any C0 control character (U+0000 to U+001F) other than newline (U+000A) rejects the message, then the text is trimmed, then it must be non-empty and at most `CHAT_MAX_LENGTH`. The control check runs on the text as sent, so a tab or carriage return at the edge is rejected and not trimmed away. Newlines inside the text are kept. `chat.send` and `chat.message` use the same text schema.
+Chat text is checked in this order: any ASCII control character other than newline (U+000A) rejects the message, which means a C0 control character (U+0000 to U+001F) and DEL (U+007F). Then the text is trimmed, then it must be non-empty and at most `CHAT_MAX_LENGTH`. The control check runs on the text as sent, so a tab or carriage return at the edge is rejected and not trimmed away. Newlines inside the text are kept. `chat.send` and `chat.message` use the same text schema.
+
+`displayName` and the couch name are single-line labels. They reject every ASCII control character, newline, tab and DEL included, checked on the text as sent, before trimming. Then they are trimmed and must be non-empty and within the limit.
+
+No other Unicode filtering is applied. Bidirectional overrides, zero-width characters and combining marks are accepted, in chat text and in names.
 
 `sentAt` is epoch MILLISECONDS on the SERVER clock, a non-negative safe integer.
 
-### Size
+### Worst-case size
 
-The largest `room.state` the schema allows is `ROOM_MEMBERS_MAX` members with maximum-length ids and names, plus a `CatalogMedia` with every field at its `MEDIA_LIMITS` maximum. With ASCII text that message is about 43,000 bytes, under the 65,536 byte `MAX_MESSAGE_BYTES`, and a test keeps it there.
+The largest `room.state` the schema allows is `ROOM_MEMBERS_MAX` members with maximum-length ids and names, plus a `CatalogMedia` with every field at its `MEDIA_LIMITS` maximum. A test builds it two ways and checks both against the caps:
 
-The cap is a byte count, and the field limits are code point counts, so the headroom depends on the text. Non-ASCII text takes 2 to 4 bytes per code point, and a JSON escape such as `\"` takes 2. The limits that fit with ASCII text can exceed the cap with text that is mostly non-ASCII.
+| Text                                                                      | Size, in bytes | Against `MAX_CLIENT_MESSAGE_BYTES` (65,536) | Against `MAX_SERVER_MESSAGE_BYTES` (262,144) |
+| ------------------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------- |
+| ASCII                                                                     | 42,947         | Under                                       | Under                                        |
+| Every free-text field and every id filled with 4-byte characters          | 149,207        | Over                                        | Under                                        |
+
+In the 4-byte case the parts the schema limits to ASCII stay ASCII: the `providerId` slug, the `https://example.com/` start of each url, the role and the dates. A code point is at most 4 bytes and a JSON escape such as `\"` is 2, so 4-byte characters are the worst case for size. The test also checks that `parseMessage` accepts the 4-byte message with the server events and refuses it with the client events, which is the reason there are two caps.
 
 ## Error codes
 
@@ -327,7 +366,7 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | Code                  | Meaning and when the server sends it                                                                                                                       |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `invalid_json`        | Not JSON, or not a JSON object.                                                                                                                            |
-| `message_too_large`   | Over `MAX_MESSAGE_BYTES`.                                                                                                                                  |
+| `message_too_large`   | Over the size cap for the direction: `MAX_CLIENT_MESSAGE_BYTES` for a client message.                                                                      |
 | `unsupported_version` | `v` is not in `SUPPORTED_VERSIONS`.                                                                                                                        |
 | `unknown_type`        | `type` is not a known event.                                                                                                                               |
 | `invalid_payload`     | Right type, wrong shape.                                                                                                                                   |

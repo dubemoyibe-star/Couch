@@ -1,8 +1,11 @@
 import * as z from "zod";
 
 /**
- * Field limits for media, license and playback source data. Lengths are in UTF-16 code
- * units (what `string.length` reports). Numeric bounds are inclusive.
+ * Field limits for media, license and playback source data. String lengths are in Unicode
+ * code points, which is how Zod measures them, so an emoji counts as 1 and not as the 2 that
+ * `string.length` reports. A combining mark or a ZWJ sequence is several code points. These
+ * are field limits, not byte sizes: a message is held to a size cap in bytes, and a code
+ * point takes 1 to 4 bytes in UTF-8. Numeric bounds are inclusive.
  */
 export const MEDIA_LIMITS = {
   /** Provider slug, for example `my-provider`. */
@@ -33,6 +36,7 @@ export const MEDIA_LIMITS = {
 /** A trimmed string with at least one character after trimming, up to `max`. */
 export const trimmedText = (max: number) => z.string().trim().min(1).max(max);
 
+/** True when `value` has an ASCII control character: U+0000 to U+001F or U+007F (DEL). */
 function hasAsciiControl(value: string): boolean {
   for (let i = 0; i < value.length; i++) {
     const unit = value.charCodeAt(i);
@@ -40,6 +44,22 @@ function hasAsciiControl(value: string): boolean {
   }
   return false;
 }
+
+/**
+ * A single-line label: trimmed, non-empty after trimming, at most `max` code points, and
+ * free of ASCII control characters, newline and tab included. The control check runs on the
+ * text as given, before trimming, so a tab or newline at the edge is rejected and not
+ * silently trimmed away. Use it for names, which are shown on one line.
+ */
+export const singleLineText = (max: number) =>
+  z
+    .string()
+    .refine((value) => !hasAsciiControl(value), {
+      error: "text must not contain control characters",
+    })
+    .trim()
+    .min(1)
+    .max(max);
 
 /**
  * An opaque id, up to `max` characters. It is checked and never changed: an id that is
