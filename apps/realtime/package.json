@@ -2,5 +2,18 @@
   "name": "@couch/realtime",
   "private": true,
   "version": "0.0.0",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@couch/contracts": "workspace:*",
+    "@couch/database": "workspace:*",
+    "@couch/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24"
+  }
 }
