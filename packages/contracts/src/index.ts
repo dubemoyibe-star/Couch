@@ -9,6 +9,17 @@ export {
   type MessageOf,
 } from "./envelope";
 export { ERROR_CODES, errorCodeSchema, errorEvent, type ErrorCode } from "./errors";
+export { MEDIA_LIMITS } from "./fields";
+export { licenseRecordSchema, licenseRecordWireSchema, type LicenseRecord } from "./license";
+export {
+  catalogMediaSchema,
+  catalogMediaWireSchema,
+  mediaRefSchema,
+  mediaWithLicenseSchema,
+  type CatalogMedia,
+  type MediaRef,
+  type MediaWithLicense,
+} from "./media";
 export {
   MAX_MESSAGE_BYTES,
   parseMessage,
@@ -37,3 +48,4 @@ export {
   type PlaybackState,
   type PlaybackSync,
 } from "./playback";
+export { playbackSourceSchema, type PlaybackSource } from "./source";
