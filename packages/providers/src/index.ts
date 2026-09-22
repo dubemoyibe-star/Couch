@@ -10,6 +10,7 @@ export type {
   ProviderRequestOptions,
 } from "./content-provider";
 export { MEDIA_REJECTION_REASONS, type MediaRejection, type MediaRejectionReason } from "./gate";
+export { StaticProvider, type CatalogEntry, type StaticProviderOptions } from "./static-catalog";
 export {
   createProviderRegistry,
   type MediaListResult,

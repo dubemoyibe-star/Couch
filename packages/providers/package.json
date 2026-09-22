@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@couch/contracts": "workspace:*",
-    "@couch/shared": "workspace:*"
+    "@couch/shared": "workspace:*",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^24"
