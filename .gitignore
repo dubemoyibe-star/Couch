@@ -11,3 +11,33 @@ coverage
 
 # generated Prisma client
 packages/database/src/generated/
+
+# Media files are never committed (see docs/LICENSING.md). This is a first
+# line of defense; scripts/check-no-media.mjs (`pnpm check:no-media`) is the
+# check that actually enforces it, including for extensions not listed here.
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+*.oga
+*.m4a
+*.wma
+*.opus
+*.aiff
+*.alac
+*.mp4
+*.m4v
+*.mov
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.mpg
+*.mpeg
+*.m2ts
+*.mts
+*.3gp
+*.ogv
+*.vob

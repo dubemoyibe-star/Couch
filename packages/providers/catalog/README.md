@@ -46,8 +46,8 @@ objects. Each entry is validated at load time against the contracts ingest schem
 Every value under `license` comes from a human who opened `sourceUrl` themselves, read the
 license text at `licenseUrl`, and verified that it names this exact item. Nothing here is
 guessed, inferred, or copied from a third-party listing. "It is available online" is never
-a reason to add an entry. See the licensing policy document, "Licensing policy and
-repository media guard" (lands in a later issue), for the full verification procedure.
+a reason to add an entry. See [docs/LICENSING.md](../../../docs/LICENSING.md) for the full
+verification procedure and the step-by-step checklist for adding an item.
 
 In particular:
 

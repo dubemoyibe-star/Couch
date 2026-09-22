@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import {
   assertDatabaseEnv,
+  countMissing,
   createPrismaClient,
   DatabaseGuardError,
   deactivateMissing,
@@ -130,10 +131,7 @@ async function main(): Promise<void> {
         listMedia: ({ onRejected, onProviderError }) => registry.listMedia({ onRejected, onProviderError }),
         upsertMedia: (media) => upsertCatalogMedia(db, media),
         deactivateMissing: (providerId, keep) => deactivateMissing(db, providerId, keep),
-        countWouldDeactivate: (providerId, keep) =>
-          db.media.count({
-            where: { providerId, isActive: true, providerMediaId: { notIn: keep } },
-          }),
+        countWouldDeactivate: (providerId, keep) => countMissing(db, providerId, keep),
       },
       { dryRun: flags.dryRun },
     );

@@ -19,6 +19,7 @@ describe("public exports", () => {
         "PrismaClient",
         "assertDatabaseEnv",
         "checkDatabaseEnv",
+        "countMissing",
         "createCouch",
         "createPrismaClient",
         "deactivateMissing",

@@ -1,0 +1,9 @@
+# Justified exceptions to check-no-media.mjs.
+#
+# One repo-relative, POSIX-separated path per line. Blank lines and lines
+# starting with "#" are ignored. An entry here is exempt from BOTH the
+# extension check and the size check, so add one only for a real, reviewed
+# exception (never a media file itself: those are never committed at all).
+#
+# This file is empty on purpose. The repo ships no media and needs no
+# exceptions today.
