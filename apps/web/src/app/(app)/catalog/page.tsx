@@ -35,6 +35,13 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
   if (nextCursor) loadMoreParams.set("cursor", nextCursor);
   const loadMoreHref = nextCursor ? `/catalog?${loadMoreParams.toString()}` : null;
 
+  // Carries the current search/cursor state through to the details page, so its
+  // "back to catalog" link returns to the same page the visitor came from.
+  const currentParams = new URLSearchParams();
+  if (query) currentParams.set("q", query);
+  if (cursor) currentParams.set("cursor", cursor);
+  const backHref = `/catalog${currentParams.size > 0 ? `?${currentParams.toString()}` : ""}`;
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-8">
       <h1 className="text-lg font-medium">Catalog</h1>
@@ -69,9 +76,8 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {items.map((item) => (
               <li key={item.id}>
-                {/* /catalog/[id] does not exist yet; it lands in a later issue. */}
                 <Link
-                  href={`/catalog/${item.id}`}
+                  href={`/catalog/${item.id}?back=${encodeURIComponent(backHref)}`}
                   className="flex flex-col gap-2 rounded border border-zinc-200 p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
                 >
                   {item.posterUrl ? (
