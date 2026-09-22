@@ -12,6 +12,7 @@ describe("package export surface", () => {
         "MEDIA_REJECTION_REASONS",
         "PROVIDER_ERROR_CODES",
         "ProviderError",
+        "StaticProvider",
         "createProviderRegistry",
         "isProviderError",
       ].sort(),

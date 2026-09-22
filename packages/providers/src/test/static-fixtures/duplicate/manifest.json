@@ -1,0 +1,56 @@
+[
+  {
+    "providerId": "static",
+    "providerMediaId": "fixture-dup",
+    "title": "TEST FIXTURE Dup One",
+    "description": "TEST FIXTURE description",
+    "durationSeconds": 100,
+    "posterUrl": "https://example.com/dup-poster.png",
+    "releaseYear": 2000,
+    "license": {
+      "licenseName": "TEST FIXTURE License",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://example.invalid/license",
+      "sourceUrl": "https://example.invalid/items/dup-1",
+      "rightsholder": "TEST FIXTURE Rightsholder",
+      "attributionRequired": false,
+      "attribution": null,
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": false,
+      "additionalRestrictions": null,
+      "verifiedAt": "2026-02-03",
+      "verificationNotes": null
+    },
+    "playback": {
+      "kind": "mp4",
+      "url": "https://example.com/dup-1.mp4"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "fixture-dup",
+    "title": "TEST FIXTURE Dup Two",
+    "description": "TEST FIXTURE description",
+    "durationSeconds": 200,
+    "posterUrl": "https://example.com/dup-poster-2.png",
+    "releaseYear": 2000,
+    "license": {
+      "licenseName": "TEST FIXTURE License",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://example.invalid/license",
+      "sourceUrl": "https://example.invalid/items/dup-2",
+      "rightsholder": "TEST FIXTURE Rightsholder",
+      "attributionRequired": false,
+      "attribution": null,
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": false,
+      "additionalRestrictions": null,
+      "verifiedAt": "2026-02-03",
+      "verificationNotes": null
+    },
+    "playback": {
+      "kind": "mp4",
+      "url": "https://example.com/dup-2.mp4"
+    }
+  }
+]

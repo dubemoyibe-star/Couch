@@ -1,0 +1,29 @@
+[
+  {
+    "providerId": "some-other-provider",
+    "providerMediaId": "fixture-wrong-provider",
+    "title": "TEST FIXTURE Wrong Provider",
+    "description": "TEST FIXTURE description",
+    "durationSeconds": 100,
+    "posterUrl": "https://example.com/wrong-poster.png",
+    "releaseYear": 2000,
+    "license": {
+      "licenseName": "TEST FIXTURE License",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://example.invalid/license",
+      "sourceUrl": "https://example.invalid/items/wrong",
+      "rightsholder": "TEST FIXTURE Rightsholder",
+      "attributionRequired": false,
+      "attribution": null,
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": false,
+      "additionalRestrictions": null,
+      "verifiedAt": "2026-02-03",
+      "verificationNotes": null
+    },
+    "playback": {
+      "kind": "mp4",
+      "url": "https://example.com/wrong.mp4"
+    }
+  }
+]

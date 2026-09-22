@@ -1,0 +1,56 @@
+[
+  {
+    "providerId": "static",
+    "providerMediaId": "fixture-alpha",
+    "title": "TEST FIXTURE Alpha",
+    "description": "TEST FIXTURE description for alpha",
+    "durationSeconds": 5400,
+    "posterUrl": "https://example.com/alpha-poster.png",
+    "releaseYear": 1999,
+    "license": {
+      "licenseName": "TEST FIXTURE License",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://example.invalid/license",
+      "sourceUrl": "https://example.invalid/items/alpha",
+      "rightsholder": "TEST FIXTURE Rightsholder",
+      "attributionRequired": true,
+      "attribution": "TEST FIXTURE attribution text",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": false,
+      "additionalRestrictions": null,
+      "verifiedAt": "2026-02-03",
+      "verificationNotes": null
+    },
+    "playback": {
+      "kind": "mp4",
+      "url": "https://example.com/alpha.mp4"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "fixture-beta-unauthorized",
+    "title": "TEST FIXTURE Beta Unauthorized",
+    "description": "TEST FIXTURE description for beta",
+    "durationSeconds": 1200,
+    "posterUrl": "https://example.com/beta-poster.png",
+    "releaseYear": 2001,
+    "license": {
+      "licenseName": "TEST FIXTURE License",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://example.invalid/license",
+      "sourceUrl": "https://example.invalid/items/beta",
+      "rightsholder": "TEST FIXTURE Rightsholder",
+      "attributionRequired": false,
+      "attribution": null,
+      "intendedUseAllowed": false,
+      "commercialUseAllowed": false,
+      "additionalRestrictions": null,
+      "verifiedAt": "2026-02-03",
+      "verificationNotes": null
+    },
+    "playback": {
+      "kind": "hls",
+      "url": "https://example.com/beta.m3u8"
+    }
+  }
+]
