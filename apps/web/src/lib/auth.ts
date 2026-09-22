@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import { getPrismaClient } from "@couch/database";
 
 // Uses the shared, hot-reload-safe Prisma client from @couch/database instead
@@ -25,4 +26,9 @@ export const auth = betterAuth({
     // is sent, so requiring it would lock every user out at sign-in.
     requireEmailVerification: false,
   },
+  // Sign-up, sign-in, and sign-out are called from Server Actions
+  // (auth.api.*), where Better Auth cannot set cookies on the response by
+  // itself. This plugin sets them via Next's `cookies()` helper instead. Must
+  // stay the last plugin in the array (Better Auth's own requirement).
+  plugins: [nextCookies()],
 });
