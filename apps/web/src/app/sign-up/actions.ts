@@ -24,6 +24,5 @@ export async function signUpAction(
     return { error: authErrorMessage(error) };
   }
 
-  // No dashboard route exists yet. Redirect to the home page until one does.
   redirect("/");
 }
