@@ -95,6 +95,7 @@ A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` 
 | `leaveCouch(db, { couchId, userId })` | Removes the caller's own membership. The host cannot leave (host transfer is out of scope). Errors: `not_a_member`, `host_cannot_leave`. |
 | `getMembership(db, { couchId, userId })` | One membership, or `null`. |
 | `listMembers(db, couchId)` | Every member with `userId`, `displayName` (from `User`), `role`, `joinedAt`, ordered by `joinedAt` then `userId`. Online status is not stored: that is a realtime concern. |
+| `listCouchesForUser(db, userId)` | The couches `userId` is a member of, for the dashboard: `{ couch: { id, name, inviteCode }, role, memberCount }`, ordered by the user's own `joinedAt` descending (most recently joined first). A summary list, not a membership dump: it does not name other members, since `listMembers` already covers that per couch. Uses `toContractRole` for the role mapping. No pagination: a user is realistically a member of very few couches in the MVP. |
 | `removeMember(db, { couchId, actingUserId, targetUserId })` | Only a `HOST` may remove a member. The host cannot remove themselves. Errors: `forbidden` (actor is not the host), `cannot_remove_self`, `not_a_member` (target is not a member). |
 | `setCurrentMedia(db, { couchId, actingUserId, mediaId })` | Only a `HOST` may call this. See "`currentMediaId` can go stale" above. Errors: `forbidden`, `media_unavailable`. |
 

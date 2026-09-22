@@ -1,9 +1,11 @@
 import { couchNameSchema, ROOM_MEMBERS_MAX } from "@couch/contracts";
 import { getCatalogMedia } from "./catalog";
 import {
+  toContractRole,
   toCouch,
   toMembership,
   type Couch,
+  type CouchListItem,
   type CouchMemberListItem,
   type CouchMembership,
 } from "./couch-mapping";
@@ -231,6 +233,39 @@ export async function listMembers(db: PrismaClient, couchId: string): Promise<Co
   }));
 }
 
+/**
+ * The couches a user is a member of, for the dashboard: a couch summary, the
+ * user's own role and the couch's total member count, ordered by the user's
+ * own `joinedAt` descending (most recently joined first). This is a summary
+ * list, not a membership dump: it does not name other members. `listMembers`
+ * already covers that per couch.
+ */
+export async function listCouchesForUser(db: PrismaClient, userId: string): Promise<CouchListItem[]> {
+  const rows = await db.couchMember.findMany({
+    where: { userId },
+    include: {
+      couch: {
+        select: {
+          id: true,
+          name: true,
+          inviteCode: true,
+          _count: { select: { members: true } },
+        },
+      },
+    },
+    orderBy: { joinedAt: "desc" },
+  });
+  return rows.map((row) => ({
+    couch: {
+      id: row.couch.id,
+      name: row.couch.name,
+      inviteCode: row.couch.inviteCode,
+    },
+    role: toContractRole(row.role),
+    memberCount: row.couch._count.members,
+  }));
+}
+
 export type RemoveMemberInput = {
   readonly couchId: string;
   readonly actingUserId: string;
@@ -306,4 +341,4 @@ export async function setCurrentMedia(
 // Re-export the role mapper and the plain types callers need to build their
 // own values (for example a realtime layer assembling a `room.state` payload).
 export { toContractRole, toDbRole } from "./couch-mapping";
-export type { Couch, CouchMembership, CouchMemberListItem } from "./couch-mapping";
+export type { Couch, CouchMembership, CouchMemberListItem, CouchListItem } from "./couch-mapping";
