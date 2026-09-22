@@ -37,6 +37,14 @@ export type UpsertOutcome = {
    * since nothing was written to reject). In a real run this is `false` when
    * `upsertMedia` returned `null`: the write stored the row, but the row is not
    * authorized, so it must not be counted as kept for `deactivateMissing`'s keep list.
+   *
+   * This branch is not reachable through `runSync`'s own flow today: `listMedia` only
+   * ever returns items that already passed the registry's license gate, which calls the
+   * same `isUseAuthorized` predicate on the same fields that `upsertMedia` re-checks
+   * after storing the row, so a kept-through-the-gate item cannot then fail authorization
+   * inside the database. It is kept here for defense in depth, in case a future caller
+   * feeds `upsertMedia` an item that bypassed the registry gate. Covered by a unit test
+   * with a fake `upsertMedia`, not by a live repro, for that reason.
    */
   readonly kept: boolean;
 };
