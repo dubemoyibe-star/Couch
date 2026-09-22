@@ -1,0 +1,56 @@
+[
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-big-buck-bunny",
+    "title": "Big Buck Bunny",
+    "description": null,
+    "durationSeconds": null,
+    "posterUrl": null,
+    "releaseYear": 2008,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceUrl": "https://peach.blender.org/about/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(c) copyright 2008, Blender Foundation / www.bigbuckbunny.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the site (Blender Foundation logo, Creative Commons logo) and associated trademarks, and the DVD cover art/disc print, from the CC license grant.",
+      "verifiedAt": "2026-09-22",
+      "verificationNotes": "Verified against https://peach.blender.org/about/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://peach.blender.org/download/ (streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits roll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. No runtime or poster asset is stated on the official source; both are null pending a follow-up if needed."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/YE7VzlLtp-4"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-sintel",
+    "title": "Sintel",
+    "description": null,
+    "durationSeconds": 888,
+    "posterUrl": null,
+    "releaseYear": 2010,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceUrl": "https://durian.blender.org/sharing/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "© copyright Blender Foundation | www.sintel.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos (Blender Foundation, Durian project, Creative Commons) and associated trademarks, and material not resulting from the Durian project (for example magazine covers), from the CC license grant.",
+      "verifiedAt": "2026-09-22",
+      "verificationNotes": "Verified against https://durian.blender.org/sharing/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://durian.blender.org/about/ and /download/ (runtime of 888 seconds; streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits scroll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. No poster asset is stated on the official source."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/eRsGyueVLvQ"
+    }
+  }
+]
