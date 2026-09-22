@@ -28,3 +28,37 @@ export {
   type OnExcluded,
 } from "./catalog";
 export type { ExclusionReason } from "./catalog-mapping";
+export {
+  createCouch,
+  getCouch,
+  getCouchByInviteCode,
+  getMembership,
+  joinCouch,
+  leaveCouch,
+  listMembers,
+  removeMember,
+  setCurrentMedia,
+  toContractRole,
+  toDbRole,
+  type Couch,
+  type CouchMemberListItem,
+  type CouchMembership,
+  type CreateCouchDeps,
+  type CreateCouchInput,
+  type JoinCouchError,
+  type JoinCouchInput,
+  type LeaveCouchError,
+  type LeaveCouchInput,
+  type RemoveMemberError,
+  type RemoveMemberInput,
+  type RepoResult,
+  type SetCurrentMediaError,
+  type SetCurrentMediaInput,
+} from "./couch";
+export {
+  INVITE_CODE_ALPHABET,
+  INVITE_CODE_BITS,
+  INVITE_CODE_LENGTH,
+  MAX_INVITE_CODE_ATTEMPTS,
+  generateInviteCode,
+} from "./invite-code";

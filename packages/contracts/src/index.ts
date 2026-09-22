@@ -85,6 +85,7 @@ export {
   COUCH_NAME_MAX_LENGTH,
   KICK_REASON_MAX_LENGTH,
   ROOM_MEMBERS_MAX,
+  couchNameSchema,
   presenceUpdateEvent,
   roomClientEvents,
   roomJoinEvent,

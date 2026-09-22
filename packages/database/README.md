@@ -65,6 +65,52 @@ The cursor row does not have to be in the catalog any more: a row that was deact
 
 Catalog database tests (`src/catalog.db.test.ts`) use a provider id prefix that is unique to each run and delete their own rows through `src/catalog-test-support.ts`. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: titles start with `TEST FIXTURE` and URLs use `example.com`.
 
+## Couch and membership
+
+A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` holds who belongs to it. Playback state (status, position, rate, revision) is NOT stored here: it is ephemeral, held in the realtime service's memory, and resets if that process restarts. The client is always the first argument, and every function returns the plain types below, never a Prisma model type. Expected domain failures come back as `{ ok: false, error }`; only unexpected failures (a connection error, for example) throw.
+
+### Model
+
+- `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: there is no user delete function), `inviteCode` (unique), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
+- `CouchMember`: `id`, `couchId` (FK `Couch`, `onDelete: Cascade`), `userId` (FK `User`, `onDelete: Restrict`), `role` (`HOST` or `PARTICIPANT`), `joinedAt`. `(couchId, userId)` is unique, and both columns are indexed.
+- There is no delete function for users, couches or media in the MVP. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
+- The database role enum (`HOST` / `PARTICIPANT`) is mapped to the lowercase contract role (`"host"` / `"participant"`) at the repository boundary; nothing outside this package sees the database enum.
+
+### `currentMediaId` can go stale
+
+`Couch.currentMediaId` can point at media that has since become unavailable: a takedown deactivates a `Media` row (`isActive = false`) without deleting it, so the foreign key stays valid while the item is no longer part of the catalog. **Callers must always resolve `currentMediaId` through `getCatalogMedia` and treat a `null` result the same as a `null` currentMediaId.** `setCurrentMedia` enforces this at write time: a non-null `mediaId` must resolve through `getCatalogMedia` (authorized, active, well-formed) in the same transaction, or the write is refused with `media_unavailable`. This is the licensing rule enforced at write time; `null` always succeeds and clears the current media.
+
+### Functions
+
+| Function | What it does |
+| --- | --- |
+| `createCouch(db, { ownerId, name })` | Validates `name` with the contracts couch name rule, then creates the couch and the owner's `HOST` membership in one transaction: both rows exist together or not at all. Retries the invite code on a real unique collision (see below). |
+| `getCouch(db, id)` | One couch by internal id, or `null`. |
+| `getCouchByInviteCode(db, code)` | One couch by invite code, or `null`. |
+| `joinCouch(db, { couchId, userId })` | Idempotent: an existing member, including the host, is returned unchanged and never downgraded, even when the couch is full. A new member is refused with `couch_full` once the couch already has `ROOM_MEMBERS_MAX` members (from `@couch/contracts`). Errors: `couch_not_found`, `couch_full`. |
+| `leaveCouch(db, { couchId, userId })` | Removes the caller's own membership. The host cannot leave (host transfer is out of scope). Errors: `not_a_member`, `host_cannot_leave`. |
+| `getMembership(db, { couchId, userId })` | One membership, or `null`. |
+| `listMembers(db, couchId)` | Every member with `userId`, `displayName` (from `User`), `role`, `joinedAt`, ordered by `joinedAt` then `userId`. Online status is not stored: that is a realtime concern. |
+| `removeMember(db, { couchId, actingUserId, targetUserId })` | Only a `HOST` may remove a member. The host cannot remove themselves. Errors: `forbidden` (actor is not the host), `cannot_remove_self`, `not_a_member` (target is not a member). |
+| `setCurrentMedia(db, { couchId, actingUserId, mediaId })` | Only a `HOST` may call this. See "`currentMediaId` can go stale" above. Errors: `forbidden`, `media_unavailable`. |
+
+### Joining atomically at the cap
+
+`joinCouch` locks the couch row (`SELECT ... FOR UPDATE`, inside the same transaction as the membership count and insert) before it decides whether there is room. A second, concurrent join on the same couch blocks on that lock until the first transaction commits or rolls back, so the count it then reads already accounts for the first join's outcome. Two simultaneous joins therefore can never both observe room under the cap and both insert. `src/couch.db.test.ts` drives many simultaneous joins at the cap and checks that exactly the free slots succeed.
+
+### Invite codes
+
+Invite codes are generated server-side in this package (`src/invite-code.ts`), with Node's `crypto.randomInt`, never in `@couch/shared` (which has no Node dependency).
+
+- **Alphabet**: 31 lowercase, URL-safe characters: digits `2`-`9` and `a`-`z` minus `i`, `l`, `o`. `0`/`o` and `1`/`l`/`i` are excluded because they are commonly confused with each other.
+- **Length**: 17 characters. Entropy is `length * log2(alphabet size)`; `log2(31)` is about 4.954 bits per character, so 17 characters give about 84.2 bits, above the 80-bit floor this package requires.
+- **Uniformity**: `randomInt` rejection-samples, so every character of the alphabet is equally likely; a plain modulo of a random byte would be biased, because 31 does not divide 256.
+- **Collision retry**: `createCouch` retries with a freshly generated code on a real unique-constraint collision, up to `MAX_INVITE_CODE_ATTEMPTS` (5) times. `withInviteCodeRetry` in `src/invite-code.ts` carries the retry loop, generator and collision check as parameters, so it is unit-testable (`src/invite-code.test.ts`) without a database. Exhausting every attempt rethrows the last collision error: an unexpected failure at that point, since the chance is astronomically small at 17 characters.
+
+### Test fixtures
+
+Couch database tests (`src/couch.db.test.ts`) create their own users, through `src/couch-test-support.ts`, and delete them (and anything they created) in teardown. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: emails end in `@example.test` and couch names and display names start with `TEST FIXTURE`.
+
 ## Destructive commands and AI agents
 
 Prisma Migrate refuses destructive commands such as `migrate reset` when it detects an AI agent, unless `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` is set. An agent must stop and ask the maintainer, and must never set that variable itself.

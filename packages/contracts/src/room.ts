@@ -17,6 +17,15 @@ import {
  */
 export const COUCH_NAME_MAX_LENGTH = 100;
 
+/**
+ * A couch name: a single-line label, trimmed, non-empty after trimming, at most
+ * `COUCH_NAME_MAX_LENGTH`, free of ASCII control characters (newline and tab included).
+ * The one reusable export for the couch name rule, so callers outside this package (for
+ * example the database package, validating a name before it creates a couch) do not
+ * duplicate it.
+ */
+export const couchNameSchema = singleLineText(COUCH_NAME_MAX_LENGTH);
+
 /** Most members a `room.state` snapshot carries. */
 export const ROOM_MEMBERS_MAX = 100;
 
@@ -79,7 +88,7 @@ export const roomStateEvent = defineEvent({
   type: "room.state",
   direction: "server",
   payload: {
-    couch: z.object({ id: couchIdSchema, name: singleLineText(COUCH_NAME_MAX_LENGTH) }),
+    couch: z.object({ id: couchIdSchema, name: couchNameSchema }),
     self: z.object({ userId: userIdSchema, role: roleSchema }),
     members: z.array(roomMemberSchema).max(ROOM_MEMBERS_MAX),
     media: catalogMediaWireSchema.nullable(),
