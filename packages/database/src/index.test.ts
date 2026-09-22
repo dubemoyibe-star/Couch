@@ -31,6 +31,7 @@ describe("public exports", () => {
         "joinCouch",
         "leaveCouch",
         "listCatalogMedia",
+        "loadEnvFile",
         "listMembers",
         "removeMember",
         "setCurrentMedia",
