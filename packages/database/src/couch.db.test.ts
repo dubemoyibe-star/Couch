@@ -13,6 +13,7 @@ import {
   getMembership,
   joinCouch,
   leaveCouch,
+  listCouchesForUser,
   listMembers,
   removeMember,
   setCurrentMedia,
@@ -331,6 +332,61 @@ describe("listMembers", () => {
     expect(members.map((member) => member.userId)).toEqual([owner.id, participant.id]);
     expect(members[0]).toMatchObject({ role: "host", displayName: expect.any(String) });
     expect(members[1]).toMatchObject({ role: "participant", displayName: expect.any(String) });
+  });
+});
+
+describe("listCouchesForUser", () => {
+  it("returns an empty array for a user with no memberships", async () => {
+    const user = await makeUser("list-couches-none");
+    expect(await listCouchesForUser(prisma, user.id)).toEqual([]);
+  });
+
+  it("lists a couch the user hosts and one they participate in, with member counts, ordered by joinedAt descending", async () => {
+    const user = await makeUser("list-couches-user");
+
+    const { couch: hosted } = await createCouch(prisma, {
+      ownerId: user.id,
+      name: "TEST FIXTURE List Couches Hosted",
+    });
+
+    const otherOwner = await makeUser("list-couches-other-owner");
+    const { couch: joined } = await createCouch(prisma, {
+      ownerId: otherOwner.id,
+      name: "TEST FIXTURE List Couches Joined",
+    });
+    await joinCouch(prisma, { couchId: joined.id, userId: user.id });
+
+    // A bystander in the joined couch, so memberCount there is 2 (owner + user).
+    const bystander = await makeUser("list-couches-bystander");
+    await joinCouch(prisma, { couchId: joined.id, userId: bystander.id });
+
+    // Fix the user's own joinedAt timestamps explicitly, so ordering is
+    // deterministic instead of depending on the wall clock between two
+    // round trips in the same test run.
+    const earlier = new Date("2020-01-01T00:00:00.000Z");
+    const later = new Date("2020-01-02T00:00:00.000Z");
+    await prisma.couchMember.update({
+      where: { couchId_userId: { couchId: hosted.id, userId: user.id } },
+      data: { joinedAt: earlier },
+    });
+    await prisma.couchMember.update({
+      where: { couchId_userId: { couchId: joined.id, userId: user.id } },
+      data: { joinedAt: later },
+    });
+
+    const list = await listCouchesForUser(prisma, user.id);
+    expect(list).toEqual([
+      {
+        couch: { id: joined.id, name: joined.name, inviteCode: joined.inviteCode },
+        role: "participant",
+        memberCount: 3,
+      },
+      {
+        couch: { id: hosted.id, name: hosted.name, inviteCode: hosted.inviteCode },
+        role: "host",
+        memberCount: 1,
+      },
+    ]);
   });
 });
 

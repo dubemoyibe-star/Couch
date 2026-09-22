@@ -32,6 +32,7 @@ describe("public exports", () => {
         "joinCouch",
         "leaveCouch",
         "listCatalogMedia",
+        "listCouchesForUser",
         "loadEnvFile",
         "listMembers",
         "removeMember",
@@ -61,6 +62,7 @@ describe("public exports", () => {
         "getMembership",
         "getPrismaClient",
         "listCatalogMedia",
+        "listCouchesForUser",
         "listMembers",
       ].sort(),
     );

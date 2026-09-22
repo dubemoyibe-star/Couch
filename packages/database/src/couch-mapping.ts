@@ -36,6 +36,17 @@ export type CouchMemberListItem = {
   readonly joinedAt: Date;
 };
 
+/** One row of `listCouchesForUser`: a couch summary plus the caller's role and the couch's member count. */
+export type CouchListItem = {
+  readonly couch: {
+    readonly id: string;
+    readonly name: string;
+    readonly inviteCode: string;
+  };
+  readonly role: Role;
+  readonly memberCount: number;
+};
+
 /** Maps the database `CouchRole` enum to the lowercase contract role. */
 export function toContractRole(role: CouchRole): Role {
   return role === "HOST" ? "host" : "participant";
