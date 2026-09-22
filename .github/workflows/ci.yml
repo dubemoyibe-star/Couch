@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.24.0 --activate
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @couch/database db:generate
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests (no database)
+        run: pnpm test
+
+      # Same host and database (named "testing") for both URLs, as the
+      # COUCH_DB_ENV guard requires. No SSL: the service container is a plain
+      # local Postgres, never Neon. Scoped to these two steps only, so the
+      # earlier `pnpm test` step still runs with no database env set at all.
+      - name: Apply migrations to test database
+        run: pnpm --filter @couch/database db:migrate:deploy:test
+        env:
+          COUCH_DB_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
+
+      - name: Database tests
+        run: pnpm test:db
+        env:
+          COUCH_DB_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
+
+      - name: Check no committed media
+        run: pnpm check:no-media
+
+      - name: Check no direct database access
+        run: pnpm check:no-direct-db-access
