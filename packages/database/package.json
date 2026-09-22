@@ -13,10 +13,10 @@
     "test:db": "vitest run --config vitest.db.config.ts",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "node scripts/migrate-dev.mjs",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
-    "db:migrate:deploy:test": "prisma migrate deploy --config prisma.test.config.ts",
+    "db:migrate:deploy:test": "prisma migrate deploy --config prisma.test.config.ts && prisma generate",
     "db:reset:test": "prisma migrate reset --config prisma.test.config.ts"
   },
   "dependencies": {

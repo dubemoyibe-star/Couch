@@ -1,5 +1,5 @@
 import { mediaWithLicenseSchema, type CatalogMedia, type MediaWithLicense } from "@couch/contracts";
-import type { PrismaClient } from "./generated/prisma/client";
+import type { Prisma, PrismaClient } from "./generated/prisma/client";
 import {
   escapeLikePattern,
   licenseToRowData,
@@ -196,9 +196,13 @@ export async function listCatalogMedia(
  * `listCatalogMedia`. Returns null for an id that does not exist and for an item
  * that is inactive, unauthorized or malformed. A row that is fetched and then
  * rejected is reported to `onExcluded`.
+ *
+ * The client type also accepts `Prisma.TransactionClient`, so a caller (for
+ * example the couch repository's `setCurrentMedia`) can resolve media inside
+ * its own transaction.
  */
 export async function getCatalogMedia(
-  db: PrismaClient,
+  db: PrismaClient | Prisma.TransactionClient,
   id: string,
   options: GetCatalogMediaOptions = {},
 ): Promise<CatalogMedia | null> {

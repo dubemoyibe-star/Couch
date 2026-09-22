@@ -20,6 +20,9 @@ model User {
   displayName String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  ownedCouches     Couch[]
+  couchMemberships CouchMember[]
 }
 
 // The verified licensing basis of one media item. The fields mirror the
@@ -81,6 +84,66 @@ model Media {
 
   licenseRecordId String        @unique
   licenseRecord   LicenseRecord @relation(fields: [licenseRecordId], references: [id], onDelete: Restrict)
+  couchesWatching Couch[]
 
   @@unique([providerId, providerMediaId])
+}
+
+// A watch party. Playback state (status, position, rate, revision) is NOT
+// stored here: it is ephemeral, held in the realtime service's memory, and
+// resets when that process restarts. Only the couch's durable identity and
+// membership are in the database.
+//
+// Deletes: there is no couch delete function in the MVP, so a delete's
+// downstream effect is a schema decision, not a runtime one.
+model Couch {
+  id         String @id @default(uuid(7))
+  name       String
+  ownerId    String
+  // The user who created the couch. There is no user delete function in the
+  // MVP, so a delete is refused (`onDelete: Restrict`) rather than guessed at.
+  owner      User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  inviteCode String @unique
+
+  currentMediaId String?
+  // The media the couch is currently watching, or null for none. Media has no
+  // delete function either, but a takedown sets `Media.isActive` to false
+  // without removing the row, so this stays a normal foreign key that clears
+  // itself (`onDelete: SetNull`) if a Media row is ever removed by another
+  // path. Callers must still resolve this id through `getCatalogMedia` on every
+  // read: it can point at media that is no longer authorized or active, and
+  // that must be treated the same as null (see the database README).
+  currentMedia   Media?  @relation(fields: [currentMediaId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members CouchMember[]
+}
+
+enum CouchRole {
+  HOST
+  PARTICIPANT
+}
+
+// One user's membership in one couch. Host transfer is out of scope: a couch
+// keeps exactly the host it was created with for the life of this schema.
+//
+// Deletes: a membership has no existence apart from its couch, so removing a
+// couch removes its memberships (`onDelete: Cascade` on `couchId`), even
+// though no couch delete function exists yet. A user cannot be deleted while
+// they still hold a membership (`onDelete: Restrict` on `userId`), matching
+// the rule that there is no user delete function in the MVP.
+model CouchMember {
+  id       String    @id @default(uuid(7))
+  couchId  String
+  couch    Couch     @relation(fields: [couchId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role     CouchRole
+  joinedAt DateTime  @default(now())
+
+  @@unique([couchId, userId])
+  @@index([couchId])
+  @@index([userId])
 }
