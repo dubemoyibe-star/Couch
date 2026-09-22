@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormError } from "@/components/form-feedback";
 import { SubmitButton } from "@/components/submit-button";
 import { signUpAction, type SignUpState } from "./actions";
 
@@ -51,9 +52,7 @@ export function SignUpForm() {
           className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
         />
       </div>
-      <div role="alert" aria-live="polite" className="min-h-5 text-sm text-red-600">
-        {state.error}
-      </div>
+      <FormError message={state.error} />
       <SubmitButton>Sign up</SubmitButton>
     </form>
   );
