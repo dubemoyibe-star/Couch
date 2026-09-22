@@ -10,5 +10,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@couch/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24"
   }
 }
