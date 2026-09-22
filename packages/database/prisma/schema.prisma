@@ -12,17 +12,87 @@ datasource db {
 // UUIDv7 values are time-ordered, so new rows land at the end of the primary
 // key index, and they are opaque, so ids do not leak row counts.
 
-// Minimal user record. Authentication fields (credentials, sessions, linked
-// accounts) are added by extending this model.
+// User record, authenticated through Better Auth's Prisma adapter.
+//
+// Schema reconciliation (see docs/DEVELOPMENT.md): Better Auth's Prisma
+// adapter conventionally expects a `name` field. This model keeps the
+// existing `displayName` field instead of adding a second, overlapping name
+// field: apps/web/src/lib/auth.ts configures the adapter with
+// `user: { fields: { name: "displayName" } }`, which points the adapter's
+// `name` concept at this column. The existing id strategy and the unique
+// email constraint are unchanged.
 model User {
-  id          String   @id @default(uuid(7))
-  email       String   @unique
-  displayName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid(7))
+  email         String   @unique
+  displayName   String
+  // Required by Better Auth's adapter. Email verification is not enforced in
+  // this MVP (emailAndPassword.requireEmailVerification is left false), so
+  // this stays false for every user for now.
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   ownedCouches     Couch[]
   couchMemberships CouchMember[]
+  sessions         Session[]
+  accounts         Account[]
+}
+
+// A Better Auth session token. Deletes: cascades with its User
+// (`onDelete: Cascade`), matching Better Auth's documented schema. There is
+// no user-delete function in this codebase yet, so this is defensive, not
+// currently exercised.
+model Session {
+  id        String   @id @default(uuid(7))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// A linked sign-in method for a User: a credential (email/password) or an
+// external provider account. Better Auth stores password sign-in as an
+// Account row with providerId "credential". Deletes: cascades with its User
+// (`onDelete: Cascade`), matching Better Auth's documented schema. There is
+// no user-delete function in this codebase yet, so this is defensive, not
+// currently exercised.
+model Account {
+  id                    String    @id @default(uuid(7))
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+// A pending verification request (for example an email verification or
+// password reset token). Not tied to a User by foreign key: Better Auth
+// looks these up by `identifier`.
+model Verification {
+  id         String   @id @default(uuid(7))
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 // The verified licensing basis of one media item. The fields mirror the
