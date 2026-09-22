@@ -17,11 +17,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Couches you create or join will show up here.
         </p>
-        {/* /couch/create does not exist yet; it lands in a later issue. */}
-        <Link
-          href="/couch/create"
-          className="mt-2 text-sm underline"
-        >
+        <Link href="/couch/create" className="mt-2 text-sm underline">
           Create a couch
         </Link>
       </div>
@@ -32,7 +28,6 @@ export default async function DashboardPage() {
     <div className="flex flex-1 flex-col gap-4 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">My Couches</h1>
-        {/* /couch/create does not exist yet; it lands in a later issue. */}
         <Link href="/couch/create" className="text-sm underline">
           Create a couch
         </Link>
