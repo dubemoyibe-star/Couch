@@ -55,6 +55,14 @@ const DEFAULT_TIMEOUT_MS = 10_000;
  * still isolated: `Promise.race` returns control to the caller once the timeout elapses, so
  * one hung provider never blocks the others. The abandoned call is left to settle in the
  * background with its rejection swallowed, so it never surfaces as an unhandled rejection.
+ *
+ * IMPORTANT for real providers (out of scope here, no real provider exists yet): this only
+ * stops the REGISTRY from waiting. It does not stop the provider's own call. A provider that
+ * does not check `signal.aborted` or wire it into its underlying request (fetch, a driver, a
+ * socket) keeps running after the timeout fires; the work, and whatever it costs (an open
+ * connection, an in-flight request, quota) leaks until that call finishes on its own or
+ * throws. Every real provider must honor `options.signal` on every underlying call it makes,
+ * or a slow upstream turns into an unbounded number of abandoned in-flight requests.
  */
 function callWithTimeout<T>(
   providerId: string,
