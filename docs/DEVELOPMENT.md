@@ -106,3 +106,17 @@ A test suite that touches the database (a `*.db.test.ts` file, see [Tests](#test
 - **Exports**: `createPrismaClient({ connectionString })` builds a client. `getPrismaClient()` returns one shared instance kept on `globalThis`, so Next.js hot reload does not open a new pool on every reload. It reads `DATABASE_URL` on first use.
 - **First connection**: Neon computes scale to zero and can take a few seconds to wake. The `pg` driver waits forever by default, so the factory sets `connectionTimeoutMillis` to 15 seconds. The database Vitest config (`vitest.db.config.ts`) sets 30 second test and hook timeouts for the same reason. A failed first connect can simply be retried.
 - **IDs**: every model uses `String @id @default(uuid(7))`. Prisma generates the value. The Prisma docs do not name a recommended generator, so this is a choice: UUIDv7 values are time-ordered, so inserts stay at the end of the primary key index, and they are opaque, so ids do not reveal row counts. Use the same declaration on every new model.
+
+## Authentication
+
+Sign-in is handled by Better Auth (`apps/web/src/lib/auth.ts`), using its Prisma adapter (`better-auth/adapters/prisma`) against the same shared Prisma client `@couch/database` already exports (`getPrismaClient()`). Using the shared client, instead of a second `PrismaClient`, keeps auth queries on the same connection pool, the same `DATABASE_URL`, and the same `COUCH_DB_ENV` guard as the rest of the app.
+
+**Schema reconciliation**: Better Auth's Prisma adapter conventionally expects a `name` field on the user model. The existing `User` model already has `displayName`, and adding a second `name` field would leave two overlapping name fields. Instead, `auth.ts` configures the adapter with `user: { fields: { name: "displayName" } }`, which points the adapter's `name` concept at the existing `displayName` column. The adapter's own field name in code stays `name` (visible in a Better Auth session's `user.name`); the database column and the rest of the app keep `displayName`. The existing id strategy (`uuid(7)`) and the unique `email` constraint are unchanged. `User.emailVerified` was added because the adapter requires it; it defaults to `false` and stays that way, since email verification is not sent or enforced in this MVP.
+
+`Session` and `Account` cascade-delete with their `User` (`onDelete: Cascade`), matching Better Auth's documented schema. `Verification` has no foreign key: Better Auth looks up a verification row by `identifier`.
+
+`emailAndPassword` is enabled with `requireEmailVerification: false`, so sign-in works without a verification step. Better Auth enforces a default minimum password length of 8 characters (and a default maximum of 128), which this setup leaves unchanged.
+
+Env vars: `BETTER_AUTH_SECRET` (generate with `openssl rand -base64 32`) and `BETTER_AUTH_URL` (the app's own base URL). Add real values to `.env.local` and `.env.test`; `.env.example` has placeholders only.
+
+`apps/web/src/lib/session.ts` exports `getCurrentUser()`, which reads the session for the current request through `auth.api.getSession`. Later pages and route handlers should call it instead of reimplementing session lookup.
