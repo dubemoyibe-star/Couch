@@ -15,6 +15,7 @@ export {
   type DbGuardRule,
   type DbPurpose,
 } from "./env-guard";
+export { loadEnvFile } from "./env-files";
 export {
   deactivateMissing,
   getCatalogMedia,
