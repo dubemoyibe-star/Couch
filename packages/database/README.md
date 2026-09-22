@@ -19,6 +19,10 @@ A database test uses values unique to the run, such as a random email, and delet
 
 ## Catalog
 
+See [docs/LICENSING.md](../../docs/LICENSING.md) for the licensing policy this catalog
+enforces, including the rule that code outside this package must never query `Media` or
+`LicenseRecord` directly.
+
 The catalog is stored in two tables, `Media` and `LicenseRecord`, and read and written through the functions below. The client is always the first argument, and the types going in and out are the `@couch/contracts` types (`MediaWithLicense`, `CatalogMedia`).
 
 **The rule: nothing unauthorized, malformed or inactive leaves the repository functions.** Every row that is read is mapped to `CatalogMedia`, checked with `isUseAuthorized` from `@couch/shared`, and validated with the strict `catalogMediaSchema`. A row that fails either check is excluded, even if it was written with plain SQL that skipped the repository. The queries also filter on `isActive` and on `license.intendedUseAllowed`, so most rejected rows are never fetched. The package exports no function that returns an unfiltered row and none that deletes media. `src/index.test.ts` asserts the export list.

@@ -121,6 +121,22 @@ export async function deactivateMissing(
 }
 
 /**
+ * Counts the rows `deactivateMissing` would change for `providerId`, without writing.
+ * Same filter, read-only: active rows whose `providerMediaId` is not in
+ * `keepProviderMediaIds`. For a `--dry-run` preview, so a caller never has to reach for
+ * the Prisma client directly to answer "how many would this deactivate".
+ */
+export async function countMissing(
+  db: PrismaClient,
+  providerId: string,
+  keepProviderMediaIds: string[],
+): Promise<number> {
+  return db.media.count({
+    where: { providerId, isActive: true, providerMediaId: { notIn: keepProviderMediaIds } },
+  });
+}
+
+/**
  * One page of the catalog, ordered by title and then id, both ascending.
  *
  * A page can be SHORTER than `limit`, even empty, because rows that fail

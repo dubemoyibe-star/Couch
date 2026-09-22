@@ -17,6 +17,7 @@ export {
 } from "./env-guard";
 export { loadEnvFile } from "./env-files";
 export {
+  countMissing,
   deactivateMissing,
   getCatalogMedia,
   listCatalogMedia,

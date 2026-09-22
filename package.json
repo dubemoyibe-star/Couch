@@ -8,8 +8,10 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test",
-    "test:db": "pnpm -r test:db"
+    "test": "pnpm -r test && vitest run --config vitest.scripts.config.mjs",
+    "test:db": "pnpm -r test:db",
+    "check:no-media": "node scripts/check-no-media.mjs",
+    "check:no-direct-db-access": "node scripts/check-no-direct-media-access.mjs"
   },
   "devDependencies": {
     "eslint": "^9",
