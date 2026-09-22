@@ -13,6 +13,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <Link href="/" className="text-sm underline">
             My Couches
           </Link>
+          <Link href="/catalog" className="text-sm underline">
+            Catalog
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           {user ? (
