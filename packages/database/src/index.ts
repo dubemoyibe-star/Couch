@@ -4,13 +4,7 @@ export {
   DEFAULT_CONNECTION_TIMEOUT_MS,
   type CreatePrismaClientOptions,
 } from "./client";
-export {
-  PrismaClient,
-  type Account,
-  type Session,
-  type User,
-  type Verification,
-} from "./generated/prisma/client";
+export { PrismaClient, type User } from "./generated/prisma/client";
 export {
   assertDatabaseEnv,
   checkDatabaseEnv,
