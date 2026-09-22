@@ -41,7 +41,12 @@ export class MyProvider implements ContentProvider {
   (the provider answered, but the result could not be trusted).
 - Use `isProviderError` to narrow a caught value to `ProviderError` before reading `code` or
   `providerId`.
-- Honor `options?.signal` where the underlying call supports cancellation.
+- Honor `options?.signal` where the underlying call supports cancellation. This is not
+  optional in practice: the registry applies a per-provider timeout by racing against your
+  call, not by stopping it. If a method ignores `signal`, a timeout stops the registry from
+  waiting on it, but the underlying request (fetch, socket, driver call) keeps running
+  server-side until it finishes or errors on its own. Wire `signal` into every underlying
+  call (`fetch(url, { signal })` and similar) or a slow upstream leaks in-flight work.
 
 ## Licensing basis, not availability
 

@@ -9,3 +9,15 @@ export type {
   ProviderCapabilities,
   ProviderRequestOptions,
 } from "./content-provider";
+export { MEDIA_REJECTION_REASONS, type MediaRejection, type MediaRejectionReason } from "./gate";
+export {
+  createProviderRegistry,
+  type MediaListResult,
+  type OnProviderError,
+  type OnRejected,
+  type ProviderFailure,
+  type ProviderRegistry,
+  type ProviderRegistryOptions,
+  type RegisteredProvider,
+  type RegistryListOptions,
+} from "./registry";

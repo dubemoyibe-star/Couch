@@ -12,7 +12,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@couch/contracts": "workspace:*"
+    "@couch/contracts": "workspace:*",
+    "@couch/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24"

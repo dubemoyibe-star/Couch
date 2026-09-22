@@ -1,17 +1,22 @@
 /**
- * Stable error codes a provider can raise. Add new codes here; never rename or remove one.
+ * Stable error codes a provider (or the registry, on a provider's behalf) can raise. Add new
+ * codes here; never rename or remove one.
  *
  * - `not_found`: the requested media does not exist on the provider.
  * - `unsupported`: the provider does not implement the requested capability.
  * - `unavailable`: the provider (or the upstream it depends on) could not answer right now.
+ *   The registry also raises this when a provider call times out.
  * - `invalid_response`: the provider answered, but the response could not be trusted or
  *   parsed (for example it does not carry a license, or fails the contracts schema).
+ * - `license_rejected`: the registry's license gate rejected the item (it failed the
+ *   contracts schema or `isUseAuthorized`). Raised by the registry, never by a provider.
  */
 export const PROVIDER_ERROR_CODES = [
   "not_found",
   "unsupported",
   "unavailable",
   "invalid_response",
+  "license_rejected",
 ] as const;
 
 export type ProviderErrorCode = (typeof PROVIDER_ERROR_CODES)[number];
