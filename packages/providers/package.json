@@ -13,5 +13,8 @@
   },
   "dependencies": {
     "@couch/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24"
   }
 }

@@ -119,6 +119,10 @@ importers:
       '@couch/contracts':
         specifier: workspace:*
         version: link:../contracts
+    devDependencies:
+      '@types/node':
+        specifier: ^24
+        version: 24.13.6
 
   packages/shared:
     dependencies:
