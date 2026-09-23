@@ -35,7 +35,6 @@ export default async function DashboardPage() {
       <ul className="flex flex-col gap-2">
         {couches.map(({ couch, role, memberCount }) => (
           <li key={couch.id}>
-            {/* /couch/[id] does not exist yet; it lands in a later issue. */}
             <Link
               href={`/couch/${couch.id}`}
               className="flex items-center justify-between rounded border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
