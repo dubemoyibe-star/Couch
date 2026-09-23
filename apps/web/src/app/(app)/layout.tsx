@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { getCurrentUser } from "@/lib/session";
 import { signOutAction } from "@/app/sign-out/actions";
 
@@ -9,7 +10,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
         <div className="flex items-center gap-6">
-          <span className="font-semibold">Couch</span>
+          <Link href="/" aria-label="Couch home">
+            <Logo size={26} />
+          </Link>
           <Link href="/" className="text-sm underline">
             My Couches
           </Link>
