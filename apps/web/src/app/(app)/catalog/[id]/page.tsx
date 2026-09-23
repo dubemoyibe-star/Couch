@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCatalogMedia, getPrismaClient } from "@couch/database";
+import { getCatalogMedia, getCouch, getMembership, getPrismaClient } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
+import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -32,6 +33,23 @@ export default async function CatalogMediaPage({
   const backHref = back && back.startsWith("/catalog") ? back : "/catalog";
 
   const db = getPrismaClient();
+
+  // Picking-for-a-couch mode, re-checked independently from this page's own
+  // query string rather than trusted from wherever the link came from: only
+  // turned on when `forCouch` names a couch the signed-in user actually
+  // hosts.
+  const forCouchParam = firstParam(search.forCouch);
+  let pickingForCouchId: string | null = null;
+  if (forCouchParam) {
+    const forCouch = await getCouch(db, forCouchParam);
+    const forCouchMembership = forCouch
+      ? await getMembership(db, { couchId: forCouch.id, userId: user.id })
+      : null;
+    if (forCouch && forCouchMembership?.role === "host") {
+      pickingForCouchId = forCouch.id;
+    }
+  }
+
   // getCatalogMedia does not distinguish "doesn't exist" from "exists but is
   // unauthorized, inactive, or malformed" to a caller by design (docs/LICENSING.md),
   // so every one of those cases renders the same not-found state here.
@@ -105,7 +123,11 @@ export default async function CatalogMediaPage({
             </a>
           </div>
 
-          {/* "Use this for my couch" action does not exist yet; it lands in Issue 11. */}
+          {pickingForCouchId ? (
+            <SetCurrentMediaForm couchId={pickingForCouchId} mediaId={media.id}>
+              Set as couch&apos;s current media
+            </SetCurrentMediaForm>
+          ) : null}
         </div>
       </div>
     </div>
