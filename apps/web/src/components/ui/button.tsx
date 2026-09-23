@@ -14,7 +14,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 // Primary is a solid fill against the page, so it has no border to rely on.
 const variants = {
   primary:
-    "rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover active:bg-[color-mix(in_oklab,var(--color-primary)_85%,black)]",
+    "rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover active:bg-[color-mix(in_oklab,var(--color-primary-hover)_90%,black)] active:translate-y-px",
   secondary:
     "rounded-md border border-border-strong bg-surface text-text hover:border-text-muted hover:bg-surface-muted active:bg-background",
 } as const;
