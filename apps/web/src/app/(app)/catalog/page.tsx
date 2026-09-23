@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getPrismaClient, listCatalogMedia } from "@couch/database";
+import { getCouch, getMembership, getPrismaClient, listCatalogMedia } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
 
 const PAGE_SIZE = 24;
@@ -19,6 +19,23 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
   const cursor = firstParam(params.cursor);
 
   const db = getPrismaClient();
+
+  // Picking-for-a-couch mode: only turned on when `forCouch` names a couch
+  // the signed-in user actually hosts. Re-checked here rather than trusted
+  // from the query string, since it is external input; a non-host or a
+  // couch that does not exist just falls back to ordinary browsing.
+  const forCouchParam = firstParam(params.forCouch);
+  let pickingFor: { id: string; name: string } | null = null;
+  if (forCouchParam) {
+    const couch = await getCouch(db, forCouchParam);
+    const forCouchMembership = couch
+      ? await getMembership(db, { couchId: couch.id, userId: user.id })
+      : null;
+    if (couch && forCouchMembership?.role === "host") {
+      pickingFor = { id: couch.id, name: couch.name };
+    }
+  }
+
   const { items, nextCursor } = await listCatalogMedia(db, {
     query,
     limit: PAGE_SIZE,
@@ -33,20 +50,33 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
   const loadMoreParams = new URLSearchParams();
   if (query) loadMoreParams.set("q", query);
   if (nextCursor) loadMoreParams.set("cursor", nextCursor);
+  if (pickingFor) loadMoreParams.set("forCouch", pickingFor.id);
   const loadMoreHref = nextCursor ? `/catalog?${loadMoreParams.toString()}` : null;
 
-  // Carries the current search/cursor state through to the details page, so its
-  // "back to catalog" link returns to the same page the visitor came from.
+  // Carries the current search/cursor/picking state through to the details
+  // page, so its "back to catalog" link returns to the same page the
+  // visitor came from, and picking mode survives the round trip.
   const currentParams = new URLSearchParams();
   if (query) currentParams.set("q", query);
   if (cursor) currentParams.set("cursor", cursor);
+  if (pickingFor) currentParams.set("forCouch", pickingFor.id);
   const backHref = `/catalog${currentParams.size > 0 ? `?${currentParams.toString()}` : ""}`;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-8">
       <h1 className="text-lg font-medium">Catalog</h1>
 
+      {pickingFor ? (
+        <div className="flex items-center justify-between rounded border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+          <span>Picking media for {pickingFor.name}</span>
+          <Link href={`/couch/${pickingFor.id}`} className="underline">
+            Cancel
+          </Link>
+        </div>
+      ) : null}
+
       <form action="/catalog" className="flex gap-2">
+        {pickingFor ? <input type="hidden" name="forCouch" value={pickingFor.id} /> : null}
         <input
           type="search"
           name="q"
@@ -77,7 +107,9 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
             {items.map((item) => (
               <li key={item.id}>
                 <Link
-                  href={`/catalog/${item.id}?back=${encodeURIComponent(backHref)}`}
+                  href={`/catalog/${item.id}?back=${encodeURIComponent(backHref)}${
+                    pickingFor ? `&forCouch=${pickingFor.id}` : ""
+                  }`}
                   className="flex flex-col gap-2 rounded border border-zinc-200 p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
                 >
                   {item.posterUrl ? (
