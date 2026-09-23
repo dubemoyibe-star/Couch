@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { getPrismaClient } from "@couch/database";
+import { getBaseUrl } from "./base-url";
 
 // Built lazily, and only on first use, the same way @couch/database's own
 // getPrismaClient() defers its DATABASE_URL read. betterAuth() calls
@@ -14,8 +15,45 @@ const globalForAuth = globalThis as typeof globalThis & {
   couchAuth?: ReturnType<typeof buildAuth>;
 };
 
+// a Google sign-in may link to an existing account with the same
+// email only when that existing account's email is already verified.
+// Better Auth's implicit linking (link-account.ts) refuses the link unless
+// (Google vouches for the email, or Google is in trustedProviders) AND, when
+// requireLocalEmailVerified is true, the existing user's emailVerified is
+// true. trustedProviders is deliberately left unset: it would bypass the
+// provider check, and Google-side trust is not what protects the victim here.
+// requireLocalEmailVerified is the guard against an attacker pre-registering
+// a victim's email with a password, then having the victim's Google identity
+// merged into an account the attacker controls. It defaults to true; it is
+// spelled out so it cannot be weakened by a default change.
+export const accountLinking = {
+  enabled: true,
+  requireLocalEmailVerified: true,
+} as const;
+
 function buildAuth() {
+  // Read lazily, like DATABASE_URL, so importing this module needs no env.
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
   return betterAuth({
+    // Better Auth builds the Google callback URL (/api/auth/callback/google)
+    // from this. A wrong value causes redirect_uri_mismatch.
+    baseURL: getBaseUrl(),
+    ...(googleClientId && googleClientSecret
+      ? {
+          socialProviders: {
+            google: {
+              clientId: googleClientId,
+              clientSecret: googleClientSecret,
+              // Always show the account chooser instead of silently reusing
+              // whichever Google account the browser is signed in to.
+              prompt: "select_account" as const,
+            },
+          },
+        }
+      : {}),
+    account: { accountLinking },
     database: prismaAdapter(getPrismaClient(), {
       provider: "postgresql",
     }),
