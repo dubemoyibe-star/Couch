@@ -176,6 +176,50 @@ those primitives needs to either lighten `border` for that specific use or
 pair it with a non-color affordance (fill, shadow, focus ring) instead of
 relying on the border alone.
 
+### Resolution: interactive controls (UI primitives)
+
+The gap above is resolved for every interactive primitive in
+`apps/web/src/components/ui/`. Two tokens were added (both palettes):
+
+| Token | Dark | Light | Use |
+| --- | --- | --- | --- |
+| `--color-border-strong` | `#7A6D5F` | `#8A7A6A` | Boundary of interactive controls |
+| `--color-focus` | `#F4EEE7` | `#2B211A` | Keyboard focus ring (same value as `text`) |
+
+`border-strong` measured against every surface a control can sit on:
+
+| Pair | Dark | Light |
+| --- | --- | --- |
+| on `background` | 3.65:1 | 3.85:1 |
+| on `surface` | 3.25:1 | 3.47:1 |
+| on `surface-muted` | 3.48:1 | 3.23:1 |
+
+All are at or above 3:1. Focus ring on `background`: 15.92:1 dark, 14.63:1
+light. The decorative `--color-border` is unchanged and remains for dividers
+and non-interactive edges.
+
+Per component:
+
+- **Input**: color adjustment. Uses `border-strong` (table above) and also a
+  `surface` fill against the page background, so the boundary has two cues.
+  Error adds a second stroke (inset ring), an icon and text, in `danger`
+  (6.21:1 dark, 5.50:1 light on `background`).
+- **Button, secondary**: color adjustment plus fill. `border-strong` and a
+  `surface` fill.
+- **Button, primary**: no border needed. The boundary is the solid `primary`
+  fill against the page, a background shift (`primary` on `background` is
+  5.44:1 dark; light `primary` on `background` is 5.09:1).
+- **Card**: not interactive. Keeps the decorative `border` plus a `surface`
+  fill (tonal depth). If a card becomes clickable, the control inside it must
+  use the treatments above.
+- **Badge**: not interactive. Decorative `border` plus `surface-muted` fill.
+  The label text uses `text` (not the status color) so it stays above 4.5:1
+  in both palettes; the status color is only a leading dot next to a label
+  that names the status.
+- **FormError / FormSuccess**: not interactive. Use `danger` and `success`
+  text (all above 4.5:1 on `background`) with an icon and a screen-reader
+  prefix.
+
 ## Typography
 
 ### Options considered

@@ -21,6 +21,12 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Public static assets and metadata files must bypass the session check, or
+// signed-out requests for them (logo, icons, manifest, social images) are
+// redirected to /sign-in and arrive as HTML instead of the file. The matcher
+// must be a static string, so the exclusions are written inline.
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api/auth|_next/static|_next/image|brand/|icons/|favicon.ico|icon.png|apple-icon.png|manifest.webmanifest|opengraph-image.png|twitter-image.png).*)",
+  ],
 };
