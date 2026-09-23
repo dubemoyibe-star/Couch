@@ -154,10 +154,27 @@ text/UI components.
 | Light `primary-foreground` on `primary-hover` | — | 6.98:1 (`#FBF6EF` / `#7F4620`) | Pass |
 | Light `success`/`warning`/`danger`/`info` on `background` | — | 4.67:1 / 5.49:1 / 5.50:1 / 5.40:1 | Pass |
 
-`border`/`surface-muted` pairs are intentionally low-contrast (they're
-non-text dividers and background fills, not something AA text/UI-component
-contrast rules apply to) and were sanity-checked only to confirm they read
-as a visible-but-subtle seam (~1.3:1 against their neighboring surface).
+**`border` and `surface-muted` were not checked against the 3:1 non-text/UI-component
+threshold.** This issue's contrast scope covers `text`-on-`background` and
+`text-muted`-on-`background` (plus `primary`/`primary-foreground`, since those
+carry button-label text); `border` and `surface-muted` are outside that
+scope because this issue doesn't decide where they get used. The actual
+ratios, computed the same way as the pairs above:
+
+| Pair | Dark | Light |
+| --- | --- | --- |
+| `border` on `background` | 1.48:1 | 1.34:1 |
+| `surface-muted` on `surface` | 1.07:1 | 1.07:1 |
+
+Both are well under 3:1 in both palettes. That's fine for a purely decorative
+divider or background fill, which WCAG 1.4.11 (Non-text Contrast) doesn't
+require 3:1 for. It is **not** fine if a later issue uses `border` as the
+*sole* visual indicator of an interactive component's boundary (e.g. an
+unstyled input or button outline with no other affordance) — that case does
+require 3:1, and `border` as shipped here doesn't clear it. Whoever builds
+those primitives needs to either lighten `border` for that specific use or
+pair it with a non-color affordance (fill, shadow, focus ring) instead of
+relying on the border alone.
 
 ## Typography
 
