@@ -15,6 +15,12 @@
   --color-surface: #241f1b;
   --color-surface-muted: #1d1916;
   --color-border: #3a332c;
+  /* Boundary of interactive controls (inputs, secondary buttons). Unlike
+     --color-border it clears 3:1 (WCAG 1.4.11) on background, surface and
+     surface-muted. See docs/DESIGN-SYSTEM.md. */
+  --color-border-strong: #7a6d5f;
+  /* Keyboard focus ring. Same value as text: highest contrast on the page. */
+  --color-focus: #f4eee7;
   --color-text: #f4eee7;
   --color-text-muted: #b8aa9c;
   --color-primary: #c47a4a;
@@ -55,6 +61,8 @@
     --color-surface: #f3ead9;
     --color-surface-muted: #ede2cf;
     --color-border: #e3d5c3;
+    --color-border-strong: #8a7a6a;
+    --color-focus: #2b211a;
     --color-text: #2b211a;
     --color-text-muted: #6b5d4f;
     --color-primary: #9c5827;
