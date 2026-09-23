@@ -1,10 +1,16 @@
 # Design system
 
 Source of truth for the design tokens defined in `apps/web/src/app/globals.css`.
-Derived from `Couch Branding & Design Direction.md`. Later issues apply these
-tokens to specific screens and build component primitives on top of them;
-this issue only establishes the token layer, so applying it doesn't change
-any existing page's visual output.
+Later issues apply these tokens to specific screens and build component
+primitives on top of them; this issue only establishes the token layer, so
+applying it doesn't change any existing page's visual output.
+
+## Direction
+
+Couch's visual identity is a warm, cinematic, cozy movie-night feel: deep
+warm neutrals, earthy terracotta accents, soft cream text on dark, comfortable
+rounded shapes. It should read as inviting and human, not corporate, not a
+generic dark-mode SaaS dashboard, and not luxury-hotel ornate.
 
 ## Tailwind version
 
@@ -28,8 +34,8 @@ is CSS-first, so all tokens live in `globals.css`.
   values. No `@custom-variant` is needed for this: Tailwind v4's `dark:`
   variant already defaults to `prefers-color-scheme` with zero config (an
   explicit `@custom-variant dark (...)` is only required to switch to a
-  class- or attribute-driven toggle, which is out of scope here per decision
-  A: no manual theme toggle in this issue).
+  class- or attribute-driven toggle, which this project doesn't use — there
+  is no manual theme switch, only OS preference).
 - A separate `@theme inline { --font-sans: var(--font-ui); --font-display:
   var(--font-display-face); }` block wires the font tokens. This one
   deliberately uses `inline`, unlike the color block. `--font-ui` and
@@ -45,9 +51,8 @@ is CSS-first, so all tokens live in `globals.css`.
   hit that resolution-order problem and don't need `inline`.
 
 Dark is the palette that applies with no OS preference or an explicit dark
-preference, matching the branding doc ("Dark mode is the primary Couch
-experience"). The light block only fires when the OS explicitly reports
-`prefers-color-scheme: light`.
+preference, since dark is Couch's primary/default experience. The light
+block only fires when the OS explicitly reports `prefers-color-scheme: light`.
 
 ## Semantic color roles
 
@@ -88,13 +93,12 @@ Exposed as Tailwind utilities via the `--color-*` naming convention, e.g.
 | `danger` | `#E0796A` |
 | `info` | `#7FB0D6` |
 
-`background`, `surface`, `text`, and `primary` are taken directly from the
-branding doc's reference palette (section 4) unchanged — they already pass
-contrast (see below). `surface-muted`, `border`, `text-muted`,
-`primary-hover`, `primary-foreground`, and the four status colors aren't in
-the reference palette (it only lists six roles); they're new, chosen to fit
-the same Warm Cinema direction and verified for contrast where they carry
-text.
+`background`, `surface`, `text`, and `primary` come from the original warm
+cinematic reference palette unchanged — they already pass contrast (see
+below). `surface-muted`, `border`, `text-muted`, `primary-hover`,
+`primary-foreground`, and the four status colors weren't part of that
+original six-color reference; they're new, chosen to fit the same warm,
+earthy direction and verified for contrast where they carry text.
 
 ### Light
 
@@ -114,23 +118,24 @@ text.
 | `danger` | `#B23B2A` |
 | `info` | `#2E6B8F` |
 
-The branding doc doesn't give a light-mode reference palette (only the
-direction in section 5: "warm off-white backgrounds, cream/tan surfaces,
-dark warm text, terracotta primary"). `background`/`surface`/`text` were
-derived to match that direction. **`primary` and `primary-hover` deviate
-from the reference terracotta (`#C47A4A`) and secondary (`#D6A77A`):** used
-as-is against the light background, `#C47A4A` only reaches 3.13:1 contrast,
-below the 4.5:1 AA threshold for text-sized use (links, icon-button labels).
-It was darkened to `#9C5827` (5.09:1) and the hover state to `#7F4620`
-(6.98:1) — the same terracotta hue and saturation, just enough darker to
-clear AA on a light background. Dark mode needed no such adjustment because
-the reference primary already passes there (5.44:1, see below).
+There was no existing light-mode reference palette, only a direction: warm
+off-white background, cream/tan surfaces, dark warm text, terracotta primary,
+kept warm rather than clinical. `background`/`surface`/`text` were derived to
+match that direction. **`primary` and `primary-hover` deviate from the dark
+palette's reference terracotta (`#C47A4A`) and its lighter variant
+(`#D6A77A`):** used as-is against the light background, `#C47A4A` only
+reaches 3.13:1 contrast, below the 4.5:1 AA threshold for text-sized use
+(links, icon-button labels). It was darkened to `#9C5827` (5.09:1) and the
+hover state to `#7F4620` (6.98:1) — the same terracotta hue and saturation,
+just enough darker to clear AA on a light background. Dark mode needed no
+such adjustment because the reference primary already passes there (5.44:1,
+see below).
 
 ## Contrast verification
 
 Calculated with the standard WCAG relative-luminance formula (sRGB,
-`(L1+0.05)/(L2+0.05)`), script in the design-tokens issue's scratch dir.
-Thresholds: 4.5:1 for body text, 3:1 for large text/UI components.
+`(L1+0.05)/(L2+0.05)`). Thresholds: 4.5:1 for body text, 3:1 for large
+text/UI components.
 
 | Pair | Before | After | Result |
 | --- | --- | --- | --- |
@@ -164,18 +169,17 @@ as a visible-but-subtle seam (~1.3:1 against their neighboring surface).
    metadata) rather than fighting for attention. Fraunces is a variable
    serif built specifically for a warm, slightly soft, non-luxury editorial
    feel — its "soft" character reads cozy/human rather than haute-editorial,
-   which matches section 8's "cinematic, confident, and human" without
-   tipping into the "overly luxurious" anti-pattern the branding doc warns
-   against (section 25).
+   giving headings personality without tipping into an overly luxurious or
+   fashion-editorial look.
 2. **Manrope (UI sans) + Newsreader (display)** — a quieter, more literary
    pairing. Newsreader is a calmer text-serif than Fraunces; it would read
-   as more restrained/editorial and less "cinematic" personality-forward.
+   as more restrained/editorial and less cinematic/personality-forward.
    Good fallback if Fraunces reads too characterful once applied to real
    headings in a later issue.
 3. **Public Sans (UI sans) + Playfair Display (display)** — rejected.
    Playfair Display is a high-contrast didone that reads as classic
-   luxury/fashion-editorial, which is explicitly called out as an
-   anti-pattern to avoid (sections 2 and 25: not "overly luxurious").
+   luxury/fashion-editorial, which is the opposite of the warm, unpretentious
+   feel Couch is going for.
 
 All three are available with zero external stylesheet requests via
 `next/font/google`, which self-hosts the font files at build time and
@@ -197,14 +201,15 @@ them to the `--font-sans` / `--font-display` theme tokens (see "Where tokens
 are defined" above), so `font-sans` / `font-display` are the only class
 names components should use — swapping the actual typeface later is a
 one-line change in `layout.tsx` plus the two `@theme inline` lines, not a
-find-and-replace across components. Per the issue's scope, `font-display` is
+find-and-replace across components. Per this issue's scope, `font-display` is
 not yet applied to any component; that's for the issues that restyle
 specific pages.
 
 ## Shape
 
-Soft Structured (branding doc section 9): UI elements stay in a modest
-radius range, media artwork gets a visibly larger radius than UI.
+UI elements stay in a modest, comfortably-rounded radius range; media
+artwork gets a visibly larger radius than UI, reinforcing the softer,
+cinematic feel of posters and thumbnails specifically.
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -221,9 +226,9 @@ scale automatically. `--radius-media` is a new key, used via `rounded-media`.
 
 Tailwind's default spacing scale (`--spacing: 0.25rem` base, so `p-4` =
 1rem, `gap-2` = 0.5rem, etc.) was not overridden. It already has enough
-resolution at both ends to express section 12's rule ("more space between
-sections, less between related elements") — small steps (`gap-1`/`gap-2`)
-for tightly related items, large steps (`gap-12`/`gap-16`/`py-20`+) for
-section breaks — so no new spacing tokens were added. This is a convention
-for later issues to follow (small gaps within a related group, large gaps
-between sections), not a new token.
+resolution at both ends for the guiding spacing principle — more space
+between sections, less space between related elements — so small steps
+(`gap-1`/`gap-2`) work for tightly related items and large steps
+(`gap-12`/`gap-16`/`py-20`+) work for section breaks. No new spacing tokens
+were added. This is a convention for later issues to follow, not a new
+token.
