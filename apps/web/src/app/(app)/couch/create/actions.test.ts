@@ -5,6 +5,16 @@ vi.mock("@couch/database", () => ({
   getPrismaClient: vi.fn(() => ({})),
 }));
 
+// Every test here exercises `runCreateCouchAction` with a stubbed
+// `deps.getCurrentUser`, never the real one, but `./actions` imports it at
+// module scope for the thin `"use server"`-wrapped export. Left unmocked,
+// that import pulls in `./auth`, which loads the `better-auth` package for
+// real: a one-time, unavoidable multi-second module load the first time any
+// process imports it, that these tests have no reason to pay.
+vi.mock("@/lib/session", () => ({
+  getCurrentUser: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
