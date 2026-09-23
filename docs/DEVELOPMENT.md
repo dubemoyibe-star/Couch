@@ -61,7 +61,9 @@ A database test creates its own data with values unique to the run (for example 
 
 CI runs both `pnpm test` and `pnpm test:db`.
 
-**Known flakiness**: `pnpm test:db` (both locally and in CI) has occasionally hit a connection timeout against Neon on longer runs, most likely the compute-wake delay described under [Client and IDs](#client-and-ids) compounding across a long sequence of database tests rather than a single first connection. Neither the CI workflow's `pnpm test:db` step nor `vitest.db.config.ts` currently retries a failed run. If this recurs in CI, re-running the job is the immediate fix; if it becomes frequent, consider a workflow-level retry (for example `nick-fields/retry`) around that one step rather than adding retry logic to the test suites themselves.
+**Known flakiness (local runs only)**: run locally, `pnpm test:db` reads `.env.test` and so talks to the real Neon `testing` database. It has occasionally hit a connection timeout or DNS failure on longer runs, most likely the compute-wake delay described under [Client and IDs](#client-and-ids) compounding across a long sequence of database tests rather than a single first connection. `vitest.db.config.ts` does not currently retry a failed run; re-running locally is the immediate fix.
+
+CI does not hit Neon at all: its `pnpm test:db` step runs against the `postgres:18` service container defined in `.github/workflows/ci.yml`, a plain local Postgres with no cold-start delay, so this specific flakiness is not expected there. If CI's `pnpm test:db` step becomes flaky for some other reason, that would be a different problem worth investigating on its own, not assumed to be this one.
 
 ## AI agents and destructive Prisma commands
 
