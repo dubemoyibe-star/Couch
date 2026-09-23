@@ -157,3 +157,183 @@ describe("runSetCurrentMediaAction", () => {
     expect(setCurrentMedia).not.toHaveBeenCalled();
   });
 });
+
+describe("runRemoveMemberAction", () => {
+  it("rejects when getCurrentUser returns null, without calling removeMember", async () => {
+    const { runRemoveMemberAction } = await import("./actions");
+    const removeMember = vi.fn();
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+    formData.set("targetUserId", "user-2");
+
+    const result = await runRemoveMemberAction(
+      { error: null },
+      formData,
+      { getCurrentUser: async () => null, removeMember },
+    );
+
+    expect(result.error).toBe("You must be signed in to do that.");
+    expect(removeMember).not.toHaveBeenCalled();
+  });
+
+  it("maps forbidden (a non-host acting) to a clear message instead of redirecting", async () => {
+    const { runRemoveMemberAction } = await import("./actions");
+    const removeMember = vi.fn(async () => ({ ok: false as const, error: "forbidden" as const }));
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+    formData.set("targetUserId", "user-2");
+
+    const result = await runRemoveMemberAction(
+      { error: null },
+      formData,
+      {
+        getCurrentUser: async () => ({ id: "user-3", email: "c@b.com", displayName: "C" }),
+        removeMember,
+      },
+    );
+
+    expect(result.error).toBe("You do not have permission to do that.");
+  });
+
+  it("maps cannot_remove_self to a clear message instead of redirecting", async () => {
+    const { runRemoveMemberAction } = await import("./actions");
+    const removeMember = vi.fn(async () => ({
+      ok: false as const,
+      error: "cannot_remove_self" as const,
+    }));
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+    formData.set("targetUserId", "host-1");
+
+    const result = await runRemoveMemberAction(
+      { error: null },
+      formData,
+      {
+        getCurrentUser: async () => ({ id: "host-1", email: "h@b.com", displayName: "H" }),
+        removeMember,
+      },
+    );
+
+    expect(result.error).toBe("You cannot remove yourself from the couch.");
+  });
+
+  it("removes the target member as the signed-in actor, then redirects to the couch", async () => {
+    const { runRemoveMemberAction } = await import("./actions");
+    const removeMember = vi.fn(async () => ({ ok: true as const, value: undefined }));
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+    formData.set("targetUserId", "user-2");
+
+    await expect(
+      runRemoveMemberAction(
+        { error: null },
+        formData,
+        {
+          getCurrentUser: async () => ({ id: "host-1", email: "h@b.com", displayName: "H" }),
+          removeMember,
+        },
+      ),
+    ).rejects.toThrow("REDIRECT:/couch/couch-1");
+
+    expect(removeMember).toHaveBeenCalledWith(
+      {},
+      { couchId: "couch-1", actingUserId: "host-1", targetUserId: "user-2" },
+    );
+  });
+
+  it("rejects a missing targetUserId before calling removeMember", async () => {
+    const { runRemoveMemberAction } = await import("./actions");
+    const removeMember = vi.fn();
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+
+    const result = await runRemoveMemberAction(
+      { error: null },
+      formData,
+      {
+        getCurrentUser: async () => ({ id: "host-1", email: "h@b.com", displayName: "H" }),
+        removeMember,
+      },
+    );
+
+    expect(result.error).toBeTruthy();
+    expect(removeMember).not.toHaveBeenCalled();
+  });
+});
+
+describe("runLeaveCouchAction", () => {
+  it("rejects when getCurrentUser returns null, without calling leaveCouch", async () => {
+    const { runLeaveCouchAction } = await import("./actions");
+    const leaveCouch = vi.fn();
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+
+    const result = await runLeaveCouchAction(
+      { error: null },
+      formData,
+      { getCurrentUser: async () => null, leaveCouch },
+    );
+
+    expect(result.error).toBe("You must be signed in to do that.");
+    expect(leaveCouch).not.toHaveBeenCalled();
+  });
+
+  it("maps host_cannot_leave to a clear message instead of redirecting", async () => {
+    const { runLeaveCouchAction } = await import("./actions");
+    const leaveCouch = vi.fn(async () => ({
+      ok: false as const,
+      error: "host_cannot_leave" as const,
+    }));
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+
+    const result = await runLeaveCouchAction(
+      { error: null },
+      formData,
+      {
+        getCurrentUser: async () => ({ id: "host-1", email: "h@b.com", displayName: "H" }),
+        leaveCouch,
+      },
+    );
+
+    expect(result.error).toBe("As the host, you cannot leave this couch.");
+  });
+
+  it("leaves the couch as the signed-in user, then redirects to the dashboard", async () => {
+    const { runLeaveCouchAction } = await import("./actions");
+    const leaveCouch = vi.fn(async () => ({ ok: true as const, value: undefined }));
+    const formData = new FormData();
+    formData.set("couchId", "couch-1");
+
+    await expect(
+      runLeaveCouchAction(
+        { error: null },
+        formData,
+        {
+          getCurrentUser: async () => ({ id: "user-2", email: "b@b.com", displayName: "B" }),
+          leaveCouch,
+        },
+      ),
+    ).rejects.toThrow("REDIRECT:/");
+
+    expect(leaveCouch).toHaveBeenCalledWith({}, { couchId: "couch-1", userId: "user-2" });
+  });
+
+  it("rejects a missing couchId before calling leaveCouch", async () => {
+    const { runLeaveCouchAction } = await import("./actions");
+    const leaveCouch = vi.fn();
+    const formData = new FormData();
+
+    const result = await runLeaveCouchAction(
+      { error: null },
+      formData,
+      {
+        getCurrentUser: async () => ({ id: "user-2", email: "b@b.com", displayName: "B" }),
+        leaveCouch,
+      },
+    );
+
+    expect(result.error).toBeTruthy();
+    expect(leaveCouch).not.toHaveBeenCalled();
+  });
+});

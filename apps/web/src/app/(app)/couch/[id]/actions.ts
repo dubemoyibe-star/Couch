@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getPrismaClient, setCurrentMedia } from "@couch/database";
+import { getPrismaClient, leaveCouch, removeMember, setCurrentMedia } from "@couch/database";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { mapToUserMessage } from "@/lib/repo-error-messages";
 
@@ -58,4 +58,95 @@ export async function setCurrentMediaAction(
   formData: FormData,
 ): Promise<SetCurrentMediaState> {
   return runSetCurrentMediaAction(prevState, formData, { getCurrentUser, setCurrentMedia });
+}
+
+export type RemoveMemberState = {
+  readonly error: string | null;
+};
+
+export type RemoveMemberDeps = {
+  readonly getCurrentUser: () => Promise<CurrentUser | null>;
+  readonly removeMember: typeof removeMember;
+};
+
+/**
+ * Same pattern as `runSetCurrentMediaAction`: the session is re-checked here
+ * rather than trusted from the page, since the action can be invoked
+ * directly. Host status is not trusted from the client either: `removeMember`
+ * itself re-checks the acting user's role and refuses a non-host with
+ * `forbidden`, and refuses the host removing themselves with
+ * `cannot_remove_self`.
+ */
+export async function runRemoveMemberAction(
+  _prevState: RemoveMemberState,
+  formData: FormData,
+  deps: RemoveMemberDeps,
+): Promise<RemoveMemberState> {
+  const user = await deps.getCurrentUser();
+  if (!user) return { error: "You must be signed in to do that." };
+
+  const couchId = formData.get("couchId");
+  const targetUserId = formData.get("targetUserId");
+  if (
+    typeof couchId !== "string" ||
+    couchId.length === 0 ||
+    typeof targetUserId !== "string" ||
+    targetUserId.length === 0
+  ) {
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  const db = getPrismaClient();
+  const result = await deps.removeMember(db, { couchId, actingUserId: user.id, targetUserId });
+  if (!result.ok) return { error: mapToUserMessage(result.error) };
+
+  redirect(`/couch/${couchId}`);
+}
+
+export async function removeMemberAction(
+  prevState: RemoveMemberState,
+  formData: FormData,
+): Promise<RemoveMemberState> {
+  return runRemoveMemberAction(prevState, formData, { getCurrentUser, removeMember });
+}
+
+export type LeaveCouchState = {
+  readonly error: string | null;
+};
+
+export type LeaveCouchDeps = {
+  readonly getCurrentUser: () => Promise<CurrentUser | null>;
+  readonly leaveCouch: typeof leaveCouch;
+};
+
+/**
+ * Same defense-in-depth pattern as the actions above. `leaveCouch` itself
+ * refuses the host with `host_cannot_leave`, so a host invoking this action
+ * directly still gets a mapped error rather than being removed.
+ */
+export async function runLeaveCouchAction(
+  _prevState: LeaveCouchState,
+  formData: FormData,
+  deps: LeaveCouchDeps,
+): Promise<LeaveCouchState> {
+  const user = await deps.getCurrentUser();
+  if (!user) return { error: "You must be signed in to do that." };
+
+  const couchId = formData.get("couchId");
+  if (typeof couchId !== "string" || couchId.length === 0) {
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  const db = getPrismaClient();
+  const result = await deps.leaveCouch(db, { couchId, userId: user.id });
+  if (!result.ok) return { error: mapToUserMessage(result.error) };
+
+  redirect("/");
+}
+
+export async function leaveCouchAction(
+  prevState: LeaveCouchState,
+  formData: FormData,
+): Promise<LeaveCouchState> {
+  return runLeaveCouchAction(prevState, formData, { getCurrentUser, leaveCouch });
 }

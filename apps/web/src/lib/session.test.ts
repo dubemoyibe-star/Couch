@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const getSession = vi.fn();
 
 vi.mock("./auth", () => ({
-  auth: { api: { getSession: getSession } },
+  getAuth: () => ({ api: { getSession: getSession } }),
 }));
 
 vi.mock("next/headers", () => ({

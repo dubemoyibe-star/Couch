@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { authErrorMessage } from "@/lib/auth-errors";
 
 export type SignInState = {
@@ -16,7 +16,7 @@ export async function signInAction(
   const password = String(formData.get("password") ?? "");
 
   try {
-    await auth.api.signInEmail({
+    await getAuth().api.signInEmail({
       body: { email, password },
     });
   } catch (error) {

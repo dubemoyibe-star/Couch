@@ -84,3 +84,15 @@ jobs:
 
       - name: Check no direct database access
         run: pnpm check:no-direct-db-access
+
+      # No DATABASE_URL/DIRECT_URL here, on purpose: apps/web's pages read the
+      # database dynamically at request time, not at build time (see
+      # docs/DEVELOPMENT.md), so the build must succeed without a live
+      # database connection. BETTER_AUTH_SECRET and BETTER_AUTH_URL are the
+      # only env vars Next.js needs at build time, and these are fake,
+      # non-secret, build-only values, never a real secret.
+      - name: Build web app
+        run: pnpm --filter @couch/web build
+        env:
+          BETTER_AUTH_SECRET: ci-build-only-not-a-real-secret
+          BETTER_AUTH_URL: http://localhost:3000

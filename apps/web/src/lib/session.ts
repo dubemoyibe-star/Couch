@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "./auth";
+import { getAuth } from "./auth";
 
 export type CurrentUser = {
   readonly id: string;
@@ -12,7 +12,15 @@ export type CurrentUser = {
 // is no signed-in user. Every later page or route handler that needs to know
 // who is signed in should call this instead of reimplementing session lookup.
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  // Read the incoming request's headers before touching `getAuth()` (which
+  // builds the database-backed auth instance on first call). Reading
+  // `headers()` is what tells Next this route depends on the request and
+  // must render dynamically; doing it first means that bailout happens
+  // before any database code runs, so a build's static-generation pass defers
+  // this page to request time instead of trying to prerender it and hitting
+  // a missing DATABASE_URL.
+  const requestHeaders = await headers();
+  const session = await getAuth().api.getSession({ headers: requestHeaders });
   if (!session) return null;
 
   return {

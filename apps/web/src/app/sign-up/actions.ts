@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { authErrorMessage } from "@/lib/auth-errors";
 
 export type SignUpState = {
@@ -17,7 +17,7 @@ export async function signUpAction(
   const displayName = String(formData.get("displayName") ?? "");
 
   try {
-    await auth.api.signUpEmail({
+    await getAuth().api.signUpEmail({
       body: { email, password, name: displayName },
     });
   } catch (error) {
