@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/session";
 import { getBaseUrl } from "@/lib/base-url";
 import { CopyInviteLink } from "@/components/copy-invite-link";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
+import { RemoveMemberForm } from "@/components/remove-member-form";
+import { LeaveCouchForm } from "@/components/leave-couch-form";
 
 export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   const user = await getCurrentUser();
@@ -116,11 +118,18 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
               className="flex items-center justify-between rounded border border-zinc-200 px-4 py-3 dark:border-zinc-800"
             >
               <span>{member.displayName}</span>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">{member.role}</span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">{member.role}</span>
+                {isHost && member.role !== "host" ? (
+                  <RemoveMemberForm couchId={couch.id} targetUserId={member.userId} />
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
       </div>
+
+      {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
     </div>
   );
 }

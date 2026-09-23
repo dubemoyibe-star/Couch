@@ -61,6 +61,10 @@ A database test creates its own data with values unique to the run (for example 
 
 CI runs both `pnpm test` and `pnpm test:db`.
 
+**Known flakiness (local runs only)**: run locally, `pnpm test:db` reads `.env.test` and so talks to the real Neon `testing` database. It has occasionally hit a connection timeout or DNS failure on longer runs, most likely the compute-wake delay described under [Client and IDs](#client-and-ids) compounding across a long sequence of database tests rather than a single first connection. `vitest.db.config.ts` does not currently retry a failed run; re-running locally is the immediate fix.
+
+CI does not hit Neon at all: its `pnpm test:db` step runs against the `postgres:18` service container defined in `.github/workflows/ci.yml`, a plain local Postgres with no cold-start delay, so this specific flakiness is not expected there. If CI's `pnpm test:db` step becomes flaky for some other reason, that would be a different problem worth investigating on its own, not assumed to be this one.
+
 ## AI agents and destructive Prisma commands
 
 Prisma Migrate has a built-in safeguard: when it detects that it was started by an AI agent, it refuses destructive commands such as `migrate reset` unless the `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` environment variable is set, which is meant to record the user's explicit consent. An agent that hits this refusal must stop and ask the maintainer. It must never set that variable itself, and the maintainer's consent applies to that one action only. The `COUCH_DB_ENV` guard applies as well and is not replaced by the safeguard.
@@ -111,6 +115,8 @@ A test suite that touches the database (a `*.db.test.ts` file, see [Tests](#test
 
 Sign-in is handled by Better Auth (`apps/web/src/lib/auth.ts`), using its Prisma adapter (`better-auth/adapters/prisma`) against the same shared Prisma client `@couch/database` already exports (`getPrismaClient()`). Using the shared client, instead of a second `PrismaClient`, keeps auth queries on the same connection pool, the same `DATABASE_URL`, and the same `COUCH_DB_ENV` guard as the rest of the app.
 
+`auth.ts` exports `getAuth()`, not a module-scope `auth` instance: building the Better Auth instance calls `getPrismaClient()`, which reads `DATABASE_URL`, so building it eagerly at import time would make every module that (even indirectly) imports `auth.ts` require a live database, including during `next build`'s page-data collection. `getAuth()` defers that construction to first call, the same lazy-singleton pattern `getPrismaClient()` itself uses.
+
 **Schema reconciliation**: Better Auth's Prisma adapter conventionally expects a `name` field on the user model. The existing `User` model already has `displayName`, and adding a second `name` field would leave two overlapping name fields. Instead, `auth.ts` configures the adapter with `user: { fields: { name: "displayName" } }`, which points the adapter's `name` concept at the existing `displayName` column. The adapter's own field name in code stays `name` (visible in a Better Auth session's `user.name`); the database column and the rest of the app keep `displayName`. The existing id strategy (`uuid(7)`) and the unique `email` constraint are unchanged. `User.emailVerified` was added because the adapter requires it; it defaults to `false` and stays that way, since email verification is not sent or enforced in this MVP.
 
 `Session` and `Account` cascade-delete with their `User` (`onDelete: Cascade`), matching Better Auth's documented schema. `Verification` has no foreign key: Better Auth looks up a verification row by `identifier`.
@@ -119,4 +125,4 @@ Sign-in is handled by Better Auth (`apps/web/src/lib/auth.ts`), using its Prisma
 
 Env vars: `BETTER_AUTH_SECRET` (generate with `openssl rand -base64 32`) and `BETTER_AUTH_URL` (the app's own base URL). Add real values to `.env.local` and `.env.test`; `.env.example` has placeholders only.
 
-`apps/web/src/lib/session.ts` exports `getCurrentUser()`, which reads the session for the current request through `auth.api.getSession`. Later pages and route handlers should call it instead of reimplementing session lookup.
+`apps/web/src/lib/session.ts` exports `getCurrentUser()`, which reads the session for the current request through `getAuth().api.getSession`. Later pages and route handlers should call it instead of reimplementing session lookup. It reads `headers()` before calling `getAuth()`, not after: `headers()` is what tells Next a route depends on the current request and must render dynamically rather than being prerendered at build time, so that bailout needs to happen before any database-backed code runs.
