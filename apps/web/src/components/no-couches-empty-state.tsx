@@ -11,10 +11,10 @@ export function NoCouchesEmptyState() {
           aria-hidden="true"
           className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--color-primary)_10%,transparent),transparent_75%)]"
         />
-        <Film aria-hidden="true" className="absolute left-[9%] top-12 size-8 -rotate-12 text-primary/40" />
-        <Ticket aria-hidden="true" className="absolute right-[10%] top-16 size-8 rotate-12 text-primary/40" />
-        <Popcorn aria-hidden="true" className="absolute bottom-14 left-[12%] size-8 -rotate-6 text-primary/35" />
-        <Sparkles aria-hidden="true" className="absolute bottom-16 right-[13%] size-7 text-primary/50" />
+        <Film aria-hidden="true" className="absolute hidden sm:block left-[9%] top-12 size-8 -rotate-12 text-primary/40" />
+        <Ticket aria-hidden="true" className="absolute hidden sm:block right-[10%] top-16 size-8 rotate-12 text-primary/40" />
+        <Popcorn aria-hidden="true" className="absolute hidden sm:block bottom-14 left-[12%] size-8 -rotate-6 text-primary/35" />
+        <Sparkles aria-hidden="true" className="absolute hidden sm:block bottom-16 right-[13%] size-7 text-primary/50" />
 
         <span aria-hidden="true" className="relative flex size-44 items-center justify-center">
           <span className="absolute inset-0 rounded-full border border-primary/20" />
