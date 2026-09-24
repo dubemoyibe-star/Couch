@@ -81,18 +81,20 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
 export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
   return (
     <Card as="li" className="overflow-hidden p-0">
+      {/* The whole card is the link; the artwork runs flush to the card's left, top and bottom edges. */}
       <Link
         href={`/couch/${couch.id}`}
-        className={cx("group flex h-full min-h-52 gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
+        className={cx("group flex h-full min-h-52 rounded-md hover:bg-surface-muted", calmTransition, focusRing)}
       >
         <Poster
           url={media?.posterUrl ?? null}
           seed={media?.id ?? couch.id}
           name={media?.title ?? couch.name}
-          className="aspect-[3/4] w-28 self-stretch rounded-md"
+          bordered={false}
+          className="w-32 self-stretch rounded-none border-r border-border"
         />
-        <span className="flex min-w-0 flex-1 flex-col justify-between gap-3 py-1">
-          <span className="flex flex-col gap-1">
+        <span className="flex min-w-0 flex-1 flex-col justify-between gap-6 p-5">
+          <span className="flex flex-col gap-2">
             <span className="truncate font-display text-xl font-semibold text-text">{couch.name}</span>
             <span className="truncate text-sm text-text-muted">
               {media ? (
@@ -104,7 +106,7 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
               )}
             </span>
           </span>
-          <span className="flex items-center justify-between gap-3 text-sm text-text-muted">
+          <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border pt-4 text-sm text-text-muted">
             <Badge tone={role === "host" ? "primary" : "neutral"}>{role === "host" ? "Host" : "Participant"}</Badge>
             <span className="inline-flex items-center gap-1.5">
               <Users aria-hidden="true" className="size-4" />

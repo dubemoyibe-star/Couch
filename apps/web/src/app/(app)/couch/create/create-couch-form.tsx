@@ -19,7 +19,7 @@ function clientNameError(name: string): string | null {
 }
 
 type CreateCouchFormProps = {
-  /** When set (inside a dialog), Cancel is a button that calls this instead of a link home. */
+  /** Set inside a dialog, which has its own close control, so the Cancel link is left out. */
   readonly onCancel?: () => void;
 };
 
@@ -53,11 +53,7 @@ export function CreateCouchForm({ onCancel }: CreateCouchFormProps) {
       <Button type="submit" loading={pending} loadingLabel="Creating…" className={authButtonClass}>
         Create couch
       </Button>
-      {onCancel ? (
-        <button type="button" onClick={onCancel} className={cancelClass}>
-          Cancel
-        </button>
-      ) : (
+      {onCancel ? null : (
         <Link href="/" className={cancelClass}>
           Cancel
         </Link>

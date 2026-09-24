@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Armchair } from "lucide-react";
+import { Armchair, X } from "lucide-react";
+import { calmTransition, focusRing } from "@/components/ui/cx";
 import { CreateCouchForm } from "@/app/(app)/couch/create/create-couch-form";
 
 /**
@@ -27,8 +28,16 @@ export function CreateCouchDialog() {
       onClick={(event) => {
         if (event.target === event.currentTarget) ref.current?.close();
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-md border border-border bg-surface p-6 text-text backdrop:bg-black/60 backdrop:backdrop-blur-sm sm:p-8"
+      className="relative m-auto w-[calc(100%-2rem)] max-w-md rounded-md border border-border bg-surface p-6 text-text backdrop:bg-black/60 backdrop:backdrop-blur-sm sm:p-8"
     >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={() => ref.current?.close()}
+        className={`absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-muted hover:bg-danger/10 hover:text-danger active:bg-danger/15 active:text-danger ${calmTransition} ${focusRing}`}
+      >
+        <X aria-hidden="true" className="size-4" />
+      </button>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <span
