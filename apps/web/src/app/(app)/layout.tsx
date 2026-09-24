@@ -1,14 +1,9 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { NavLink } from "@/components/nav-link";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { getCurrentUser } from "@/lib/session";
 import { signOutAction } from "@/app/sign-out/actions";
-
-const navLinkClass = cx(
-  "rounded-sm px-2 py-1 text-sm font-medium text-text-muted hover:text-text",
-  calmTransition,
-  focusRing,
-);
 
 // Secondary and deliberately small so the header stays quiet next to the content.
 const signOutClass = cx(
@@ -29,12 +24,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <Logo size={26} />
             </Link>
             <nav aria-label="Main" className="flex items-center gap-1">
-              <Link href="/" className={navLinkClass}>
-                My Couches
-              </Link>
-              <Link href="/catalog" className={navLinkClass}>
-                Catalog
-              </Link>
+              <NavLink href="/" exact>
+                Dashboard
+              </NavLink>
+              <NavLink href="/couches">My Couches</NavLink>
+              <NavLink href="/catalog">Catalog</NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
