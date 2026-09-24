@@ -5,6 +5,10 @@ import { assertDatabaseEnv, createPrismaClient, deleteUnverifiedUser, type Prism
 
 assertDatabaseEnv(process.env, "test-suite");
 
+// Over Neon a round trip can take seconds, and this transaction stays open
+// while the delete waits on it, so it needs more than Prisma's default 5s.
+const WRITER_TRANSACTION_OPTIONS = { maxWait: 15_000, timeout: 30_000 };
+
 describe("deleteUnverifiedUser", () => {
   let db: PrismaClient;
   const userIds: string[] = [];
@@ -115,7 +119,7 @@ describe("deleteUnverifiedUser", () => {
       });
       insertDone();
       await gate;
-    });
+    }, WRITER_TRANSACTION_OPTIONS);
     await inserted;
 
     // The release has to wait for that transaction (the insert holds a lock on

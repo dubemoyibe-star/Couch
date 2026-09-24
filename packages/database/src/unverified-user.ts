@@ -10,6 +10,9 @@ export type DeleteUnverifiedUserResult =
   | { readonly ok: true }
   | { readonly ok: false; readonly reason: "not_found" | "verified" | "has_data" };
 
+/** `maxWait`: how long to wait for a transaction slot. `timeout`: how long the transaction may run. */
+const DELETE_TRANSACTION_OPTIONS = { maxWait: 15_000, timeout: 15_000 };
+
 /**
  * Deletes the user with this email, and its accounts, only if the user is
  * unverified and has nothing attached: no owned couch, no couch membership, no
@@ -23,6 +26,10 @@ export type DeleteUnverifiedUserResult =
  * the `emailVerified = false` condition, and the couch and membership foreign
  * keys are `onDelete: Restrict`, so the database itself refuses the delete if
  * data appeared anyway (reported as `has_data`).
+ *
+ * Because it can wait behind another transaction that holds the row lock, the
+ * transaction is given a longer wait and run budget than Prisma's default
+ * (2s to start, 5s to run): `DELETE_TRANSACTION_OPTIONS` below.
  *
  * Deleting the user removes its `Account` rows (`onDelete: Cascade`); they are
  * deleted explicitly first so the intent does not depend on the cascade.
@@ -52,7 +59,7 @@ export async function deleteUnverifiedUser(
       const deleted = await tx.user.deleteMany({ where: { id: user.id, emailVerified: false } });
       if (deleted.count !== 1) return { ok: false, reason: "verified" } as const;
       return { ok: true } as const;
-    });
+    }, DELETE_TRANSACTION_OPTIONS);
   } catch (error) {
     // P2003: a foreign key refused the delete because data was attached.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
