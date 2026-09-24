@@ -25,9 +25,10 @@ model User {
   id            String   @id @default(uuid(7))
   email         String   @unique
   displayName   String
-  // Required by Better Auth's adapter. Email verification is not enforced in
-  // this MVP (emailAndPassword.requireEmailVerification is left false), so
-  // this stays false for every user for now.
+  // Required by Better Auth's adapter. Email/password sign-ups start false and
+  // flip to true when the emailed link is opened; Google sign-ups start true
+  // when Google vouches for the address. A user with this false is refused a
+  // session on both paths (apps/web/src/lib/auth.ts).
   emailVerified Boolean  @default(false)
   // Required by Better Auth's adapter (a user avatar URL). Nothing in this
   // app sets it yet.
@@ -42,9 +43,8 @@ model User {
 }
 
 // A Better Auth session token. Deletes: cascades with its User
-// (`onDelete: Cascade`), matching Better Auth's documented schema. There is
-// no user-delete function in this codebase yet, so this is defensive, not
-// currently exercised.
+// (`onDelete: Cascade`), matching Better Auth's documented schema. The only
+// user delete (`deleteUnverifiedUser`) refuses a user that has a session.
 model Session {
   id        String   @id @default(uuid(7))
   userId    String
@@ -62,9 +62,9 @@ model Session {
 // A linked sign-in method for a User: a credential (email/password) or an
 // external provider account. Better Auth stores password sign-in as an
 // Account row with providerId "credential". Deletes: cascades with its User
-// (`onDelete: Cascade`), matching Better Auth's documented schema. There is
-// no user-delete function in this codebase yet, so this is defensive, not
-// currently exercised.
+// (`onDelete: Cascade`), matching Better Auth's documented schema. The only
+// user delete (`deleteUnverifiedUser`) removes the accounts of the unverified
+// user it deletes.
 model Account {
   id                    String    @id @default(uuid(7))
   userId                String
@@ -173,8 +173,9 @@ model Couch {
   id         String @id @default(uuid(7))
   name       String
   ownerId    String
-  // The user who created the couch. There is no user delete function in the
-  // MVP, so a delete is refused (`onDelete: Restrict`) rather than guessed at.
+  // The user who created the couch. The only user delete
+  // (`deleteUnverifiedUser`) checks for owned couches first, and a delete is
+  // refused (`onDelete: Restrict`) rather than guessed at.
   owner      User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   inviteCode String @unique
 
@@ -205,8 +206,8 @@ enum CouchRole {
 // Deletes: a membership has no existence apart from its couch, so removing a
 // couch removes its memberships (`onDelete: Cascade` on `couchId`), even
 // though no couch delete function exists yet. A user cannot be deleted while
-// they still hold a membership (`onDelete: Restrict` on `userId`), matching
-// the rule that there is no user delete function in the MVP.
+// they still hold a membership (`onDelete: Restrict` on `userId`), so the only
+// user delete (`deleteUnverifiedUser`) refuses a user that holds one.
 model CouchMember {
   id       String    @id @default(uuid(7))
   couchId  String

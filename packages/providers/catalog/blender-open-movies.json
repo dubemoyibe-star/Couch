@@ -5,7 +5,7 @@
     "title": "Big Buck Bunny",
     "description": null,
     "durationSeconds": null,
-    "posterUrl": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/92/96/9296b1255fff3ef0e25da43f70616349_m.webp",
     "releaseYear": 2008,
     "license": {
       "licenseName": "Creative Commons Attribution",
@@ -19,7 +19,7 @@
       "commercialUseAllowed": true,
       "additionalRestrictions": "Excludes all logos on the site (Blender Foundation logo, Creative Commons logo) and associated trademarks, and the DVD cover art/disc print, from the CC license grant.",
       "verifiedAt": "2026-09-22",
-      "verificationNotes": "Verified against https://peach.blender.org/about/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://peach.blender.org/download/ (streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits roll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. No runtime or poster asset is stated on the official source; both are null pending a follow-up if needed."
+      "verificationNotes": "Verified against https://peach.blender.org/about/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://peach.blender.org/download/ (streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits roll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. No runtime is stated on the official source. posterUrl (added 2026-09-24) is the thumbnail image on the film's Blender Studio page https://studio.blender.org/films/big-buck-bunny/; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
     },
     "playback": {
       "kind": "embed",
@@ -32,7 +32,7 @@
     "title": "Sintel",
     "description": null,
     "durationSeconds": 888,
-    "posterUrl": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/03/f7/03f7b0d15c55b428680d4c6bb313f742_m.webp",
     "releaseYear": 2010,
     "license": {
       "licenseName": "Creative Commons Attribution",
@@ -46,11 +46,227 @@
       "commercialUseAllowed": true,
       "additionalRestrictions": "Excludes all logos (Blender Foundation, Durian project, Creative Commons) and associated trademarks, and material not resulting from the Durian project (for example magazine covers), from the CC license grant.",
       "verifiedAt": "2026-09-22",
-      "verificationNotes": "Verified against https://durian.blender.org/sharing/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://durian.blender.org/about/ and /download/ (runtime of 888 seconds; streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits scroll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. No poster asset is stated on the official source."
+      "verificationNotes": "Verified against https://durian.blender.org/sharing/ (CC BY 3.0 grant; commercial use and broadcast/screening explicitly permitted) and https://durian.blender.org/about/ and /download/ (runtime of 888 seconds; streaming link to the official YouTube upload used as playback.url). CC BY 3.0 requires including the entire credits scroll when screening or broadcasting the whole film, so the player must never cut the film's own end credits. posterUrl (added 2026-09-24) is the thumbnail image on the film's Blender Studio page https://studio.blender.org/films/sintel/; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
     },
     "playback": {
       "kind": "embed",
       "url": "https://www.youtube.com/embed/eRsGyueVLvQ"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-spring",
+    "title": "Spring",
+    "description": "Spring is the story of a shepherd girl and her dog, who face ancient spirits in order to continue the cycle of life.",
+    "durationSeconds": 464,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/ea/65/ea65feaacf95911f39844e2ea97e68b5_m.webp",
+    "releaseYear": 2019,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://studio.blender.org/projects/spring/pages/about/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "© Blender Foundation | cloud.blender.org/spring",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Spring logo, Creative Commons logo) and associated trademarks, and material that is clearly not produced by the Spring project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://studio.blender.org/projects/spring/pages/about/ (film released under CC BY 4.0; free reuse and distribution including commercial use with attribution; runtime stated as 7:44, so 464 seconds). Playback is the official YouTube video linked from https://studio.blender.org/films/spring/. posterUrl is the thumbnail image on that film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0. Keep the film's own end credits intact when showing the whole film."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/WhWc3b3KhnY"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-coffee-run",
+    "title": "Coffee Run",
+    "description": "Fueled by caffeine, a young woman runs through the bittersweet memories of her past relationship.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/7a/43/7a43fa6b0bc44e62f1cbb21473800e07_m.webp",
+    "releaseYear": 2020,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://studio.blender.org/projects/coffee-run/pages/licensing/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(CC) Blender Foundation | studio.blender.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Coffee Run logo, Creative Commons logo) and associated trademarks, and material that is clearly not produced by the Coffee Run project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://studio.blender.org/projects/coffee-run/pages/licensing/ (content released under CC BY 4.0; free reuse and distribution including commercial use with attribution). Playback is the official YouTube video linked from https://studio.blender.org/films/coffee-run/. Release year 2020 as shown on the project page. No runtime is stated on a licensing source, so it is null. posterUrl is the thumbnail image on the film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/PVGeM40dABA"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-wing-it",
+    "title": "Wing It!",
+    "description": "An uptight engineer gets an unwelcome visit from a enthusiastic wannabe-pilot, causing both of them to be launched into the air inside an out-of-control space shuttle.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/c2/6d/c26d3b56aeb6bc9bf1ba6ee8e27b7ccd_m.webp",
+    "releaseYear": null,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://studio.blender.org/projects/wing-it/pages/licensing/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(CC) Blender Foundation | studio.blender.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Wing It! logo, Creative Commons logo, sponsor logos) and associated trademarks, and material that is clearly not produced by the project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://studio.blender.org/projects/wing-it/pages/licensing/ (work licensed under CC BY 4.0; free reuse and distribution including commercial use with attribution). Playback is the official YouTube video linked from https://studio.blender.org/films/wing-it/. No release year or runtime is stated on a licensing source, so both are null. posterUrl is the thumbnail image on the film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/u9lj-c29dxI"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-glass-half",
+    "title": "Glass Half",
+    "description": "Exploring cartoon animation and rendering in Blender 2.6x viewport - this 2015 short film looks fantastic even in 4K.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/ca/e4/cae4b30a27c3a0fe21d494d20b4fce83_m.webp",
+    "releaseYear": 2015,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceUrl": "https://studio.blender.org/projects/glass-half/pages/licensing/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(CC) Blender Foundation | studio.blender.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Glass Half logo, Creative Commons logo, sponsor logos) and associated trademarks, and material that is clearly not produced by the Glass Half project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://studio.blender.org/projects/glass-half/pages/licensing/ (content released under CC BY 3.0; free reuse and distribution including commercial use with attribution). Playback is the official YouTube video linked from https://studio.blender.org/films/glass-half/, which also states the 2015 release. No runtime is stated on a licensing source, so it is null. posterUrl is the thumbnail image on the film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/lqiN98z6Dak"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-tears-of-steel",
+    "title": "Tears of Steel",
+    "description": "In 2012 this film pushed the limits for motion tracking, masking and realistic rendering in Blender.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/3c/83/3c833d978e7de4b58eaa1a12be541664_m.webp",
+    "releaseYear": 2012,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceUrl": "https://mango.blender.org/sharing/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(CC) Blender Foundation | mango.blender.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Mango logo, Creative Commons logo, sponsor logos) and associated trademarks, and material that is clearly not resulting from the Mango project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://mango.blender.org/sharing/ (project results licensed under CC BY 3.0; free reuse and distribution including commercial use with attribution) and https://mango.blender.org/about/ (the film may be shared and shown freely for as long as the credit scroll is kept included, so the player must never cut the film's own end credits). Playback is the official YouTube video linked from https://studio.blender.org/films/tears-of-steel/, which also states the 2012 release. No runtime is stated on a licensing source, so it is null. posterUrl is the thumbnail image on that film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/R6MlUcmOul8"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-cosmos-laundromat",
+    "title": "Cosmos Laundromat: First Cycle",
+    "description": "Aimed at becoming a feature film, the first episode of Cosmos Laundromat became the biggest Blender Institute production so far.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/75/54/7554352c0ec78a8540a8e5f3b3671927_m.webp",
+    "releaseYear": null,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceUrl": "https://gooseberry.blender.org/license/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(CC) Blender Foundation | gooseberry.blender.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "Excludes all logos on the website (including the Blender logo, Gooseberry logo, Creative Commons logo, sponsor logos) and associated trademarks, and material that is clearly not produced by the Gooseberry project, such as magazine covers, from the CC license grant.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://gooseberry.blender.org/license/ (the Gooseberry Open Movie project, of which Cosmos Laundromat is the film, is licensed under CC BY 3.0; free reuse and distribution including commercial use with attribution). Playback is the official YouTube video linked from https://studio.blender.org/films/cosmos-laundromat/. No release year or runtime is stated on a licensing source, so both are null. posterUrl is the thumbnail image on that film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/Y-rmzh0PI3c"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-elephants-dream",
+    "title": "Elephants Dream",
+    "description": "Released in 2006, this is widely known as the first open movie ever. Elephants Dream has put Blender on the radar for many pros.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/04/77/0477dfea1d88a94ba1a75f99f433b8f6_m.webp",
+    "releaseYear": 2006,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/",
+      "sourceUrl": "https://orange.blender.org/blog/creative-commons-license-2/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "(c) copyright 2006, Blender Foundation / Netherlands Media Art Institute / www.elephantsdream.org",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "The additional soundtrack audio files on the project website are under a different license (Creative Commons Attribution-NonCommercial-NoDerivs 2.5) and are not part of this entry. Some texture files on the project DVDs carry their own Creative Commons attribution.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://orange.blender.org/blog/creative-commons-license-2/ (the movie is licensed under the Creative Commons Attribution license; free reuse and distribution including commercial use with attribution; the page links to https://creativecommons.org/licenses/by/2.5/) and https://orange.blender.org/ (states the movie is available under Creative Commons Attribution 2.5). When screening or broadcasting the entire movie the entire credits roll must be included, so the player must never cut the film's end credits; the attribution shown is the line the source gives for reuse of the movie itself. Playback is the official YouTube video linked from https://studio.blender.org/films/elephants-dream/, which also states the 2006 release. No runtime is stated on a licensing source, so it is null. posterUrl is the thumbnail image on that film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/TLkA0RELQ1g"
+    }
+  },
+  {
+    "providerId": "static",
+    "providerMediaId": "blender-project-gold",
+    "title": "Project Gold",
+    "description": "A technical and artistic showcase, focused on highly stylized rendering and animation workflows using Geometry Node tools.",
+    "durationSeconds": null,
+    "posterUrl": "https://studio.blender.org/files/public/thumbnail/c4/53/c453eb55534c8a3c01234a89081e56cf_m.webp",
+    "releaseYear": null,
+    "license": {
+      "licenseName": "Creative Commons Attribution",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://studio.blender.org/projects/gold/pages/credits/",
+      "rightsholder": "Blender Foundation",
+      "attributionRequired": true,
+      "attribution": "© Blender Foundation | studio.blender.org/projects/gold",
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "The only licensing statement found is the one line on the project's credits page; it names no exclusions. Logos and trademarks are not covered by the grants Blender Studio states for its other projects, and the same care applies here.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified against https://studio.blender.org/projects/gold/pages/credits/, which states the project is an Open Project licensed as Creative Commons Attribution 4.0 with the attribution line recorded here. That page is the only per-project licensing statement found; it does not spell out the commercial-use terms itself, which come from the CC BY 4.0 license text at the licenseUrl. Playback is the official YouTube video linked from https://studio.blender.org/films/gold/. No release year or runtime is stated on a licensing source, so both are null. posterUrl is the thumbnail image on that film page; the Blender Studio terms at https://studio.blender.org/terms-and-conditions/ state that, unless notified otherwise, all digital content including artwork is available under Creative Commons Attribution 4.0."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://www.youtube.com/embed/nV_awXI9XJY"
     }
   }
 ]
