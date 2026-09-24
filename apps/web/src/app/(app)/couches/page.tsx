@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Armchair, Plus } from "lucide-react";
 import { getPrismaClient, listCouchesForUser } from "@couch/database";
-import { CouchCard } from "@/components/couch-card";
+import { CouchCard, NewCouchTile } from "@/components/couch-card";
 import { Card } from "@/components/ui/card";
 import { buttonClassName } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/session";
@@ -37,7 +37,7 @@ export default async function CouchesPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl font-semibold text-text">My Couches</h1>
         <Link href="/couch/create" className={buttonClassName("primary")}>
@@ -45,10 +45,11 @@ export default async function CouchesPage() {
           Create a couch
         </Link>
       </div>
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {couches.map(({ couch, role, memberCount }) => (
           <CouchCard key={couch.id} id={couch.id} name={couch.name} role={role} memberCount={memberCount} />
         ))}
+        <NewCouchTile />
       </ul>
     </div>
   );

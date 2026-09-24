@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-border">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-4 sm:gap-6">
             <Link href="/" aria-label="Couch home" className={cx("rounded-sm", focusRing)}>
               <Logo size={26} />
