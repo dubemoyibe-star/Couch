@@ -47,10 +47,10 @@ export function AuthShell({
 }) {
   return (
     <div
-      className={cx("flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12", backdrop)}
+      className={cx("flex flex-1 flex-col items-center justify-center gap-6 px-6 py-12", backdrop)}
     >
       <Logo size={30} />
-      <Card as="section" className="flex w-full max-w-md flex-col gap-6 p-8">
+      <Card as="section" className="flex w-full max-w-md flex-col gap-6 p-6 sm:p-8">
         <div className="flex flex-col items-center gap-3 text-center">
           {icon ? <IconBadge>{icon}</IconBadge> : null}
           <h1 className="font-display text-2xl font-semibold text-text">{title}</h1>
@@ -121,16 +121,16 @@ export function AuthSplit({
       </aside>
       <main
         className={cx(
-          "flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12",
+          "flex flex-1 flex-col items-center justify-center gap-6 px-6 py-12",
           backdrop,
           "lg:bg-none",
         )}
       >
-        <Logo size={30} className="lg:hidden" />
         <div className="flex w-full max-w-sm flex-col gap-6">
+          <Logo size={24} className="lg:hidden" />
           <div className="flex flex-col gap-1.5">
             <h1 className="font-display text-3xl font-semibold text-text">{title}</h1>
-            <p className="text-text-muted">{subtitle}</p>
+            <p className="text-sm text-text-muted sm:text-base">{subtitle}</p>
           </div>
           {children}
         </div>
