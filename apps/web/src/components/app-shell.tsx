@@ -5,7 +5,7 @@ import { AppNav } from "@/components/app-nav";
 import { HeaderGreeting } from "@/components/header-greeting";
 import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
-import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import { calmTransition, cx, focusRing, inputFocus } from "@/components/ui/cx";
 
 /** The signed-in frame: sidebar on desktop, top bar with search, and bottom tabs on phones. */
 export function AppShell({ name, children }: { readonly name: string; readonly children: ReactNode }) {
@@ -71,8 +71,7 @@ export function AppShell({ name, children }: { readonly name: string; readonly c
               placeholder="Search movies, shows..."
               className={cx(
                 "min-h-10 w-full rounded-md border border-border-strong bg-surface py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted",
-                calmTransition,
-                focusRing,
+                inputFocus,
               )}
             />
           </form>

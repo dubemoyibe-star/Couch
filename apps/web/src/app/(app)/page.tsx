@@ -31,7 +31,6 @@ export default async function DashboardPage() {
         id: item.id,
         title: item.title,
         posterUrl: item.posterUrl ?? null,
-        attribution: item.license.attributionRequired ? item.license.attribution : null,
       }))}
     />
   );

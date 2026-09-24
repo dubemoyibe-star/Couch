@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cx, inputFocus } from "@/components/ui/cx";
 
 /** A read-only invite link with a copy-to-clipboard affordance. */
 export function CopyInviteLink({ url }: { url: string }) {
@@ -17,22 +20,29 @@ export function CopyInviteLink({ url }: { url: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
-      <span className="text-sm font-medium">Invite link</span>
+    <div className="flex flex-col gap-2">
+      <label htmlFor="invite-link" className="text-sm font-medium text-text">
+        Invite link
+      </label>
       <div className="flex items-center gap-2">
         <input
+          id="invite-link"
           readOnly
           value={url}
           onFocus={(event) => event.target.select()}
-          className="flex-1 rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-black"
+          className={cx(
+            "min-h-10 min-w-0 flex-1 rounded-md border border-border-strong bg-surface-muted px-3 py-2 text-sm text-text-muted",
+            inputFocus,
+          )}
         />
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="rounded bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-black"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <Button variant="secondary" onClick={handleCopy} className="min-h-10 px-4">
+          {copied ? (
+            <Check aria-hidden="true" className="size-4" />
+          ) : (
+            <Copy aria-hidden="true" className="size-4" />
+          )}
+          <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+        </Button>
       </div>
     </div>
   );

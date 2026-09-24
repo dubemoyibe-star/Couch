@@ -10,7 +10,6 @@ export type DiscoverItem = {
   readonly title: string;
   readonly posterUrl: string | null;
   /** Credit line to show with the title, or null when the license asks for none. */
-  readonly attribution: string | null;
 };
 
 type TabId = "continue" | "popular" | "recent";
@@ -129,9 +128,6 @@ export function DiscoverTabs({
                   />
                   <span className="flex flex-col">
                     <span className="text-sm font-medium text-text">{item.title}</span>
-                    {item.attribution ? (
-                      <span className="text-xs leading-snug text-text-muted">{item.attribution}</span>
-                    ) : null}
                   </span>
                 </Link>
               </li>

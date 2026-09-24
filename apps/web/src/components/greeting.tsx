@@ -13,7 +13,7 @@ export function Greeting({ name }: { readonly name: string }) {
   const greeting = useSyncExternalStore(subscribe, clientGreeting, serverGreeting);
   return (
     <>
-      {greeting}, {name}.
+      {greeting}, {name}👋.
     </>
   );
 }

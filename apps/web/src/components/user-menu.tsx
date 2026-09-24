@@ -1,5 +1,6 @@
 import { ChevronDown, LogOut } from "lucide-react";
 import { Avatar } from "@/components/avatar";
+import { CloseDetailsOnOutside } from "@/components/close-details-on-outside";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { signOutAction } from "@/app/sign-out/actions";
 
@@ -19,6 +20,7 @@ export function UserMenu({
 }) {
   return (
     <details className="group relative">
+      <CloseDetailsOnOutside />
       <summary
         aria-label={`Account menu for ${name}`}
         className={cx(
