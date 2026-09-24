@@ -121,6 +121,39 @@ export function passwordChangedEmail({ name, forgotPasswordUrl }: PasswordChange
   return { subject: "Your Couch password was changed", html, text };
 }
 
+export type WelcomeEmailInput = {
+  readonly name: string;
+  readonly catalogUrl: string;
+  readonly createCouchUrl: string;
+};
+
+export function welcomeEmail({ name, catalogUrl, createCouchUrl }: WelcomeEmailInput): EmailContent {
+  const safeName = escapeHtml(name);
+  const safeCatalogUrl = escapeHtml(catalogUrl);
+  const safeCreateUrl = escapeHtml(createCouchUrl);
+
+  const html = layout({
+    heading: "Welcome to Couch",
+    paragraphs: [
+      `Hi ${safeName}, your email is verified and your account is ready. Pull up a seat.`,
+      `Have a look around the catalog to find something to watch, or <a href="${safeCreateUrl}" style="color:${PRIMARY};">create a couch</a> and invite friends to watch together.`,
+    ],
+    button: { label: "Browse the catalog", url: safeCatalogUrl },
+    footnote: "Glad to have you. Enjoy movie night.",
+  });
+
+  const text = [
+    `Hi ${name}, your email is verified and your account is ready. Pull up a seat.`,
+    "",
+    `Browse the catalog: ${catalogUrl}`,
+    `Create a couch and invite friends: ${createCouchUrl}`,
+    "",
+    "Glad to have you. Enjoy movie night.",
+  ].join("\n");
+
+  return { subject: "Welcome to Couch", html, text };
+}
+
 export type VerificationEmailInput = {
   readonly name: string;
   readonly url: string;

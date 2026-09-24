@@ -5,7 +5,7 @@ import { getPrismaClient } from "@couch/database";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
-import { passwordChangedEmail, resetPasswordEmail, verificationEmail } from "./email-templates";
+import { passwordChangedEmail, resetPasswordEmail, verificationEmail, welcomeEmail } from "./email-templates";
 
 // Built lazily, and only on first use, the same way @couch/database's own
 // getPrismaClient() defers its DATABASE_URL read. betterAuth() calls
@@ -73,6 +73,43 @@ export const emailAndPassword = {
   },
 } as const;
 
+// Not awaited, and never throws: a failure to build the welcome email must not
+// break the verification or sign-up that triggered it.
+function sendWelcomeEmail(user: { email: string; name: string }): void {
+  try {
+    const baseUrl = getBaseUrl();
+    const message = welcomeEmail({
+      name: user.name,
+      catalogUrl: `${baseUrl}/catalog`,
+      createCouchUrl: `${baseUrl}/couch/create`,
+    });
+    runInBackground(sendEmail({ to: user.email, ...message }));
+  } catch (err) {
+    console.error(`[email] welcome email not sent: ${err instanceof Error ? err.message : "unknown error"}`);
+  }
+}
+
+// The welcome email goes out the first time an account becomes verified, and
+// the two ways that can happen are handled by two hooks that cannot both fire
+// for the same account:
+// - Email/password accounts are created unverified and later flip to verified.
+//   emailVerification.afterEmailVerification fires on that flip only. Better
+//   Auth returns early for an already-verified account, so re-opening a used
+//   link never reaches it.
+// - Google accounts are created already verified, so nothing ever flips and
+//   afterEmailVerification never fires for them. This create hook covers them.
+//   It only sends when the row is created with emailVerified true, and an
+//   email/password sign-up is created with it false, so it stays silent there.
+export const databaseHooks = {
+  user: {
+    create: {
+      async after(user: { email: string; name: string; emailVerified: boolean }) {
+        if (user.emailVerified) sendWelcomeEmail(user);
+      },
+    },
+  },
+} as const;
+
 export const emailVerification = {
   // sendOnSignIn is deliberately left off: a sign-in attempt goes through a
   // Server Action, which Better Auth's rate limiter does not see, so it would
@@ -91,6 +128,9 @@ export const emailVerification = {
       expiresInMinutes: VERIFICATION_LINK_TTL_SECONDS / 60,
     });
     runInBackground(sendEmail({ to: user.email, ...message }));
+  },
+  async afterEmailVerification(user: { email: string; name: string }) {
+    sendWelcomeEmail(user);
   },
 };
 
@@ -138,6 +178,7 @@ function buildAuth() {
     },
     emailAndPassword,
     emailVerification,
+    databaseHooks,
     rateLimit,
     // Sign-up, sign-in, and sign-out are called from Server Actions
     // (auth.api.*), where Better Auth cannot set cookies on the response by
