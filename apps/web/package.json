@@ -10,7 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "send:test-email": "tsx --env-file ../../.env.local scripts/send-test-email.ts",
-    "sync:catalog":"tsx scripts/sync-catalog.ts",
+    "sync:catalog": "tsx scripts/sync-catalog.ts",
     "sync:catalog:test": "tsx scripts/sync-catalog.ts --env-file ../../.env.test"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "@couch/providers": "workspace:*",
     "@couch/shared": "workspace:*",
     "better-auth": "1.7.5",
+    "lucide-react": "^1.47.0",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",

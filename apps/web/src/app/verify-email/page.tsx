@@ -1,3 +1,4 @@
+import { Mail, MailCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { AuthShell, authLinkClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
@@ -20,9 +21,9 @@ export default async function VerifyEmailPage({
 
   if (errorMessage) {
     return (
-      <AuthShell title="Verification link problem">
+      <AuthShell title="Verification link problem" icon={<TriangleAlert className="size-6" />}>
         <FormError message={errorMessage} />
-        <p className="text-sm text-text-muted">Enter your email to get a new link.</p>
+        <p className="text-center text-sm text-text-muted">Enter your email to get a new link.</p>
         <ResendVerification />
       </AuthShell>
     );
@@ -30,11 +31,11 @@ export default async function VerifyEmailPage({
 
   if (status === "verified") {
     return (
-      <AuthShell title="Email verified">
+      <AuthShell title="Email verified" icon={<MailCheck className="size-6" />}>
         {user ? (
           <>
-            <p className="text-sm text-text-muted">Your email is verified and you are signed in.</p>
-            <p className="text-sm">
+            <p className="text-center text-sm text-text-muted">Your email is verified and you are signed in.</p>
+            <p className="text-center text-sm">
               <Link href="/" className={authLinkClass}>
                 Continue
               </Link>
@@ -42,8 +43,8 @@ export default async function VerifyEmailPage({
           </>
         ) : (
           <>
-            <p className="text-sm text-text-muted">Your email is verified. Sign in to continue.</p>
-            <p className="text-sm">
+            <p className="text-center text-sm text-text-muted">Your email is verified. Sign in to continue.</p>
+            <p className="text-center text-sm">
               <Link href="/sign-in" className={authLinkClass}>
                 Sign in
               </Link>
@@ -55,8 +56,8 @@ export default async function VerifyEmailPage({
   }
 
   return (
-    <AuthShell title="Verify your email">
-      <p className="text-sm text-text-muted">Enter your email to get a verification link.</p>
+    <AuthShell title="Verify your email" icon={<Mail className="size-6" />}>
+      <p className="text-center text-sm text-text-muted">Enter your email to get a verification link.</p>
       <ResendVerification />
     </AuthShell>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AuthDivider, AuthShell, authLinkClass } from "@/components/auth-shell";
+import { AuthDivider, AuthSplit, authLinkClass } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { SignUpForm } from "./sign-up-form";
 
@@ -10,16 +10,16 @@ export default async function SignUpPage({
 }) {
   const { error } = await searchParams;
   return (
-    <AuthShell title="Sign up">
-      <SignUpForm />
-      <AuthDivider />
+    <AuthSplit title="Create your account" subtitle="Get a seat on the couch in a minute.">
       <GoogleButton errorPath="/sign-up" callbackError={error} />
-      <p className="text-sm text-text-muted">
+      <AuthDivider label="or sign up with email" />
+      <SignUpForm />
+      <p className="text-center text-sm text-text-muted">
         Already have an account?{" "}
         <Link href="/sign-in" className={authLinkClass}>
           Sign in
         </Link>
       </p>
-    </AuthShell>
+    </AuthSplit>
   );
 }

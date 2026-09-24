@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
+import { authLinkClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
 import { ResendVerification } from "@/components/resend-verification";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,11 @@ export function SignInForm() {
           required
           autoComplete="current-password"
         />
+        <p className="-mt-2 text-right text-sm">
+          <Link href="/forgot-password" className={authLinkClass}>
+            Forgot your password?
+          </Link>
+        </p>
         <FormError message={state.error} />
         <Button type="submit" loading={pending} loadingLabel="Signing in…">
           Sign in
