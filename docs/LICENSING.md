@@ -122,11 +122,12 @@ format; update this document to match.
 
 ## Attribution
 
-Wherever a catalog item is presented to a user, its attribution must be shown when
-`attributionRequired` is true: the exact `attribution` text, associated with that item. This
-is a requirement for the Batch 2 UI work (the screens that render catalog items), not yet
-implemented as of this document. `attribution` is carried through to `CatalogMedia`
-(`packages/contracts`), so it is available on the wire wherever an item is displayed.
+When a catalog item's `attributionRequired` is true, its exact `attribution` text is shown on the
+item's details page, in the credit line beneath the description, together with the license name and
+links to the license and the source. Browse tiles in the catalog list show only the poster, title and
+year. Any other screen that presents an item as content in its own right, rather than as a link to
+its details page, must show the attribution too. `attribution` is carried through to
+`CatalogMedia` (`packages/contracts`), so it is available on the wire wherever an item is displayed.
 
 ## Takedown procedure
 

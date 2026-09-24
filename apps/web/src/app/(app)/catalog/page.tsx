@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Search } from "lucide-react";
 import { getCouch, getMembership, getPrismaClient, listCatalogMedia } from "@couch/database";
+import { Card } from "@/components/ui/card";
+import { buttonClassName } from "@/components/ui/button";
+import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { getCurrentUser } from "@/lib/session";
 
 const PAGE_SIZE = 24;
@@ -63,78 +67,96 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
   const backHref = `/catalog${currentParams.size > 0 ? `?${currentParams.toString()}` : ""}`;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-8">
-      <h1 className="text-lg font-medium">Catalog</h1>
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10">
+      <div className="flex flex-col gap-1">
+        <h1 className="font-display text-3xl font-semibold text-text">Catalog</h1>
+        <p className="text-text-muted">Licensed titles you can watch together.</p>
+      </div>
 
       {pickingFor ? (
-        <div className="flex items-center justify-between rounded border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-          <span>Picking media for {pickingFor.name}</span>
-          <Link href={`/couch/${pickingFor.id}`} className="underline">
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <span className="text-sm text-text">Picking media for {pickingFor.name}</span>
+          <Link href={`/couch/${pickingFor.id}`} className={buttonClassName("secondary", "min-h-10 px-4")}>
             Cancel
           </Link>
-        </div>
+        </Card>
       ) : null}
 
-      <form action="/catalog" className="flex gap-2">
+      <form action="/catalog" role="search" className="flex max-w-lg gap-2">
         {pickingFor ? <input type="hidden" name="forCouch" value={pickingFor.id} /> : null}
         <input
           type="search"
           name="q"
           defaultValue={query ?? ""}
+          aria-label="Search titles"
           placeholder="Search titles"
-          className="w-full max-w-sm rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
+          className={cx(
+            "min-h-11 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted hover:border-text-muted",
+            calmTransition,
+            focusRing,
+          )}
         />
-        <button
-          type="submit"
-          className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700"
-        >
+        <button type="submit" className={buttonClassName("primary", "cursor-pointer")}>
           Search
         </button>
       </form>
 
       {items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8">
-          <p className="text-lg font-medium">{query ? "No matches" : "No catalog entries yet"}</p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {query
-              ? "Try a different search."
-              : "Licensed media will show up here once it has been added."}
-          </p>
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+          <Card as="section" className="flex w-full max-w-md flex-col items-center gap-3 p-8 text-center">
+            <span
+              aria-hidden="true"
+              className="flex size-12 items-center justify-center rounded-full border border-border bg-surface-muted text-primary"
+            >
+              <Search className="size-6" />
+            </span>
+            <h2 className="font-display text-2xl font-semibold text-text">
+              {query ? "No matches" : "No catalog entries yet"}
+            </h2>
+            <p className="text-text-muted">
+              {query
+                ? "Try a different search."
+                : "Licensed media will show up here once it has been added."}
+            </p>
+          </Card>
         </div>
       ) : (
         <>
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {items.map((item) => (
               <li key={item.id}>
                 <Link
                   href={`/catalog/${item.id}?back=${encodeURIComponent(backHref)}${
                     pickingFor ? `&forCouch=${pickingFor.id}` : ""
                   }`}
-                  className="flex flex-col gap-2 rounded border border-zinc-200 p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  className={cx("group flex flex-col gap-3 rounded-media", focusRing)}
                 >
+                  {/* Artwork is shown as delivered: no filter, tint, or overlay. */}
                   {item.posterUrl ? (
                     <img
                       src={item.posterUrl}
                       alt=""
-                      className="aspect-[2/3] w-full rounded object-cover"
+                      className="aspect-[2/3] w-full rounded-media object-cover shadow-md motion-safe:transition-transform motion-safe:duration-200 group-hover:-translate-y-1"
                     />
                   ) : (
-                    <div className="flex aspect-[2/3] w-full items-center justify-center rounded bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-                      No poster
+                    <div className="flex aspect-[2/3] w-full items-center justify-center rounded-media border border-border bg-surface-muted px-3 text-center font-display text-lg text-text-muted">
+                      {item.title}
                     </div>
                   )}
-                  <span className="font-medium">{item.title}</span>
-                  {item.license.attributionRequired ? (
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {item.license.attribution}
+                  <span className="flex flex-col gap-0.5 px-1">
+                    <span className="text-sm font-medium leading-snug text-text group-hover:text-primary">
+                      {item.title}
                     </span>
-                  ) : null}
+                    {item.releaseYear ? (
+                      <span className="text-xs text-text-muted">{item.releaseYear}</span>
+                    ) : null}
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
           {loadMoreHref ? (
-            <Link href={loadMoreHref} className="self-center text-sm underline">
+            <Link href={loadMoreHref} className={buttonClassName("secondary", "self-center")}>
               Load more
             </Link>
           ) : null}
