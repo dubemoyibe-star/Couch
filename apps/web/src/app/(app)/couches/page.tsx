@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Armchair, Plus } from "lucide-react";
-import { getPrismaClient, listCouchesForUser } from "@couch/database";
+import { getPrismaClient } from "@couch/database";
 import { CouchCard, NewCouchTile } from "@/components/couch-card";
 import { Card } from "@/components/ui/card";
 import { buttonClassName } from "@/components/ui/button";
+import { loadCouchRooms } from "@/lib/couch-rooms";
 import { getCurrentUser } from "@/lib/session";
 
 export default async function CouchesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const couches = await listCouchesForUser(getPrismaClient(), user.id);
+  const couches = await loadCouchRooms(getPrismaClient(), user.id);
 
   if (couches.length === 0) {
     return (
@@ -46,8 +47,8 @@ export default async function CouchesPage() {
         </Link>
       </div>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {couches.map(({ couch, role, memberCount }) => (
-          <CouchCard key={couch.id} id={couch.id} name={couch.name} role={role} memberCount={memberCount} />
+        {couches.map((room) => (
+          <CouchCard key={room.couch.id} {...room} />
         ))}
         <NewCouchTile />
       </ul>
