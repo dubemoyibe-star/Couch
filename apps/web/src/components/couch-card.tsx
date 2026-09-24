@@ -83,7 +83,7 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
     <Card as="li" className="overflow-hidden p-0">
       <Link
         href={`/couch/${couch.id}`}
-        className={cx("group flex h-full min-h-44 gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
+        className={cx("group flex h-full min-h-52 gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
       >
         <Poster
           url={media?.posterUrl ?? null}

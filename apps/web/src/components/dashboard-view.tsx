@@ -147,7 +147,7 @@ export function DashboardView({
               <div className="flex flex-col gap-6 p-5 sm:p-8 lg:min-h-108 lg:max-w-[66%] lg:justify-center">
                 <div className="flex max-w-md flex-col gap-2">
                   {mobileGreeting}
-                  <h1 className="font-display text-3xl font-semibold leading-tight text-text sm:text-4xl">
+                  <h1 className="font-display text-2xl font-semibold leading-tight text-text sm:text-3xl">
                     Movie nights hit different with the right people.
                   </h1>
                 </div>
