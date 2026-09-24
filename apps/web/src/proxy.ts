@@ -2,11 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getAuth } from "@/lib/auth";
 
 const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
+// Reachable whether or not the visitor is signed in: the emailed link lands
+// here already signed in, and an expired link lands here signed out.
+const OPEN_PATHS = new Set(["/verify-email"]);
 
 // Runs on the Node.js runtime (the Next.js 16 default for proxy), so it can call
 // auth.api.getSession directly and validate the session against the database instead of only
 // checking whether a session cookie is present.
 export async function proxy(request: NextRequest) {
+  if (OPEN_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();
+
   const session = await getAuth().api.getSession({ headers: request.headers });
   const isPublicPath = PUBLIC_PATHS.has(request.nextUrl.pathname);
 
