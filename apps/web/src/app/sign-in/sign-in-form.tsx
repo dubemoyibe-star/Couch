@@ -24,6 +24,7 @@ export function SignInForm() {
           type="email"
           required
           autoComplete="email"
+          focusTone="brand"
           icon={<Mail />}
         />
         <Input
@@ -32,6 +33,7 @@ export function SignInForm() {
           type="password"
           required
           autoComplete="current-password"
+          focusTone="brand"
           icon={<Lock />}
           revealable
           labelAction={

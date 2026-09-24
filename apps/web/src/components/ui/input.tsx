@@ -16,6 +16,8 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   readonly revealable?: boolean;
   /** Small control shown at the right end of the label row, such as a help link. */
   readonly labelAction?: ReactNode;
+  /** "brand" swaps the high-contrast white focus ring for a softer terracotta one. */
+  readonly focusTone?: "default" | "brand";
 };
 
 // Boundary cues (never the decorative --color-border alone):
@@ -31,6 +33,7 @@ export function Input({
   icon,
   revealable,
   labelAction,
+  focusTone = "default",
   className,
   type,
   ...rest
@@ -69,7 +72,9 @@ export function Input({
         className={cx(
           "min-h-11 w-full rounded-md border bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted",
           calmTransition,
-          "focus-visible:border-focus focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
+          focusTone === "brand"
+            ? "focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-primary)_25%,transparent)]"
+            : "focus-visible:border-focus focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
           error
             ? "border-danger ring-1 ring-inset ring-danger"
             : "border-border-strong hover:border-text-muted",
@@ -88,7 +93,9 @@ export function Input({
             className={cx(
               "absolute inset-y-0 right-1 my-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text",
               calmTransition,
-              focusRing,
+              focusTone === "brand"
+                ? "focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary"
+                : focusRing,
             )}
           >
             {revealed ? (

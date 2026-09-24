@@ -55,6 +55,7 @@ export function ResendVerification({ email: fixedEmail }: ResendVerificationProp
           type="email"
           required
           autoComplete="email"
+          focusTone="brand"
           icon={<Mail />}
           value={typedEmail}
           onChange={(event) => setTypedEmail(event.target.value)}

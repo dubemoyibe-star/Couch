@@ -35,6 +35,7 @@ export function SignUpForm() {
         type="text"
         required
         autoComplete="name"
+        focusTone="brand"
         icon={<User />}
       />
       <Input
@@ -43,6 +44,7 @@ export function SignUpForm() {
         type="email"
         required
         autoComplete="email"
+        focusTone="brand"
         icon={<Mail />}
       />
       <Input
@@ -52,6 +54,7 @@ export function SignUpForm() {
         required
         minLength={8}
         autoComplete="new-password"
+        focusTone="brand"
         icon={<Lock />}
         revealable
       />

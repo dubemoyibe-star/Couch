@@ -47,6 +47,7 @@ export function ForgotPasswordForm() {
         type="email"
         required
         autoComplete="email"
+        focusTone="brand"
         icon={<Mail />}
         value={email}
         onChange={(event) => setEmail(event.target.value)}

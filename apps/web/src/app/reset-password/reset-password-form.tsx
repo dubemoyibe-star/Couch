@@ -49,6 +49,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
         type="password"
         required
         autoComplete="new-password"
+        focusTone="brand"
         icon={<Lock />}
         revealable
         value={password}
