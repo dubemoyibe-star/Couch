@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError, FormSuccess } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { RESET_PASSWORD_REDIRECT_URL } from "@/lib/password-reset";
@@ -45,10 +47,11 @@ export function ForgotPasswordForm() {
         type="email"
         required
         autoComplete="email"
+        icon={<Mail />}
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <Button type="submit" loading={pending} loadingLabel="Sending…">
+      <Button type="submit" loading={pending} loadingLabel="Sending…" className={authButtonClass}>
         Send reset link
       </Button>
       <FormError message={error} />

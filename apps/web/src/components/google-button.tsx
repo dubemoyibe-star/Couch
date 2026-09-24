@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -38,6 +39,16 @@ export function GoogleButton({ errorPath, callbackError }: GoogleButtonProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Coming back from Google with the browser Back button restores this page from
+  // the back/forward cache with `pending` still set. Clear it when that happens.
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) setPending(false);
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   async function onClick() {
     setPending(true);
     setError(null);
@@ -57,6 +68,7 @@ export function GoogleButton({ errorPath, callbackError }: GoogleButtonProps) {
     <div className="flex w-full flex-col gap-2">
       <Button
         variant="secondary"
+        className={authButtonClass}
         loading={pending}
         loadingLabel="Redirecting to Google…"
         onClick={onClick}

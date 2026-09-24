@@ -1,8 +1,8 @@
 import { Mail, MailCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { AuthShell, authLinkClass } from "@/components/auth-shell";
-import { FormError } from "@/components/form-feedback";
+import { AuthNotice, AuthShell, authButtonClass } from "@/components/auth-shell";
 import { ResendVerification } from "@/components/resend-verification";
+import { buttonClassName } from "@/components/ui/button";
 import { verifyLinkErrorMessage } from "@/lib/auth-errors";
 import { getCurrentUser } from "@/lib/session";
 
@@ -22,7 +22,7 @@ export default async function VerifyEmailPage({
   if (errorMessage) {
     return (
       <AuthShell title="Verification link problem" icon={<TriangleAlert className="size-6" />}>
-        <FormError message={errorMessage} />
+        <AuthNotice tone="error">{errorMessage}</AuthNotice>
         <p className="text-center text-sm text-text-muted">Enter your email to get a new link.</p>
         <ResendVerification />
       </AuthShell>
@@ -34,21 +34,17 @@ export default async function VerifyEmailPage({
       <AuthShell title="Email verified" icon={<MailCheck className="size-6" />}>
         {user ? (
           <>
-            <p className="text-center text-sm text-text-muted">Your email is verified and you are signed in.</p>
-            <p className="text-center text-sm">
-              <Link href="/" className={authLinkClass}>
-                Continue
-              </Link>
-            </p>
+            <AuthNotice tone="success">Your email is verified and you are signed in.</AuthNotice>
+            <Link href="/" className={buttonClassName("primary", authButtonClass)}>
+              Continue
+            </Link>
           </>
         ) : (
           <>
-            <p className="text-center text-sm text-text-muted">Your email is verified. Sign in to continue.</p>
-            <p className="text-center text-sm">
-              <Link href="/sign-in" className={authLinkClass}>
-                Sign in
-              </Link>
-            </p>
+            <AuthNotice tone="success">Your email is verified. Sign in to continue.</AuthNotice>
+            <Link href="/sign-in" className={buttonClassName("primary", authButtonClass)}>
+              Sign in
+            </Link>
           </>
         )}
       </AuthShell>

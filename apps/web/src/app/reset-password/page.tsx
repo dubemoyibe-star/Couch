@@ -1,7 +1,7 @@
 import { Lock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { AuthShell, authLinkClass } from "@/components/auth-shell";
-import { FormError } from "@/components/form-feedback";
+import { AuthNotice, AuthShell, authButtonClass } from "@/components/auth-shell";
+import { buttonClassName } from "@/components/ui/button";
 import { resetLinkErrorMessage } from "@/lib/auth-errors";
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -20,12 +20,10 @@ export default async function ResetPasswordPage({
     <AuthShell title="Choose a new password" icon={errorMessage || !token ? <TriangleAlert className="size-6" /> : <Lock className="size-6" />}>
       {errorMessage || !token ? (
         <>
-          <FormError message={errorMessage} />
-          <p className="text-center text-sm">
-            <Link href="/forgot-password" className={authLinkClass}>
-              Request a new link
-            </Link>
-          </p>
+          <AuthNotice tone="error">{errorMessage}</AuthNotice>
+          <Link href="/forgot-password" className={buttonClassName("primary", authButtonClass)}>
+            Request a new link
+          </Link>
         </>
       ) : (
         <ResetPasswordForm token={token} />

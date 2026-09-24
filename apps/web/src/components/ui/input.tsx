@@ -1,6 +1,7 @@
-import { useId } from "react";
-import type { InputHTMLAttributes } from "react";
-import { calmTransition, cx } from "./cx";
+import { Eye, EyeOff } from "lucide-react";
+import { useId, useState } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
+import { calmTransition, cx, focusRing } from "./cx";
 import { StatusIcon } from "./status-icon";
 
 export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
@@ -9,6 +10,10 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   /** Field-level error text. Setting it marks the field invalid. */
   readonly error?: string | null;
   readonly hint?: string;
+  /** Decorative icon shown inside the field, before the text. */
+  readonly icon?: ReactNode;
+  /** For password fields: adds a show/hide toggle. */
+  readonly revealable?: boolean;
 };
 
 // Boundary cues (never the decorative --color-border alone):
@@ -16,8 +21,19 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
 //   2. a surface fill that differs from the page background
 // Focus adds a thick high-contrast outline; error adds a second stroke (inset
 // ring) plus an icon and text, so it is not color alone.
-export function Input({ label, id, error, hint, className, ...rest }: InputProps) {
+export function Input({
+  label,
+  id,
+  error,
+  hint,
+  icon,
+  revealable,
+  className,
+  type,
+  ...rest
+}: InputProps) {
   const generatedId = useId();
+  const [revealed, setRevealed] = useState(false);
   const inputId = id ?? generatedId;
   const hintId = hint ? `${inputId}-hint` : undefined;
   const errorId = error ? `${inputId}-error` : undefined;
@@ -29,9 +45,19 @@ export function Input({ label, id, error, hint, className, ...rest }: InputProps
       <label htmlFor={inputId} className="text-sm font-medium text-text">
         {label}
       </label>
-      <input
-        {...rest}
-        id={inputId}
+      <div className="group relative">
+        {icon ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-text-muted transition-colors duration-150 group-focus-within:text-primary motion-reduce:transition-none [&>svg]:size-[1.125rem]"
+          >
+            {icon}
+          </span>
+        ) : null}
+        <input
+          {...rest}
+          type={revealable && revealed ? "text" : type}
+          id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cx(
@@ -42,9 +68,31 @@ export function Input({ label, id, error, hint, className, ...rest }: InputProps
             ? "border-danger ring-1 ring-inset ring-danger"
             : "border-border-strong hover:border-text-muted",
           "disabled:cursor-not-allowed disabled:opacity-60",
+          icon ? "pl-10" : false,
+          revealable && "pr-11",
           className,
         )}
       />
+        {revealable ? (
+          <button
+            type="button"
+            onClick={() => setRevealed((value) => !value)}
+            aria-label={revealed ? "Hide password" : "Show password"}
+            aria-pressed={revealed}
+            className={cx(
+              "absolute inset-y-0 right-1 my-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text",
+              calmTransition,
+              focusRing,
+            )}
+          >
+            {revealed ? (
+              <EyeOff aria-hidden="true" className="size-[1.125rem]" />
+            ) : (
+              <Eye aria-hidden="true" className="size-[1.125rem]" />
+            )}
+          </button>
+        ) : null}
+      </div>
       {hint ? (
         <p id={hintId} className="text-sm text-text-muted">
           {hint}

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { MonitorPlay, RefreshCw, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Card } from "@/components/ui/card";
+import { StatusIcon } from "@/components/ui/status-icon";
 import { cx, focusRing } from "@/components/ui/cx";
 
 /** Link styling shared by the auth screens. */
@@ -13,6 +14,9 @@ export const authLinkClass = cx(
 // A warm glow at the top of the page so the background is not flat.
 const backdrop =
   "bg-[radial-gradient(60%_45%_at_50%_0%,color-mix(in_oklab,var(--color-primary)_20%,transparent),transparent_70%)]";
+
+/** Full-width buttons with a pointer cursor (a progress cursor while busy), for the auth screens. */
+export const authButtonClass = "w-full cursor-pointer aria-busy:cursor-progress";
 
 function IconBadge({ children }: { readonly children: ReactNode }) {
   return (
@@ -125,6 +129,34 @@ export function AuthSplit({
           {children}
         </div>
       </main>
+    </div>
+  );
+}
+
+/** A boxed status message for page-level states, such as an expired link or a completed step. */
+export function AuthNotice({
+  tone,
+  children,
+}: {
+  readonly tone: "error" | "success";
+  readonly children: ReactNode;
+}) {
+  const error = tone === "error";
+  return (
+    <div
+      role={error ? "alert" : "status"}
+      className={cx(
+        "flex items-start gap-2.5 rounded-md border p-4 text-sm leading-relaxed text-text",
+        error ? "border-danger/50 bg-danger/10" : "border-success/50 bg-success/10",
+      )}
+    >
+      <span className={error ? "text-danger" : "text-success"}>
+        <StatusIcon kind={tone} />
+      </span>
+      <p>
+        <span className="sr-only">{error ? "Error: " : "Success: "}</span>
+        {children}
+      </p>
     </div>
   );
 }

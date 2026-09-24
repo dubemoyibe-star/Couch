@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError, FormSuccess } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { VERIFY_EMAIL_CALLBACK_URL } from "@/lib/verification";
@@ -53,11 +55,18 @@ export function ResendVerification({ email: fixedEmail }: ResendVerificationProp
           type="email"
           required
           autoComplete="email"
+          icon={<Mail />}
           value={typedEmail}
           onChange={(event) => setTypedEmail(event.target.value)}
         />
       ) : null}
-      <Button type="submit" variant="secondary" loading={pending} loadingLabel="Sending…">
+      <Button
+        type="submit"
+        variant="secondary"
+        loading={pending}
+        loadingLabel="Sending…"
+        className={authButtonClass}
+      >
         Resend verification email
       </Button>
       <FormError message={error} />
