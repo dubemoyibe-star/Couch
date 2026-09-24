@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import { cx, inputFocus } from "@/components/ui/cx";
 
 /** A read-only invite link with a copy-to-clipboard affordance. */
 export function CopyInviteLink({ url }: { url: string }) {
@@ -32,8 +32,7 @@ export function CopyInviteLink({ url }: { url: string }) {
           onFocus={(event) => event.target.select()}
           className={cx(
             "min-h-10 min-w-0 flex-1 rounded-md border border-border-strong bg-surface-muted px-3 py-2 text-sm text-text-muted",
-            calmTransition,
-            focusRing,
+            inputFocus,
           )}
         />
         <Button variant="secondary" onClick={handleCopy} className="min-h-10 px-4">

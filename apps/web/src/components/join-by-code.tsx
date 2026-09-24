@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
-import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import { cx, inputFocus } from "@/components/ui/cx";
 import { parseInviteCode } from "@/lib/invite-input";
 
 const ERROR_VISIBLE_MS = 5000;
@@ -51,8 +51,7 @@ export function JoinByCode({ className }: { readonly className?: string }) {
           spellCheck={false}
           className={cx(
             "min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-text placeholder:text-text-muted",
-            calmTransition,
-            focusRing,
+            inputFocus,
           )}
         />
         <Button type="submit" variant="secondary" className="shrink-0 cursor-pointer">

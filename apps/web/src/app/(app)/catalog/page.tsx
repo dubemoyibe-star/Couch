@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { getCouch, getMembership, getPrismaClient, listCatalogMedia } from "@couch/database";
 import { Card } from "@/components/ui/card";
 import { buttonClassName } from "@/components/ui/button";
-import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import { cx, focusRing, inputFocus } from "@/components/ui/cx";
 import { getCurrentUser } from "@/lib/session";
 
 const PAGE_SIZE = 24;
@@ -91,9 +91,8 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
           aria-label="Search titles"
           placeholder="Search titles"
           className={cx(
-            "min-h-11 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted hover:border-text-muted",
-            calmTransition,
-            focusRing,
+            "min-h-11 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted",
+            inputFocus,
           )}
         />
         <button type="submit" className={buttonClassName("primary", "cursor-pointer")}>
