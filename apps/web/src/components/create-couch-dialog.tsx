@@ -1,43 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Armchair, X } from "lucide-react";
-import { calmTransition, focusRing } from "@/components/ui/cx";
+import { Armchair } from "lucide-react";
+import { ModalDialog } from "@/components/modal-dialog";
 import { CreateCouchForm } from "@/app/(app)/couch/create/create-couch-form";
 
-/**
- * The create-couch form in a native modal dialog, which gives focus trapping,
- * Escape to close and an inert page behind it. Closing goes back one history
- * entry, so the page underneath is exactly where the visitor was.
- */
+/** The create-couch form in a modal, opened over the page the visitor was on. */
 export function CreateCouchDialog() {
-  const router = useRouter();
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-  }, []);
-
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby="create-couch-title"
-      onClose={() => router.back()}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) ref.current?.close();
-      }}
-      className="relative m-auto w-[calc(100%-2rem)] max-w-md rounded-md border border-border bg-surface p-6 text-text backdrop:bg-black/60 backdrop:backdrop-blur-sm sm:p-8"
-    >
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={() => ref.current?.close()}
-        className={`absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-muted hover:bg-danger/10 hover:text-danger active:bg-danger/15 active:text-danger ${calmTransition} ${focusRing}`}
-      >
-        <X aria-hidden="true" className="size-4" />
-      </button>
+    <ModalDialog labelledBy="create-couch-title" className="p-6 sm:p-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <span
@@ -51,8 +21,8 @@ export function CreateCouchDialog() {
           </h1>
           <p className="text-sm text-text-muted">Give it a name, then invite friends with a link.</p>
         </div>
-        <CreateCouchForm onCancel={() => ref.current?.close()} />
+        <CreateCouchForm />
       </div>
-    </dialog>
+    </ModalDialog>
   );
 }

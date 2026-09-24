@@ -12,12 +12,12 @@ export function JoinCouchForm({ inviteCode }: { inviteCode: string }) {
   const [state, formAction, pending] = useActionState(joinCouchAction, initialState);
 
   return (
-    <form action={formAction} className="flex w-full flex-col gap-3">
+    <form action={formAction} className="flex w-full flex-col">
       <input type="hidden" name="inviteCode" value={inviteCode} />
       <Button type="submit" loading={pending} loadingLabel="Joining…" className={authButtonClass}>
         Join couch
       </Button>
-      <FormError message={state.error} />
+      <FormError message={state.error} compact />
     </form>
   );
 }

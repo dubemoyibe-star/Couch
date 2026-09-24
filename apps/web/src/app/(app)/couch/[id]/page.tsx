@@ -13,6 +13,7 @@ import { CopyInviteLink } from "@/components/copy-invite-link";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { LeaveCouchForm } from "@/components/leave-couch-form";
+import { NoMediaEmptyState } from "@/components/no-media-empty-state";
 
 export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   const user = await getCurrentUser();
@@ -129,14 +130,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
             ) : null}
           </Card>
         ) : (
-          <Card className="flex flex-col items-start gap-3">
-            <p className="text-text-muted">No media selected yet.</p>
-            {isHost ? (
-              <Link href={pickHref} className={buttonClassName("primary", "min-h-10 px-4")}>
-                Search the catalog
-              </Link>
-            ) : null}
-          </Card>
+          <NoMediaEmptyState isHost={isHost} pickHref={pickHref} />
         )}
       </section>
 
