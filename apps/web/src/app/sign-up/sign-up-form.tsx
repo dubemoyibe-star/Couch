@@ -31,6 +31,7 @@ export function SignUpForm() {
     <form action={formAction} className="flex w-full flex-col gap-4">
       <Input
         label="Display name"
+        placeholder="What should we call you?"
         name="displayName"
         type="text"
         required
@@ -40,6 +41,7 @@ export function SignUpForm() {
       />
       <Input
         label="Email"
+        placeholder="you@example.com"
         name="email"
         type="email"
         required
@@ -49,6 +51,7 @@ export function SignUpForm() {
       />
       <Input
         label="Password"
+        placeholder="At least 8 characters"
         name="password"
         type="password"
         required

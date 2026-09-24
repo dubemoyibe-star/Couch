@@ -51,6 +51,7 @@ export function ResendVerification({ email: fixedEmail }: ResendVerificationProp
       {fixedEmail === undefined ? (
         <Input
           label="Email"
+          placeholder="you@example.com"
           id="resend-email"
           type="email"
           required

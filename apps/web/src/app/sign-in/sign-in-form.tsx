@@ -20,6 +20,7 @@ export function SignInForm() {
       <form action={formAction} className="flex w-full flex-col gap-4">
         <Input
           label="Email"
+          placeholder="you@example.com"
           name="email"
           type="email"
           required
@@ -29,6 +30,7 @@ export function SignInForm() {
         />
         <Input
           label="Password"
+          placeholder="Enter your password"
           name="password"
           type="password"
           required

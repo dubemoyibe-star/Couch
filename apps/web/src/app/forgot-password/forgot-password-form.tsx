@@ -44,6 +44,7 @@ export function ForgotPasswordForm() {
     <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
       <Input
         label="Email"
+        placeholder="you@example.com"
         type="email"
         required
         autoComplete="email"

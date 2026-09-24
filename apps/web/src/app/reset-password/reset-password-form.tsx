@@ -46,6 +46,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
     <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
       <Input
         label="New password"
+        placeholder="Choose a new password"
         type="password"
         required
         autoComplete="new-password"

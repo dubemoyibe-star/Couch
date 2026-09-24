@@ -71,7 +71,9 @@ export function Input({
         aria-describedby={describedBy}
         className={cx(
           "min-h-11 w-full rounded-md border bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted",
-          calmTransition,
+          focusTone === "brand"
+            ? "transition-[border-color,box-shadow] duration-150 ease-out motion-reduce:transition-none"
+            : calmTransition,
           focusTone === "brand"
             ? "focus-visible:border-primary/70 focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]"
             : "focus-visible:border-focus focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
