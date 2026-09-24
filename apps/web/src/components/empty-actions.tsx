@@ -8,7 +8,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 
 /** Create and join actions for a new user. "Join a couch" reveals the invite box in place. */
-export function EmptyActions() {
+export function EmptyActions({ showInviteHint = true }: { readonly showInviteHint?: boolean }) {
   const [joining, setJoining] = useState(false);
 
   return (
@@ -32,17 +32,19 @@ export function EmptyActions() {
       <div id="join-panel" hidden={!joining} className="w-full max-w-md text-left">
         <JoinByCode />
       </div>
-      <p className="flex flex-col items-center gap-1 text-sm text-text-muted">
-        <span aria-hidden="true" className="mb-2 h-px w-8 bg-border-strong" />
-        Have an invite?
-        <button
-          type="button"
-          onClick={() => setJoining(true)}
-          className={cx("cursor-pointer rounded-sm font-medium text-primary hover:text-primary-hover", calmTransition, focusRing)}
-        >
-          Join a couch
-        </button>
-      </p>
+      {showInviteHint ? (
+        <p className="flex flex-col items-center gap-1 text-sm text-text-muted">
+          <span aria-hidden="true" className="mb-2 h-px w-8 bg-border-strong" />
+          Have an invite?
+          <button
+            type="button"
+            onClick={() => setJoining(true)}
+            className={cx("cursor-pointer rounded-sm font-medium text-primary hover:text-primary-hover", calmTransition, focusRing)}
+          >
+            Join a couch
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }
