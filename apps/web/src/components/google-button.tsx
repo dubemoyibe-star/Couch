@@ -42,7 +42,7 @@ export function GoogleButton({ errorPath, callbackError }: GoogleButtonProps) {
   }
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <Button
         variant="secondary"
         loading={pending}

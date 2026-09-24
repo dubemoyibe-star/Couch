@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FormError, FormSuccess } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { RESET_PASSWORD_REDIRECT_URL } from "@/lib/password-reset";
 
@@ -38,21 +39,15 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-        />
-      </div>
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
+      <Input
+        label="Email"
+        type="email"
+        required
+        autoComplete="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+      />
       <Button type="submit" loading={pending} loadingLabel="Sending…">
         Send reset link
       </Button>

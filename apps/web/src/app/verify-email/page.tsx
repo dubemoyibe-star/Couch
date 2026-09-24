@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AuthShell, authLinkClass } from "@/components/auth-shell";
+import { FormError } from "@/components/form-feedback";
 import { ResendVerification } from "@/components/resend-verification";
 import { verifyLinkErrorMessage } from "@/lib/auth-errors";
 import { getCurrentUser } from "@/lib/session";
@@ -18,51 +20,44 @@ export default async function VerifyEmailPage({
 
   if (errorMessage) {
     return (
-      <Shell title="Verification link problem">
-        <p role="alert" className="text-sm text-danger">
-          {errorMessage}
-        </p>
-        <p className="text-sm">Enter your email to get a new link.</p>
+      <AuthShell title="Verification link problem">
+        <FormError message={errorMessage} />
+        <p className="text-sm text-text-muted">Enter your email to get a new link.</p>
         <ResendVerification />
-      </Shell>
+      </AuthShell>
     );
   }
 
   if (status === "verified") {
     return (
-      <Shell title="Email verified">
+      <AuthShell title="Email verified">
         {user ? (
           <>
-            <p className="text-sm">Your email is verified and you are signed in.</p>
-            <Link href="/" className="font-medium underline">
-              Continue
-            </Link>
+            <p className="text-sm text-text-muted">Your email is verified and you are signed in.</p>
+            <p className="text-sm">
+              <Link href="/" className={authLinkClass}>
+                Continue
+              </Link>
+            </p>
           </>
         ) : (
           <>
-            <p className="text-sm">Your email is verified. Sign in to continue.</p>
-            <Link href="/sign-in" className="font-medium underline">
-              Sign in
-            </Link>
+            <p className="text-sm text-text-muted">Your email is verified. Sign in to continue.</p>
+            <p className="text-sm">
+              <Link href="/sign-in" className={authLinkClass}>
+                Sign in
+              </Link>
+            </p>
           </>
         )}
-      </Shell>
+      </AuthShell>
     );
   }
 
   return (
-    <Shell title="Verify your email">
-      <p className="text-sm">Enter your email to get a verification link.</p>
+    <AuthShell title="Verify your email">
+      <p className="text-sm text-text-muted">Enter your email to get a verification link.</p>
       <ResendVerification />
-    </Shell>
-  );
-}
-
-function Shell({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      {children}
-    </div>
+    </AuthShell>
   );
 }

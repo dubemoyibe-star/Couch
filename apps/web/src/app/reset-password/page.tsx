@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AuthShell, authLinkClass } from "@/components/auth-shell";
+import { FormError } from "@/components/form-feedback";
 import { resetLinkErrorMessage } from "@/lib/auth-errors";
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -14,20 +16,19 @@ export default async function ResetPasswordPage({
   const errorMessage = error || !token ? resetLinkErrorMessage(error ?? "INVALID_TOKEN") : null;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">Choose a new password</h1>
+    <AuthShell title="Choose a new password">
       {errorMessage || !token ? (
         <>
-          <p role="alert" className="text-sm text-danger">
-            {errorMessage}
+          <FormError message={errorMessage} />
+          <p className="text-sm">
+            <Link href="/forgot-password" className={authLinkClass}>
+              Request a new link
+            </Link>
           </p>
-          <Link href="/forgot-password" className="text-sm font-medium underline">
-            Request a new link
-          </Link>
         </>
       ) : (
         <ResetPasswordForm token={token} />
       )}
-    </div>
+    </AuthShell>
   );
 }

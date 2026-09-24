@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { authLinkClass } from "@/components/auth-shell";
 import { FormError, FormSuccess } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { resetPasswordErrorMessage } from "@/lib/auth-errors";
 
@@ -30,9 +32,9 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
 
   if (done) {
     return (
-      <div className="flex w-full max-w-sm flex-col gap-4">
+      <div className="flex w-full flex-col gap-4">
         <FormSuccess message="Your password has been changed." />
-        <Link href="/sign-in" className="text-sm font-medium underline">
+        <Link href="/sign-in" className={authLinkClass}>
           Sign in
         </Link>
       </div>
@@ -40,24 +42,18 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="new-password" className="text-sm font-medium">
-          New password
-        </label>
-        <input
-          id="new-password"
-          type="password"
-          required
-          autoComplete="new-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-        />
-      </div>
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
+      <Input
+        label="New password"
+        type="password"
+        required
+        autoComplete="new-password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
       <FormError message={error} />
       {tokenRejected ? (
-        <Link href="/forgot-password" className="text-sm font-medium underline">
+        <Link href="/forgot-password" className={authLinkClass}>
           Request a new link
         </Link>
       ) : null}
