@@ -11,6 +11,12 @@ export const authLinkClass = cx(
   focusRing,
 );
 
+/** Link styling without the underline, for links that sit beside a form. */
+export const authQuietLinkClass = cx(
+  "rounded-sm font-medium text-primary hover:text-primary-hover",
+  focusRing,
+);
+
 // A warm glow at the top of the page so the background is not flat.
 const backdrop =
   "bg-[radial-gradient(60%_45%_at_50%_0%,color-mix(in_oklab,var(--color-primary)_20%,transparent),transparent_70%)]";

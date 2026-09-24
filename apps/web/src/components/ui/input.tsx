@@ -73,11 +73,13 @@ export function Input({
           "min-h-11 w-full rounded-md border bg-surface px-3.5 py-2.5 text-base text-text placeholder:text-text-muted",
           calmTransition,
           focusTone === "brand"
-            ? "focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-primary)_25%,transparent)]"
+            ? "focus-visible:border-primary/70 focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]"
             : "focus-visible:border-focus focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
           error
             ? "border-danger ring-1 ring-inset ring-danger"
-            : "border-border-strong hover:border-text-muted",
+            : focusTone === "brand"
+              ? "border-border-strong not-focus:hover:border-text-muted"
+              : "border-border-strong hover:border-text-muted",
           "disabled:cursor-not-allowed disabled:opacity-60",
           icon ? "pl-10" : false,
           revealable && "pr-11",

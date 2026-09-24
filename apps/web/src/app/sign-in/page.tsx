@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AuthDivider, AuthSplit, authLinkClass } from "@/components/auth-shell";
+import { AuthDivider, AuthSplit, authQuietLinkClass } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { SignInForm } from "./sign-in-form";
 
@@ -16,7 +16,7 @@ export default async function SignInPage({
       <SignInForm />
       <p className="text-center text-sm text-text-muted">
         Don&apos;t have an account yet?{" "}
-        <Link href="/sign-up" className={authLinkClass}>
+        <Link href="/sign-up" className={authQuietLinkClass}>
           Sign up
         </Link>
       </p>
