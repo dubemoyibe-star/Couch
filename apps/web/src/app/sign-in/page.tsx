@@ -12,7 +12,7 @@ export default async function SignInPage({
   return (
     <AuthSplit title="Welcome back" subtitle="Sign in to pick up where you left off.">
       <GoogleButton errorPath="/sign-in" callbackError={error} />
-      <AuthDivider label="or continue with email" />
+      <AuthDivider />
       <SignInForm />
       <p className="text-center text-sm text-text-muted">
         Don&apos;t have an account yet?{" "}

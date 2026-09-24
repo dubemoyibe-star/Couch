@@ -12,7 +12,7 @@ export default async function SignUpPage({
   return (
     <AuthSplit title="Create your account" subtitle="Get a seat on the couch in a minute.">
       <GoogleButton errorPath="/sign-up" callbackError={error} />
-      <AuthDivider label="or sign up with email" />
+      <AuthDivider />
       <SignUpForm />
       <p className="text-center text-sm text-text-muted">
         Already have an account?{" "}

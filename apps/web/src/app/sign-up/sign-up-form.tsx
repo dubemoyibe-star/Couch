@@ -55,7 +55,7 @@ export function SignUpForm() {
         icon={<Lock />}
         revealable
       />
-      <div className="[&>[role=alert]:not(:empty)]:mb-3">
+      <div className="pt-2 [&>[role=alert]:not(:empty)]:mb-3">
         <FormError message={state.error} compact />
         <Button
           type="submit"

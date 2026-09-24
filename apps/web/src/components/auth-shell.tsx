@@ -162,7 +162,7 @@ export function AuthNotice({
 }
 
 /** Separates the email/password form from another sign-in method. */
-export function AuthDivider({ label = "or" }: { readonly label?: string }) {
+export function AuthDivider({ label = "OR" }: { readonly label?: string }) {
   return (
     <div role="separator" className="flex items-center gap-3 text-sm text-text-muted">
       <span aria-hidden="true" className="h-px flex-1 bg-border" />

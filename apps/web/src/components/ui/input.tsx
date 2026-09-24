@@ -14,6 +14,8 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   readonly icon?: ReactNode;
   /** For password fields: adds a show/hide toggle. */
   readonly revealable?: boolean;
+  /** Small control shown at the right end of the label row, such as a help link. */
+  readonly labelAction?: ReactNode;
 };
 
 // Boundary cues (never the decorative --color-border alone):
@@ -28,6 +30,7 @@ export function Input({
   hint,
   icon,
   revealable,
+  labelAction,
   className,
   type,
   ...rest
@@ -42,9 +45,12 @@ export function Input({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium text-text">
-        {label}
-      </label>
+      <div className="flex items-baseline justify-between gap-2">
+        <label htmlFor={inputId} className="text-sm font-medium text-text">
+          {label}
+        </label>
+        {labelAction}
+      </div>
       <div className="group relative">
         {icon ? (
           <span

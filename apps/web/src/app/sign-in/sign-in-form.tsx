@@ -34,13 +34,13 @@ export function SignInForm() {
           autoComplete="current-password"
           icon={<Lock />}
           revealable
+          labelAction={
+            <Link href="/forgot-password" className={`${authLinkClass} text-xs`}>
+              Forgot password?
+            </Link>
+          }
         />
-        <p className="-mt-2 text-right text-sm">
-          <Link href="/forgot-password" className={authLinkClass}>
-            Forgot your password?
-          </Link>
-        </p>
-        <div className="[&>[role=alert]:not(:empty)]:mb-3">
+        <div className="pt-2 [&>[role=alert]:not(:empty)]:mb-3">
           <FormError message={state.error} compact />
           <Button
             type="submit"
