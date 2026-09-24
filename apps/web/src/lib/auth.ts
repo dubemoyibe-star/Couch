@@ -5,7 +5,7 @@ import { getPrismaClient } from "@couch/database";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
-import { verificationEmail } from "./email-templates";
+import { resetPasswordEmail, verificationEmail } from "./email-templates";
 
 // Built lazily, and only on first use, the same way @couch/database's own
 // getPrismaClient() defers its DATABASE_URL read. betterAuth() calls
@@ -39,9 +39,22 @@ const VERIFICATION_LINK_TTL_SECONDS = 60 * 60;
 // Email/password sign-in is refused until the address is verified. This only
 // gates the credential sign-in path: a Google sign-in creates the user with
 // emailVerified already set by Google and never goes through this check.
+const RESET_PASSWORD_TTL_SECONDS = 60 * 60;
+
 export const emailAndPassword = {
   enabled: true,
   requireEmailVerification: true,
+  resetPasswordTokenExpiresIn: RESET_PASSWORD_TTL_SECONDS,
+  // Not awaited, for the same reason as sendVerificationEmail: the response
+  // must not reveal whether the address has an account.
+  async sendResetPassword({ user, url }: { user: { email: string; name: string }; url: string }) {
+    const message = resetPasswordEmail({
+      name: user.name,
+      url,
+      expiresInMinutes: RESET_PASSWORD_TTL_SECONDS / 60,
+    });
+    runInBackground(sendEmail({ to: user.email, ...message }));
+  },
 } as const;
 
 export const emailVerification = {

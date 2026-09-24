@@ -3,8 +3,10 @@ import { getAuth } from "@/lib/auth";
 
 const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
 // Reachable whether or not the visitor is signed in: the emailed link lands
-// here already signed in, and an expired link lands here signed out.
-const OPEN_PATHS = new Set(["/verify-email"]);
+// here already signed in, and an expired link lands here signed out. Password
+// reset is open too: a signed-out visitor needs it, and the emailed link works
+// in whichever browser it is opened.
+const OPEN_PATHS = new Set(["/verify-email", "/forgot-password", "/reset-password"]);
 
 // Runs on the Node.js runtime (the Next.js 16 default for proxy), so it can call
 // auth.api.getSession directly and validate the session against the database instead of only

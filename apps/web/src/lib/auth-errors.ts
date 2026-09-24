@@ -40,6 +40,22 @@ export function verifyLinkErrorMessage(code: string | undefined): string | null 
   return VERIFY_LINK_ERROR_MESSAGES[code] ?? "This verification link could not be used.";
 }
 
+const RESET_TOKEN_MESSAGE = "This reset link has expired or was already used.";
+
+/** Message for a password-reset link that cannot be used (the `error` query param). */
+export function resetLinkErrorMessage(code: string | undefined): string | null {
+  if (!code) return null;
+  return code === "INVALID_TOKEN" ? RESET_TOKEN_MESSAGE : "This reset link could not be used.";
+}
+
+/** Message for a failed reset-password request, keyed by Better Auth's error code. */
+export function resetPasswordErrorMessage(code: string | undefined): string {
+  if (code === "INVALID_TOKEN") return RESET_TOKEN_MESSAGE;
+  if (code === "PASSWORD_TOO_SHORT") return AUTH_ERROR_MESSAGES.PASSWORD_TOO_SHORT;
+  if (code === "PASSWORD_TOO_LONG") return AUTH_ERROR_MESSAGES.PASSWORD_TOO_LONG;
+  return DEFAULT_MESSAGE;
+}
+
 /**
  * Maps a thrown Better Auth error to a message for the sign-up and sign-in forms. This is
  * intentionally narrow: it only knows the auth error codes above. A general repository-result
