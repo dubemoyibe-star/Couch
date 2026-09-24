@@ -56,7 +56,7 @@ export function JoinByCode({ className }: { readonly className?: string }) {
           )}
         />
         <Button type="submit" variant="secondary" className="shrink-0 cursor-pointer">
-          Join a couch
+          Join
         </Button>
       </div>
       <FormError message={error} />
