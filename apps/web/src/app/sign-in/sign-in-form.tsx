@@ -1,47 +1,60 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
 import { ResendVerification } from "@/components/resend-verification";
-import { SubmitButton } from "@/components/submit-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Lock, Mail } from "lucide-react";
 import { signInAction, type SignInState } from "./actions";
 
 const initialState: SignInState = { error: null, unverifiedEmail: null };
 
 export function SignInForm() {
-  const [state, formAction] = useActionState(signInAction, initialState);
+  const [state, formAction, pending] = useActionState(signInAction, initialState);
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       <form action={formAction} className="flex w-full flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-          />
+        <Input
+          label="Email"
+          placeholder="you@example.com"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          focusTone="brand"
+          icon={<Mail />}
+        />
+        <Input
+          label="Password"
+          placeholder="Enter your password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          focusTone="brand"
+          icon={<Lock />}
+          revealable
+          labelAction={
+            <Link href="/forgot-password" className="rounded-sm text-xs font-medium text-primary hover:text-primary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus">
+              Forgot password?
+            </Link>
+          }
+        />
+        <div className="pt-2 [&>[role=alert]:not(:empty)]:mb-3">
+          <FormError message={state.error} compact />
+          <Button
+            type="submit"
+            loading={pending}
+            loadingLabel="Signing in…"
+            className={authButtonClass}
+          >
+            Sign in
+          </Button>
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-          />
-        </div>
-        <FormError message={state.error} />
-        <SubmitButton>Sign in</SubmitButton>
       </form>
       {state.unverifiedEmail ? <ResendVerification email={state.unverifiedEmail} /> : null}
     </div>

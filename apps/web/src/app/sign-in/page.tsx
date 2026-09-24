@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthDivider, AuthSplit, authQuietLinkClass } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { SignInForm } from "./sign-in-form";
 
@@ -9,21 +10,16 @@ export default async function SignInPage({
 }) {
   const { error } = await searchParams;
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
-      <SignInForm />
+    <AuthSplit title="Welcome back" subtitle="Sign in to pick up where you left off.">
       <GoogleButton errorPath="/sign-in" callbackError={error} />
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        <Link href="/forgot-password" className="font-medium underline">
-          Forgot your password?
-        </Link>
-      </p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Need an account?{" "}
-        <Link href="/sign-up" className="font-medium underline">
+      <AuthDivider />
+      <SignInForm />
+      <p className="text-center text-sm text-text-muted">
+        Don&apos;t have an account yet?{" "}
+        <Link href="/sign-up" className={authQuietLinkClass}>
           Sign up
         </Link>
       </p>
-    </div>
+    </AuthSplit>
   );
 }

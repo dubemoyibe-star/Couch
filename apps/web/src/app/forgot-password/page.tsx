@@ -1,15 +1,21 @@
+import { ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
+import { AuthShell, authLinkClass } from "@/components/auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Forgot your password?</h1>
-      <p className="max-w-sm text-center text-sm">Enter your email and we will send you a link to choose a new one.</p>
+    <AuthShell title="Forgot your password?" icon={<KeyRound className="size-6" />}>
+      <p className="text-center text-sm text-text-muted">
+        Enter your email and we will send you a link to choose a new one.
+      </p>
       <ForgotPasswordForm />
-      <Link href="/sign-in" className="text-sm font-medium underline">
-        Back to sign in
-      </Link>
-    </div>
+      <p className="text-center text-sm">
+        <Link href="/sign-in" className={`${authLinkClass} inline-flex items-center gap-1.5`}>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Back to sign in
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

@@ -1,4 +1,7 @@
+import { Lock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
+import { AuthNotice, AuthShell, authButtonClass } from "@/components/auth-shell";
+import { buttonClassName } from "@/components/ui/button";
 import { resetLinkErrorMessage } from "@/lib/auth-errors";
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -14,20 +17,17 @@ export default async function ResetPasswordPage({
   const errorMessage = error || !token ? resetLinkErrorMessage(error ?? "INVALID_TOKEN") : null;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">Choose a new password</h1>
+    <AuthShell title="Choose a new password" icon={errorMessage || !token ? <TriangleAlert className="size-6" /> : <Lock className="size-6" />}>
       {errorMessage || !token ? (
         <>
-          <p role="alert" className="text-sm text-danger">
-            {errorMessage}
-          </p>
-          <Link href="/forgot-password" className="text-sm font-medium underline">
+          <AuthNotice tone="error">{errorMessage}</AuthNotice>
+          <Link href="/forgot-password" className={buttonClassName("primary", authButtonClass)}>
             Request a new link
           </Link>
         </>
       ) : (
         <ResetPasswordForm token={token} />
       )}
-    </div>
+    </AuthShell>
   );
 }

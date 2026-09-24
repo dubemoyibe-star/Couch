@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError, FormSuccess } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { VERIFY_EMAIL_CALLBACK_URL } from "@/lib/verification";
 
@@ -44,24 +47,28 @@ export function ResendVerification({ email: fixedEmail }: ResendVerificationProp
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-3">
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-3">
       {fixedEmail === undefined ? (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="resend-email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="resend-email"
-            type="email"
-            required
-            autoComplete="email"
-            value={typedEmail}
-            onChange={(event) => setTypedEmail(event.target.value)}
-            className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-          />
-        </div>
+        <Input
+          label="Email"
+          placeholder="you@example.com"
+          id="resend-email"
+          type="email"
+          required
+          autoComplete="email"
+          focusTone="brand"
+          icon={<Mail />}
+          value={typedEmail}
+          onChange={(event) => setTypedEmail(event.target.value)}
+        />
       ) : null}
-      <Button type="submit" variant="secondary" loading={pending} loadingLabel="Sending…">
+      <Button
+        type="submit"
+        variant="secondary"
+        loading={pending}
+        loadingLabel="Sending…"
+        className={authButtonClass}
+      >
         Resend verification email
       </Button>
       <FormError message={error} />

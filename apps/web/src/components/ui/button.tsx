@@ -19,6 +19,17 @@ const variants = {
     "rounded-md border border-border-strong bg-surface text-text hover:border-text-muted hover:bg-surface-muted active:bg-background",
 } as const;
 
+/** Button styling for an element that is not a <button>, such as a link that should look like one. */
+export function buttonClassName(variant: "primary" | "secondary" = "primary", className?: string) {
+  return cx(
+    "inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium",
+    calmTransition,
+    focusRing,
+    variants[variant],
+    className,
+  );
+}
+
 export function Button({
   variant = "primary",
   loading = false,
@@ -44,10 +55,7 @@ export function Button({
         onClick?.(event);
       }}
       className={cx(
-        "inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium",
-        calmTransition,
-        focusRing,
-        variants[variant],
+        buttonClassName(variant),
         "disabled:cursor-not-allowed disabled:opacity-50",
         loading && "cursor-progress opacity-80",
         className,
