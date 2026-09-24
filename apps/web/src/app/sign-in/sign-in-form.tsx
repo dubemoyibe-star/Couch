@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { authButtonClass, authLinkClass } from "@/components/auth-shell";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
 import { ResendVerification } from "@/components/resend-verification";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export function SignInForm() {
           icon={<Lock />}
           revealable
           labelAction={
-            <Link href="/forgot-password" className={`${authLinkClass} text-xs`}>
+            <Link href="/forgot-password" className="rounded-sm text-xs font-medium text-primary hover:text-primary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus">
               Forgot password?
             </Link>
           }
