@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { FormError } from "@/components/form-feedback";
-import { SubmitButton } from "@/components/submit-button";
+import { Button } from "@/components/ui/button";
 import {
   setCurrentMediaAction,
   type SetCurrentMediaState,
@@ -23,13 +23,15 @@ type SetCurrentMediaFormProps = {
  * item), so the one form and the one server action back both flows.
  */
 export function SetCurrentMediaForm({ couchId, mediaId, children }: SetCurrentMediaFormProps) {
-  const [state, formAction] = useActionState(setCurrentMediaAction, initialState);
+  const [state, formAction, pending] = useActionState(setCurrentMediaAction, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-1">
       <input type="hidden" name="couchId" value={couchId} />
       {mediaId ? <input type="hidden" name="mediaId" value={mediaId} /> : null}
-      <SubmitButton>{children}</SubmitButton>
+      <Button type="submit" loading={pending} className="self-start">
+        {children}
+      </Button>
       <FormError message={state.error} />
     </form>
   );
