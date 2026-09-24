@@ -65,7 +65,7 @@ export function GoogleButton({ errorPath, callbackError }: GoogleButtonProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col [&>[role=alert]:not(:empty)]:mt-3">
       <Button
         variant="secondary"
         className={authButtonClass}
@@ -76,7 +76,7 @@ export function GoogleButton({ errorPath, callbackError }: GoogleButtonProps) {
         <GoogleIcon />
         Continue with Google
       </Button>
-      <FormError message={error ?? callbackErrorMessage(callbackError)} />
+      <FormError message={error ?? callbackErrorMessage(callbackError)} compact />
     </div>
   );
 }
