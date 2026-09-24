@@ -109,8 +109,8 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
                 </Link>
               </div>
               {isHost ? (
-                <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                  <Link href={pickHref} className={buttonClassName("secondary", "min-h-10 px-4")}>
+                <div className="flex flex-wrap items-start justify-center gap-3 sm:justify-start">
+                  <Link href={pickHref} className={buttonClassName("secondary", "px-5")}>
                     Change
                   </Link>
                   <SetCurrentMediaForm couchId={couch.id} variant="secondary">
@@ -151,7 +151,11 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
                   {member.role === "host" ? "Host" : "Participant"}
                 </Badge>
                 {isHost && member.role !== "host" ? (
-                  <RemoveMemberForm couchId={couch.id} targetUserId={member.userId} />
+                  <RemoveMemberForm
+                    couchId={couch.id}
+                    targetUserId={member.userId}
+                    memberName={member.displayName}
+                  />
                 ) : null}
               </span>
             </li>

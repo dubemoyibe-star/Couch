@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
+import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import {
   removeMemberAction,
   type RemoveMemberState,
@@ -13,20 +14,76 @@ const initialState: RemoveMemberState = { error: null };
 type RemoveMemberFormProps = {
   readonly couchId: string;
   readonly targetUserId: string;
+  readonly memberName: string;
 };
 
-/** A host-only control that removes a non-host member from a couch. */
-export function RemoveMemberForm({ couchId, targetUserId }: RemoveMemberFormProps) {
+/**
+ * A host-only control that removes a non-host member from a couch. The
+ * button only opens a confirmation; nothing is submitted until the host
+ * confirms in the dialog.
+ */
+export function RemoveMemberForm({ couchId, targetUserId, memberName }: RemoveMemberFormProps) {
   const [state, formAction, pending] = useActionState(removeMemberAction, initialState);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (
-    <form action={formAction} className="flex flex-col items-end gap-1">
+    <form action={formAction}>
       <input type="hidden" name="couchId" value={couchId} />
       <input type="hidden" name="targetUserId" value={targetUserId} />
-      <Button type="submit" variant="secondary" loading={pending} loadingLabel="Removing…" className="min-h-9 px-3 text-xs">
+      <button
+        type="button"
+        aria-label={`Remove ${memberName}`}
+        onClick={() => dialogRef.current?.showModal()}
+        className={cx(
+          "min-h-9 cursor-pointer rounded-md border border-border-strong bg-surface px-3 text-xs font-medium text-text hover:border-danger hover:bg-danger/10 hover:text-danger active:bg-danger/15",
+          calmTransition,
+          focusRing,
+        )}
+      >
         Remove
-      </Button>
-      <FormError message={state.error} compact />
+      </button>
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={`remove-${targetUserId}-title`}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) dialogRef.current?.close();
+        }}
+        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-md border border-border bg-surface p-6 text-text backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+      >
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <h2 id={`remove-${targetUserId}-title`} className="font-display text-xl font-semibold">
+              Remove {memberName}?
+            </h2>
+            <p className="text-sm text-text-muted">
+              They will lose access to this couch. They can rejoin later with the invite link.
+            </p>
+          </div>
+          <FormError message={state.error} compact />
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="secondary"
+              className="min-h-10 px-4"
+              onClick={() => dialogRef.current?.close()}
+            >
+              Cancel
+            </Button>
+            {/* A plain button, not the Button primitive, so its danger fill is not fighting the primary variant. */}
+            <button
+              type="submit"
+              disabled={pending}
+              aria-busy={pending || undefined}
+              className={cx(
+                "min-h-10 cursor-pointer rounded-md bg-danger px-4 text-sm font-medium text-background hover:bg-danger/85 active:bg-danger/75 disabled:cursor-progress disabled:opacity-70",
+                calmTransition,
+                focusRing,
+              )}
+            >
+              {pending ? "Removing…" : "Remove"}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </form>
   );
 }
