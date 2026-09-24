@@ -1,6 +1,6 @@
 import { APIError } from "better-auth/api";
 import { describe, expect, it } from "vitest";
-import { authErrorMessage } from "./auth-errors";
+import { authErrorMessage, isEmailNotVerifiedError, verifyLinkErrorMessage } from "./auth-errors";
 
 describe("authErrorMessage", () => {
   it("maps a known Better Auth error code to a clear message", () => {
@@ -27,6 +27,16 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(error)).toBe("An account with that email already exists.");
   });
 
+  it("maps EMAIL_NOT_VERIFIED to a specific message, not the generic one", () => {
+    const error = new APIError("FORBIDDEN", {
+      code: "EMAIL_NOT_VERIFIED",
+      message: "Email not verified",
+    });
+    expect(authErrorMessage(error)).toBe(
+      "Verify your email address before signing in. Check your inbox for the link.",
+    );
+  });
+
   it("falls back to a generic message for an unrecognized error code", () => {
     const error = new APIError("BAD_REQUEST", {
       code: "SOME_FUTURE_CODE",
@@ -40,5 +50,30 @@ describe("authErrorMessage", () => {
       "Something went wrong. Please try again.",
     );
     expect(authErrorMessage("plain string")).toBe("Something went wrong. Please try again.");
+  });
+});
+
+describe("isEmailNotVerifiedError", () => {
+  it("is true only for the EMAIL_NOT_VERIFIED code", () => {
+    const unverified = new APIError("FORBIDDEN", { code: "EMAIL_NOT_VERIFIED", message: "x" });
+    const wrongPassword = new APIError("UNAUTHORIZED", { code: "INVALID_EMAIL_OR_PASSWORD", message: "x" });
+    expect(isEmailNotVerifiedError(unverified)).toBe(true);
+    expect(isEmailNotVerifiedError(wrongPassword)).toBe(false);
+    expect(isEmailNotVerifiedError(new Error("EMAIL_NOT_VERIFIED"))).toBe(false);
+  });
+});
+
+describe("verifyLinkErrorMessage", () => {
+  it("returns null when there is no error", () => {
+    expect(verifyLinkErrorMessage(undefined)).toBeNull();
+  });
+
+  it("distinguishes an expired link from an invalid one", () => {
+    expect(verifyLinkErrorMessage("TOKEN_EXPIRED")).toBe("This verification link has expired.");
+    expect(verifyLinkErrorMessage("INVALID_TOKEN")).toBe("This verification link is not valid.");
+  });
+
+  it("falls back for an unknown code", () => {
+    expect(verifyLinkErrorMessage("SOMETHING_ELSE")).toBe("This verification link could not be used.");
   });
 });
