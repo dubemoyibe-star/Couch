@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { FormError } from "@/components/form-feedback";
-import { SubmitButton } from "@/components/submit-button";
+import { Button } from "@/components/ui/button";
 import {
   leaveCouchAction,
   type LeaveCouchState,
@@ -16,12 +16,14 @@ type LeaveCouchFormProps = {
 
 /** A non-host control that leaves a couch. Redirects to the dashboard on success. */
 export function LeaveCouchForm({ couchId }: LeaveCouchFormProps) {
-  const [state, formAction] = useActionState(leaveCouchAction, initialState);
+  const [state, formAction, pending] = useActionState(leaveCouchAction, initialState);
 
   return (
     <form action={formAction} className="flex flex-col items-start gap-1">
       <input type="hidden" name="couchId" value={couchId} />
-      <SubmitButton>Leave this couch</SubmitButton>
+      <Button type="submit" variant="secondary" loading={pending} loadingLabel="Leaving…" className="min-h-10 px-4">
+        Leave this couch
+      </Button>
       <FormError message={state.error} />
     </form>
   );

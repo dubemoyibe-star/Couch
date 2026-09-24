@@ -66,9 +66,6 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
               {memberCount} {memberCount === 1 ? "member" : "members"} ·{" "}
               {media ? media.title : "Nothing on yet"}
             </span>
-            {media?.attribution ? (
-              <span className="line-clamp-2 text-[11px] leading-snug text-[#CDBFAE]">{media.attribution}</span>
-            ) : null}
           </span>
           <ChevronRight
             aria-hidden="true"
@@ -86,15 +83,15 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
     <Card as="li" className="overflow-hidden p-0">
       <Link
         href={`/couch/${couch.id}`}
-        className={cx("group flex h-full gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
+        className={cx("group flex h-full flex-col gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
       >
         <Poster
           url={media?.posterUrl ?? null}
           seed={media?.id ?? couch.id}
           name={media?.title ?? couch.name}
-          className="aspect-video w-32 rounded-md"
+          className="aspect-video w-full rounded-md"
         />
-        <span className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+        <span className="flex min-w-0 flex-1 flex-col justify-between gap-4">
           <span className="flex flex-col gap-1">
             <span className="truncate font-display text-xl font-semibold text-text">{couch.name}</span>
             <span className="truncate text-sm text-text-muted">
@@ -106,7 +103,6 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
                 "Nothing on yet"
               )}
             </span>
-            {media?.attribution ? <span className="text-xs text-text-muted">{media.attribution}</span> : null}
           </span>
           <span className="flex items-center justify-between gap-3 text-sm text-text-muted">
             <Badge tone={role === "host" ? "primary" : "neutral"}>{role === "host" ? "Host" : "Participant"}</Badge>

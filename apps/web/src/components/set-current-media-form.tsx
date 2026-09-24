@@ -15,6 +15,7 @@ type SetCurrentMediaFormProps = {
   /** Omitted to clear the couch's current media. */
   readonly mediaId?: string;
   readonly children: React.ReactNode;
+  readonly variant?: "primary" | "secondary";
 };
 
 /**
@@ -22,14 +23,14 @@ type SetCurrentMediaFormProps = {
  * from the couch page (to clear) and from the catalog (to set a searched
  * item), so the one form and the one server action back both flows.
  */
-export function SetCurrentMediaForm({ couchId, mediaId, children }: SetCurrentMediaFormProps) {
+export function SetCurrentMediaForm({ couchId, mediaId, children, variant }: SetCurrentMediaFormProps) {
   const [state, formAction, pending] = useActionState(setCurrentMediaAction, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-1">
       <input type="hidden" name="couchId" value={couchId} />
       {mediaId ? <input type="hidden" name="mediaId" value={mediaId} /> : null}
-      <Button type="submit" loading={pending} className="self-start">
+      <Button type="submit" variant={variant} loading={pending} className="self-start">
         {children}
       </Button>
       <FormError message={state.error} />

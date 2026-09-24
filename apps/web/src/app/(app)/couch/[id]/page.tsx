@@ -3,6 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { getCatalogMedia, getCouch, getMembership, getPrismaClient, listMembers } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
 import { getBaseUrl } from "@/lib/base-url";
+import { Users } from "lucide-react";
+import { Avatar } from "@/components/avatar";
+import { Badge } from "@/components/ui/badge";
+import { buttonClassName } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { CopyInviteLink } from "@/components/copy-invite-link";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
@@ -25,12 +31,12 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   // member list or current media: those are internals for members only.
   if (!membership) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8">
-        <p className="text-lg font-medium">You&apos;re not a member of {couch.name}</p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Ask whoever invited you for the invite link to join.
-        </p>
-        <Link href="/" className="mt-2 text-sm underline">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+        <h1 className="font-display text-2xl font-semibold text-text">
+          You&apos;re not a member of {couch.name}
+        </h1>
+        <p className="text-text-muted">Ask whoever invited you for the invite link to join.</p>
+        <Link href="/" className={buttonClassName("secondary", "mt-4")}>
           Back to my couches
         </Link>
       </div>
@@ -54,82 +60,116 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
     : null;
   const currentMediaUnavailable = couch.currentMediaId !== null && currentMedia === null;
 
+  const secondaryLink = cx(
+    "rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
+    calmTransition,
+    focusRing,
+  );
+  const pickHref = `/catalog?forCouch=${couch.id}`;
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-xl font-medium">{couch.name}</h1>
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-10">
+      <header className="flex flex-col gap-2">
+        <h1 className="font-display text-3xl font-semibold text-text sm:text-4xl">{couch.name}</h1>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-text-muted">
+          <Badge tone={isHost ? "primary" : "neutral"}>{isHost ? "Host" : "Participant"}</Badge>
+          <span className="inline-flex items-center gap-1.5">
+            <Users aria-hidden="true" className="size-4" />
+            {members.length} {members.length === 1 ? "member" : "members"}
+          </span>
+        </p>
+      </header>
 
-      {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
-
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium">Now watching</h2>
+      <section aria-labelledby="now-watching" className="flex flex-col gap-3">
+        <h2 id="now-watching" className="text-sm font-medium uppercase tracking-wide text-text-muted">
+          Now watching
+        </h2>
         {currentMedia ? (
-          <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col">
-                <span className="font-medium">{currentMedia.title}</span>
-                {currentMedia.license.attributionRequired ? (
-                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {currentMedia.license.attribution}
-                  </span>
-                ) : null}
+          <Card className="flex flex-col gap-5 sm:flex-row sm:items-start">
+            {/* Artwork is shown as delivered: no filter, tint, or overlay. */}
+            {currentMedia.posterUrl ? (
+              // Provider-hosted artwork from arbitrary hosts, so next/image's host allowlist does not fit.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={currentMedia.posterUrl}
+                alt=""
+                className="aspect-[2/3] w-32 shrink-0 rounded-media object-cover shadow-lg"
+              />
+            ) : (
+              <div className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-media border border-border bg-surface-muted text-sm text-text-muted">
+                No poster
               </div>
-              <Link href={`/catalog/${currentMedia.id}`} className="text-sm underline">
-                View details
-              </Link>
-            </div>
-            {isHost ? (
-              <div className="flex items-center gap-4">
-                <Link href={`/catalog?forCouch=${couch.id}`} className="text-sm underline">
-                  Change
+            )}
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <p className="font-display text-2xl font-semibold text-text">{currentMedia.title}</p>
+                <Link href={`/catalog/${currentMedia.id}`} className={cx(secondaryLink, "self-start")}>
+                  View details
                 </Link>
-                <SetCurrentMediaForm couchId={couch.id}>Stop watching</SetCurrentMediaForm>
               </div>
-            ) : null}
-          </div>
+              {isHost ? (
+                <div className="flex flex-wrap items-start gap-3">
+                  <Link href={pickHref} className={buttonClassName("secondary", "min-h-10 px-4")}>
+                    Change
+                  </Link>
+                  <SetCurrentMediaForm couchId={couch.id} variant="secondary">
+                    Stop watching
+                  </SetCurrentMediaForm>
+                </div>
+              ) : null}
+            </div>
+          </Card>
         ) : currentMediaUnavailable ? (
-          <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              The previously selected item is no longer available.
-            </p>
+          <Card className="flex flex-col items-start gap-3">
+            <p className="text-text-muted">The previously selected item is no longer available.</p>
             {isHost ? (
-              <Link href={`/catalog?forCouch=${couch.id}`} className="text-sm underline">
+              <Link href={pickHref} className={buttonClassName("secondary", "min-h-10 px-4")}>
                 Pick something else
               </Link>
             ) : null}
-          </div>
+          </Card>
         ) : (
-          <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">No media selected yet.</p>
+          <Card className="flex flex-col items-start gap-3">
+            <p className="text-text-muted">No media selected yet.</p>
             {isHost ? (
-              <Link href={`/catalog?forCouch=${couch.id}`} className="text-sm underline">
+              <Link href={pickHref} className={buttonClassName("primary", "min-h-10 px-4")}>
                 Search the catalog
               </Link>
             ) : null}
-          </div>
+          </Card>
         )}
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium">Members</h2>
+      <section aria-labelledby="members" className="flex flex-col gap-3">
+        <h2 id="members" className="text-sm font-medium uppercase tracking-wide text-text-muted">
+          Members
+        </h2>
         <ul className="flex flex-col gap-2">
           {members.map((member) => (
-            <li
-              key={member.userId}
-              className="flex items-center justify-between rounded border border-zinc-200 px-4 py-3 dark:border-zinc-800"
-            >
-              <span>{member.displayName}</span>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">{member.role}</span>
+            <Card as="li" key={member.userId} className="flex items-center justify-between gap-4 px-4 py-3">
+              <span className="flex min-w-0 items-center gap-3">
+                <Avatar name={member.displayName} />
+                <span className="truncate text-text">{member.displayName}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-3">
+                <Badge tone={member.role === "host" ? "primary" : "neutral"}>
+                  {member.role === "host" ? "Host" : "Participant"}
+                </Badge>
                 {isHost && member.role !== "host" ? (
                   <RemoveMemberForm couchId={couch.id} targetUserId={member.userId} />
                 ) : null}
-              </div>
-            </li>
+              </span>
+            </Card>
           ))}
         </ul>
-      </div>
+      </section>
 
-      {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
+      {inviteUrl || !isHost ? (
+        <section className="flex flex-col gap-4 border-t border-border pt-6">
+          {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
+          {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
+        </section>
+      ) : null}
     </div>
   );
 }
