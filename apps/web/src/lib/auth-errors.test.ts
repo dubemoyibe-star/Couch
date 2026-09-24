@@ -1,6 +1,12 @@
 import { APIError } from "better-auth/api";
 import { describe, expect, it } from "vitest";
-import { authErrorMessage, isEmailNotVerifiedError, verifyLinkErrorMessage } from "./auth-errors";
+import {
+  authErrorMessage,
+  isEmailNotVerifiedError,
+  resetLinkErrorMessage,
+  resetPasswordErrorMessage,
+  verifyLinkErrorMessage,
+} from "./auth-errors";
 
 describe("authErrorMessage", () => {
   it("maps a known Better Auth error code to a clear message", () => {
@@ -75,5 +81,23 @@ describe("verifyLinkErrorMessage", () => {
 
   it("falls back for an unknown code", () => {
     expect(verifyLinkErrorMessage("SOMETHING_ELSE")).toBe("This verification link could not be used.");
+  });
+});
+
+describe("password reset messages", () => {
+  it("tells the visitor an INVALID_TOKEN reset link expired or was already used", () => {
+    expect(resetLinkErrorMessage("INVALID_TOKEN")).toBe("This reset link has expired or was already used.");
+    expect(resetPasswordErrorMessage("INVALID_TOKEN")).toBe("This reset link has expired or was already used.");
+  });
+
+  it("returns null for a reset link with no error, and a generic message for an unknown one", () => {
+    expect(resetLinkErrorMessage(undefined)).toBeNull();
+    expect(resetLinkErrorMessage("SOMETHING_ELSE")).toBe("This reset link could not be used.");
+  });
+
+  it("maps password length errors and falls back for anything else", () => {
+    expect(resetPasswordErrorMessage("PASSWORD_TOO_SHORT")).toBe("That password is too short.");
+    expect(resetPasswordErrorMessage("PASSWORD_TOO_LONG")).toBe("That password is too long.");
+    expect(resetPasswordErrorMessage(undefined)).toBe("Something went wrong. Please try again.");
   });
 });

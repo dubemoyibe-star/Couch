@@ -5,7 +5,7 @@ import { getPrismaClient } from "@couch/database";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
-import { verificationEmail } from "./email-templates";
+import { passwordChangedEmail, resetPasswordEmail, verificationEmail, welcomeEmail } from "./email-templates";
 
 // Built lazily, and only on first use, the same way @couch/database's own
 // getPrismaClient() defers its DATABASE_URL read. betterAuth() calls
@@ -39,9 +39,75 @@ const VERIFICATION_LINK_TTL_SECONDS = 60 * 60;
 // Email/password sign-in is refused until the address is verified. This only
 // gates the credential sign-in path: a Google sign-in creates the user with
 // emailVerified already set by Google and never goes through this check.
+const RESET_PASSWORD_TTL_SECONDS = 60 * 60;
+
 export const emailAndPassword = {
   enabled: true,
   requireEmailVerification: true,
+  resetPasswordTokenExpiresIn: RESET_PASSWORD_TTL_SECONDS,
+  // Not awaited, for the same reason as sendVerificationEmail: the response
+  // must not reveal whether the address has an account.
+  async sendResetPassword({ user, url }: { user: { email: string; name: string }; url: string }) {
+    const message = resetPasswordEmail({
+      name: user.name,
+      url,
+      expiresInMinutes: RESET_PASSWORD_TTL_SECONDS / 60,
+    });
+    runInBackground(sendEmail({ to: user.email, ...message }));
+  },
+  // Fires after a reset-with-token has changed the password, so it only runs
+  // on a real change (a rejected or reused token never reaches it). The email
+  // is informational and carries no reset link, only the /forgot-password page
+  // address. Not awaited, and a failure to build it must not turn a completed
+  // password change into an error response.
+  async onPasswordReset({ user }: { user: { email: string; name: string } }) {
+    try {
+      const message = passwordChangedEmail({
+        name: user.name,
+        forgotPasswordUrl: `${getBaseUrl()}/forgot-password`,
+      });
+      runInBackground(sendEmail({ to: user.email, ...message }));
+    } catch (err) {
+      console.error(`[email] password-changed email not sent: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  },
+} as const;
+
+// Not awaited, and never throws: a failure to build the welcome email must not
+// break the verification or sign-up that triggered it.
+function sendWelcomeEmail(user: { email: string; name: string }): void {
+  try {
+    const baseUrl = getBaseUrl();
+    const message = welcomeEmail({
+      name: user.name,
+      catalogUrl: `${baseUrl}/catalog`,
+      createCouchUrl: `${baseUrl}/couch/create`,
+    });
+    runInBackground(sendEmail({ to: user.email, ...message }));
+  } catch (err) {
+    console.error(`[email] welcome email not sent: ${err instanceof Error ? err.message : "unknown error"}`);
+  }
+}
+
+// The welcome email goes out the first time an account becomes verified, and
+// the two ways that can happen are handled by two hooks that cannot both fire
+// for the same account:
+// - Email/password accounts are created unverified and later flip to verified.
+//   emailVerification.afterEmailVerification fires on that flip only. Better
+//   Auth returns early for an already-verified account, so re-opening a used
+//   link never reaches it.
+// - Google accounts are created already verified, so nothing ever flips and
+//   afterEmailVerification never fires for them. This create hook covers them.
+//   It only sends when the row is created with emailVerified true, and an
+//   email/password sign-up is created with it false, so it stays silent there.
+export const databaseHooks = {
+  user: {
+    create: {
+      async after(user: { email: string; name: string; emailVerified: boolean }) {
+        if (user.emailVerified) sendWelcomeEmail(user);
+      },
+    },
+  },
 } as const;
 
 export const emailVerification = {
@@ -62,6 +128,9 @@ export const emailVerification = {
       expiresInMinutes: VERIFICATION_LINK_TTL_SECONDS / 60,
     });
     runInBackground(sendEmail({ to: user.email, ...message }));
+  },
+  async afterEmailVerification(user: { email: string; name: string }) {
+    sendWelcomeEmail(user);
   },
 };
 
@@ -109,6 +178,7 @@ function buildAuth() {
     },
     emailAndPassword,
     emailVerification,
+    databaseHooks,
     rateLimit,
     // Sign-up, sign-in, and sign-out are called from Server Actions
     // (auth.api.*), where Better Auth cannot set cookies on the response by

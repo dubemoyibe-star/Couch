@@ -14,6 +14,11 @@ export default async function SignInPage({
       <SignInForm />
       <GoogleButton errorPath="/sign-in" callbackError={error} />
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <Link href="/forgot-password" className="font-medium underline">
+          Forgot your password?
+        </Link>
+      </p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Need an account?{" "}
         <Link href="/sign-up" className="font-medium underline">
           Sign up
