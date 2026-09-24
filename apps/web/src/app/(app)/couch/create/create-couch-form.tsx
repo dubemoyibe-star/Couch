@@ -18,10 +18,21 @@ function clientNameError(name: string): string | null {
   return parsed.success ? null : (parsed.error.issues[0]?.message ?? "That couch name is not valid.");
 }
 
-export function CreateCouchForm() {
+type CreateCouchFormProps = {
+  /** When set (inside a dialog), Cancel is a button that calls this instead of a link home. */
+  readonly onCancel?: () => void;
+};
+
+export function CreateCouchForm({ onCancel }: CreateCouchFormProps) {
   const [state, formAction, pending] = useActionState(createCouchAction, initialState);
   const [name, setName] = useState("");
   const [touched, setTouched] = useState(false);
+
+  const cancelClass = cx(
+    "self-center rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
+    calmTransition,
+    focusRing,
+  );
 
   const nameError = touched ? clientNameError(name) : null;
 
@@ -42,16 +53,15 @@ export function CreateCouchForm() {
       <Button type="submit" loading={pending} loadingLabel="Creating…" className={authButtonClass}>
         Create couch
       </Button>
-      <Link
-        href="/"
-        className={cx(
-          "self-center rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
-          calmTransition,
-          focusRing,
-        )}
-      >
-        Cancel
-      </Link>
+      {onCancel ? (
+        <button type="button" onClick={onCancel} className={cancelClass}>
+          Cancel
+        </button>
+      ) : (
+        <Link href="/" className={cancelClass}>
+          Cancel
+        </Link>
+      )}
     </form>
   );
 }

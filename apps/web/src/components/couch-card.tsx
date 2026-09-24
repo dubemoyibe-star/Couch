@@ -13,7 +13,7 @@ export function NewCouchTile({ hint = "Start a new watch party" }: { readonly hi
       <Link
         href="/couch/create"
         className={cx(
-          "group flex h-full min-h-28 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border-strong p-4 text-center text-text-muted hover:border-primary hover:bg-surface hover:text-text",
+          "group flex h-full min-h-56 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border-strong p-4 text-center text-text-muted hover:border-primary hover:bg-surface hover:text-text",
           calmTransition,
           focusRing,
         )}
@@ -40,7 +40,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
       <Link
         href={`/couch/${couch.id}`}
         className={cx(
-          "group relative isolate flex h-full min-h-28 items-end overflow-hidden rounded-md border border-border bg-surface",
+          "group relative isolate flex h-full min-h-56 items-end overflow-hidden rounded-md border border-border bg-surface",
           calmTransition,
           focusRing,
         )}

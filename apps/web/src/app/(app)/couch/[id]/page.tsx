@@ -85,7 +85,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
           Now watching
         </h2>
         {currentMedia ? (
-          <Card className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <Card className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-stretch">
             {/* Artwork is shown as delivered: no filter, tint, or overlay. */}
             {currentMedia.posterUrl ? (
               // Provider-hosted artwork from arbitrary hosts, so next/image's host allowlist does not fit.
@@ -93,22 +93,22 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
               <img
                 src={currentMedia.posterUrl}
                 alt=""
-                className="aspect-[2/3] w-32 shrink-0 rounded-media object-cover shadow-lg"
+                className="aspect-[2/3] w-44 shrink-0 rounded-media object-cover shadow-lg"
               />
             ) : (
-              <div className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-media border border-border bg-surface-muted text-sm text-text-muted">
+              <div className="flex aspect-[2/3] w-44 shrink-0 items-center justify-center rounded-media border border-border bg-surface-muted text-sm text-text-muted">
                 No poster
               </div>
             )}
-            <div className="flex flex-1 flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <p className="font-display text-2xl font-semibold text-text">{currentMedia.title}</p>
+            <div className="flex w-full flex-1 flex-col justify-between gap-6 text-center sm:text-left">
+              <div className="flex flex-col items-center gap-2 sm:items-start">
+                <p className="font-display text-2xl font-semibold text-text sm:text-3xl">{currentMedia.title}</p>
                 <Link href={`/catalog/${currentMedia.id}`} className={cx(secondaryLink, "self-start")}>
                   View details
                 </Link>
               </div>
               {isHost ? (
-                <div className="flex flex-wrap items-start gap-3">
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                   <Link href={pickHref} className={buttonClassName("secondary", "min-h-10 px-4")}>
                     Change
                   </Link>
@@ -144,9 +144,10 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
         <h2 id="members" className="text-sm font-medium uppercase tracking-wide text-text-muted">
           Members
         </h2>
-        <ul className="flex flex-col gap-2">
+        <Card as="section" className="p-0">
+          <ul className="divide-y divide-border">
           {members.map((member) => (
-            <Card as="li" key={member.userId} className="flex items-center justify-between gap-4 px-4 py-3">
+            <li key={member.userId} className="flex items-center justify-between gap-4 px-4 py-3">
               <span className="flex min-w-0 items-center gap-3">
                 <Avatar name={member.displayName} />
                 <span className="truncate text-text">{member.displayName}</span>
@@ -159,16 +160,17 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
                   <RemoveMemberForm couchId={couch.id} targetUserId={member.userId} />
                 ) : null}
               </span>
-            </Card>
+            </li>
           ))}
-        </ul>
+          </ul>
+        </Card>
       </section>
 
       {inviteUrl || !isHost ? (
-        <section className="flex flex-col gap-4 border-t border-border pt-6">
+        <Card as="section" className="flex flex-col gap-5">
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
-        </section>
+        </Card>
       ) : null}
     </div>
   );

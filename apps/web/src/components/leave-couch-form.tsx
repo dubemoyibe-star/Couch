@@ -24,7 +24,7 @@ export function LeaveCouchForm({ couchId }: LeaveCouchFormProps) {
       <Button type="submit" variant="secondary" loading={pending} loadingLabel="Leaving…" className="min-h-10 px-4">
         Leave this couch
       </Button>
-      <FormError message={state.error} />
+      <FormError message={state.error} compact />
     </form>
   );
 }

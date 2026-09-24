@@ -26,7 +26,7 @@ export function RemoveMemberForm({ couchId, targetUserId }: RemoveMemberFormProp
       <Button type="submit" variant="secondary" loading={pending} loadingLabel="Removing…" className="min-h-9 px-3 text-xs">
         Remove
       </Button>
-      <FormError message={state.error} />
+      <FormError message={state.error} compact />
     </form>
   );
 }
