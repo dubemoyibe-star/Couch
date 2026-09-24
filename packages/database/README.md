@@ -75,9 +75,9 @@ A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` 
 
 ### Model
 
-- `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: there is no user delete function), `inviteCode` (unique), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
+- `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: a user who owns a couch cannot be deleted), `inviteCode` (unique), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
 - `CouchMember`: `id`, `couchId` (FK `Couch`, `onDelete: Cascade`), `userId` (FK `User`, `onDelete: Restrict`), `role` (`HOST` or `PARTICIPANT`), `joinedAt`. `(couchId, userId)` is unique, and both columns are indexed.
-- There is no delete function for users, couches or media in the MVP. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
+- There is no delete function for couches or media in the MVP, and the only user delete is `deleteUnverifiedUser`: it deletes a user (and its accounts) only when the user is unverified and has no couch, membership or session, decided inside one transaction under a row lock. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
 - The database role enum (`HOST` / `PARTICIPANT`) is mapped to the lowercase contract role (`"host"` / `"participant"`) at the repository boundary; nothing outside this package sees the database enum.
 
 ### `currentMediaId` can go stale

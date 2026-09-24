@@ -1,10 +1,12 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { getPrismaClient } from "@couch/database";
+import { google } from "better-auth/social-providers";
+import { getPrismaClient, deleteUnverifiedUser } from "@couch/database";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
+import { withEmailClaim } from "./email-claim";
 import { passwordChangedEmail, resetPasswordEmail, verificationEmail, welcomeEmail } from "./email-templates";
 
 // Built lazily, and only on first use, the same way @couch/database's own
@@ -32,6 +34,21 @@ const globalForAuth = globalThis as typeof globalThis & {
 export const accountLinking = {
   enabled: true,
   requireLocalEmailVerified: true,
+} as const;
+
+// Settings for the Google provider that do not depend on credentials.
+// requireEmailVerification is per provider and independent of
+// emailAndPassword.requireEmailVerification, which never gates social sign-in.
+// Without it, a Google sign-in for a new email that Google does not vouch for
+// creates an unverified user and issues a session anyway. With it, the user row
+// is still created and a verification email is sent, but no session is issued
+// until the address is verified. This keeps the rule that an unverified user
+// never has a session, on both the password and the Google path.
+export const googleProviderSettings = {
+  // Always show the account chooser instead of silently reusing
+  // whichever Google account the browser is signed in to.
+  prompt: "select_account",
+  requireEmailVerification: true,
 } as const;
 
 const VERIFICATION_LINK_TTL_SECONDS = 60 * 60;
@@ -156,9 +173,13 @@ function buildAuth() {
             google: {
               clientId: googleClientId,
               clientSecret: googleClientSecret,
-              // Always show the account chooser instead of silently reusing
-              // whichever Google account the browser is signed in to.
-              prompt: "select_account" as const,
+              ...googleProviderSettings,
+              // Replaces an unverified account that holds the email Google
+              // vouches for. See email-claim.ts.
+              getUserInfo: withEmailClaim(
+                google({ clientId: googleClientId, clientSecret: googleClientSecret }).getUserInfo,
+                (email) => deleteUnverifiedUser(getPrismaClient(), email),
+              ),
             },
           },
         }

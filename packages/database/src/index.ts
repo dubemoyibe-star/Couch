@@ -59,6 +59,7 @@ export {
   type SetCurrentMediaError,
   type SetCurrentMediaInput,
 } from "./couch";
+export { deleteUnverifiedUser, type DeleteUnverifiedUserResult } from "./unverified-user";
 export {
   INVITE_CODE_ALPHABET,
   INVITE_CODE_BITS,
