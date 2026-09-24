@@ -1,17 +1,26 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { parseInviteCode } from "@/lib/invite-input";
 
+const ERROR_VISIBLE_MS = 5000;
+
 /** Takes a pasted invite link or code and opens its join page, which checks it on the server. */
 export function JoinByCode({ className }: { readonly className?: string }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // The message clears itself after a few seconds.
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), ERROR_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +42,10 @@ export function JoinByCode({ className }: { readonly className?: string }) {
         <input
           id="join-invite"
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setError(null);
+          }}
           placeholder="Paste an invite link"
           autoComplete="off"
           spellCheck={false}

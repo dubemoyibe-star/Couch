@@ -1,0 +1,29 @@
+[
+  {
+    "providerId": "static",
+    "providerMediaId": "sita-sings-the-blues",
+    "title": "Sita Sings the Blues",
+    "description": "Sita is a goddess separated from her beloved Lord and husband Rama. Nina is an animator whose husband moves to India, then dumps her by email. Three hilarious shadow puppets narrate both ancient tragedy and modern comedy.",
+    "durationSeconds": null,
+    "posterUrl": "https://archive.org/services/img/Sita_Sings_the_Blues",
+    "releaseYear": 2008,
+    "license": {
+      "licenseName": "CC0 1.0 Universal",
+      "licenseVersion": "1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://www.sitasingstheblues.com/",
+      "rightsholder": "Nina Paley",
+      "attributionRequired": false,
+      "attribution": null,
+      "intendedUseAllowed": true,
+      "commercialUseAllowed": true,
+      "additionalRestrictions": "None stated on the film's official homepage, which is the only page read; the creator's statement covers the film as a work she owns. Nothing about third-party music or artwork clearances was checked.",
+      "verifiedAt": "2026-09-24",
+      "verificationNotes": "Verified on the film's official site https://www.sitasingstheblues.com/, where the creator states that, to the extent possible under law, she has waived all copyright and related or neighboring rights to the film (CC0 public domain dedication, updated 2011) and invites people to distribute, copy, share, archive and show it. Playback is the Internet Archive's official embed of the item https://archive.org/details/Sita_Sings_the_Blues, whose usage field reads CC0 1.0 Universal. The description is taken from that item's page. posterUrl is the Internet Archive's own thumbnail service for the same item. No runtime was verified, so it is null. Attribution is not legally required; crediting Nina Paley is courteous."
+    },
+    "playback": {
+      "kind": "embed",
+      "url": "https://archive.org/embed/Sita_Sings_the_Blues"
+    }
+  }
+]

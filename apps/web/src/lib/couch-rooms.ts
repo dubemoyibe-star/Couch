@@ -12,6 +12,8 @@ export type RoomMedia = {
   readonly id: string;
   readonly title: string;
   readonly posterUrl: string | null;
+  /** Credit line to show with the title, or null when the license asks for none. */
+  readonly attribution: string | null;
 };
 
 export type CouchRoom = CouchListItem & { readonly media: RoomMedia | null };
@@ -36,7 +38,14 @@ export async function loadCouchRooms(db: Db, userId: string): Promise<CouchRoom[
         : null;
       return {
         ...item,
-        media: media ? { id: media.id, title: media.title, posterUrl: media.posterUrl ?? null } : null,
+        media: media
+          ? {
+              id: media.id,
+              title: media.title,
+              posterUrl: media.posterUrl ?? null,
+              attribution: media.license.attributionRequired ? media.license.attribution : null,
+            }
+          : null,
       };
     }),
   );
