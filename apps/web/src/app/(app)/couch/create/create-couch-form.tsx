@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { couchNameSchema } from "@couch/contracts";
+import { authButtonClass } from "@/components/auth-shell";
 import { FormError } from "@/components/form-feedback";
-import { SubmitButton } from "@/components/submit-button";
+import { Button } from "@/components/ui/button";
+import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import { Input } from "@/components/ui/input";
 import { createCouchAction, type CreateCouchState } from "./actions";
 
 const initialState: CreateCouchState = { error: null };
@@ -16,37 +19,39 @@ function clientNameError(name: string): string | null {
 }
 
 export function CreateCouchForm() {
-  const [state, formAction] = useActionState(createCouchAction, initialState);
+  const [state, formAction, pending] = useActionState(createCouchAction, initialState);
   const [name, setName] = useState("");
   const [touched, setTouched] = useState(false);
 
   const nameError = touched ? clientNameError(name) : null;
 
   return (
-    <form action={formAction} className="flex w-full max-w-sm flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium">
-          Couch name
-        </label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          onBlur={() => setTouched(true)}
-          className="rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-black"
-        />
-        <FormError message={nameError} />
-      </div>
+    <form action={formAction} className="flex w-full flex-col gap-4">
+      <Input
+        label="Couch name"
+        name="name"
+        type="text"
+        required
+        focusTone="brand"
+        value={name}
+        error={nameError}
+        onChange={(event) => setName(event.target.value)}
+        onBlur={() => setTouched(true)}
+      />
       <FormError message={state.error} />
-      <div className="flex items-center gap-4">
-        <SubmitButton>Create couch</SubmitButton>
-        <Link href="/" className="text-sm underline">
-          Cancel
-        </Link>
-      </div>
+      <Button type="submit" loading={pending} loadingLabel="Creating…" className={authButtonClass}>
+        Create couch
+      </Button>
+      <Link
+        href="/"
+        className={cx(
+          "self-center rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
+          calmTransition,
+          focusRing,
+        )}
+      >
+        Cancel
+      </Link>
     </form>
   );
 }

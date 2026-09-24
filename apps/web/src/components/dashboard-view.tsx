@@ -71,7 +71,6 @@ function ContinueWatching({ room }: { readonly room: CouchRoom }) {
           <p className="text-sm text-text-muted">
             {couch.name} · {memberCount} {memberCount === 1 ? "member" : "members"}
           </p>
-          {media?.attribution ? <p className="text-xs leading-snug text-text-muted">{media.attribution}</p> : null}
         </div>
       </div>
       {media ? (
@@ -88,18 +87,18 @@ function ContinueWatching({ room }: { readonly room: CouchRoom }) {
       ) : role !== "host" ? (
         <p className="text-sm text-text-muted">Nothing on yet. The host picks what plays.</p>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Link href={`/couch/${couch.id}`} className={buttonClassName("primary", "min-h-10 px-4")}>
+      <div className="flex gap-2">
+        <Link href={`/couch/${couch.id}`} className={buttonClassName("primary", "min-h-10 flex-1 px-4")}>
           <Play aria-hidden="true" className="size-4 fill-current" />
           Return to couch
         </Link>
         {media ? (
-          <Link href={`/catalog/${media.id}`} className={buttonClassName("secondary", "min-h-10 px-4")}>
+          <Link href={`/catalog/${media.id}`} className={buttonClassName("secondary", "min-h-10 flex-1 px-4")}>
             <Info aria-hidden="true" className="size-4" />
             View details
           </Link>
         ) : role === "host" ? (
-          <Link href={`/catalog?forCouch=${couch.id}`} className={buttonClassName("secondary", "min-h-10 px-4")}>
+          <Link href={`/catalog?forCouch=${couch.id}`} className={buttonClassName("secondary", "min-h-10 flex-1 px-4")}>
             Pick something to watch
           </Link>
         ) : null}
@@ -128,7 +127,7 @@ export function DashboardView({
   for (const { media } of rooms) {
     if (media && !seen.has(media.id)) {
       seen.add(media.id);
-      continueItems.push({ id: media.id, title: media.title, posterUrl: media.posterUrl, attribution: media.attribution });
+      continueItems.push({ id: media.id, title: media.title, posterUrl: media.posterUrl });
     }
   }
 

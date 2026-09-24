@@ -83,15 +83,15 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
     <Card as="li" className="overflow-hidden p-0">
       <Link
         href={`/couch/${couch.id}`}
-        className={cx("group flex h-full flex-col gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
+        className={cx("group flex h-full min-h-44 gap-4 rounded-md p-4 hover:bg-surface-muted", calmTransition, focusRing)}
       >
         <Poster
           url={media?.posterUrl ?? null}
           seed={media?.id ?? couch.id}
           name={media?.title ?? couch.name}
-          className="aspect-video w-full rounded-md"
+          className="aspect-[3/4] w-28 self-stretch rounded-md"
         />
-        <span className="flex min-w-0 flex-1 flex-col justify-between gap-4">
+        <span className="flex min-w-0 flex-1 flex-col justify-between gap-3 py-1">
           <span className="flex flex-col gap-1">
             <span className="truncate font-display text-xl font-semibold text-text">{couch.name}</span>
             <span className="truncate text-sm text-text-muted">
