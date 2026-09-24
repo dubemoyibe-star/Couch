@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resetPasswordEmail, verificationEmail } from "./email-templates";
+import { passwordChangedEmail, resetPasswordEmail, verificationEmail } from "./email-templates";
 
 const URL = "http://localhost:3000/api/auth/verify-email?token=abc&callbackURL=%2Fverify-email";
 
@@ -46,5 +46,29 @@ describe("resetPasswordEmail", () => {
     const { html } = resetPasswordEmail({ name: "Ada", url: RESET_URL, expiresInMinutes: 60 });
     expect(html).not.toContain("var(--");
     expect(html).toContain("#9c5827");
+  });
+});
+
+describe("passwordChangedEmail", () => {
+  const FORGOT_URL = "http://localhost:3000/forgot-password";
+
+  it("points back to /forgot-password in both bodies and carries no token link", () => {
+    const { html, text, subject } = passwordChangedEmail({ name: "Ada", forgotPasswordUrl: FORGOT_URL });
+    expect(subject).toBe("Your Couch password was changed");
+    expect(html).toContain(`href="${FORGOT_URL}"`);
+    expect(text).toContain(FORGOT_URL);
+    expect(html).not.toContain("token");
+    expect(html).not.toContain("reset-password");
+  });
+
+  it("escapes the display name so it cannot inject markup", () => {
+    const { html } = passwordChangedEmail({ name: '<script>alert("x")</script>', forgotPasswordUrl: FORGOT_URL });
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("uses inline hex colors, not CSS custom properties", () => {
+    const { html } = passwordChangedEmail({ name: "Ada", forgotPasswordUrl: FORGOT_URL });
+    expect(html).not.toContain("var(--");
   });
 });

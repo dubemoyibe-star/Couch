@@ -91,6 +91,36 @@ export function resetPasswordEmail({ name, url, expiresInMinutes }: ResetPasswor
   return { subject: "Reset your Couch password", html, text };
 }
 
+export type PasswordChangedEmailInput = {
+  readonly name: string;
+  /** The /forgot-password page, not a token link: anyone who reads this email must not be able to change the password with it. */
+  readonly forgotPasswordUrl: string;
+};
+
+export function passwordChangedEmail({ name, forgotPasswordUrl }: PasswordChangedEmailInput): EmailContent {
+  const safeName = escapeHtml(name);
+  const safeUrl = escapeHtml(forgotPasswordUrl);
+
+  const html = layout({
+    heading: "Your password was changed",
+    paragraphs: [
+      `Hi ${safeName}, the password for your Couch account was just changed. You can now sign in with the new one.`,
+      `If this was not you, reset your password again right away at <a href="${safeUrl}" style="color:${PRIMARY};word-break:break-all;">${safeUrl}</a>.`,
+    ],
+    footnote: "If this was you, there is nothing more to do.",
+  });
+
+  const text = [
+    `Hi ${name}, the password for your Couch account was just changed. You can now sign in with the new one.`,
+    "",
+    `If this was not you, reset your password again right away: ${forgotPasswordUrl}`,
+    "",
+    "If this was you, there is nothing more to do.",
+  ].join("\n");
+
+  return { subject: "Your Couch password was changed", html, text };
+}
+
 export type VerificationEmailInput = {
   readonly name: string;
   readonly url: string;

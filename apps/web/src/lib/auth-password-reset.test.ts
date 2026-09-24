@@ -73,11 +73,13 @@ function resetWith(auth: TestAuth, token: string, newPassword = NEW_PASSWORD) {
 }
 
 beforeEach(() => {
+  vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
   sendEmail.mockReset();
   sendEmail.mockResolvedValue({ ok: true, id: "msg_1" });
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.useRealTimers();
 });
 
@@ -187,5 +189,66 @@ describe("reset with token", () => {
     await expect(resetWith(auth, token ?? "", "short")).rejects.toMatchObject({
       body: { code: "PASSWORD_TOO_SHORT" },
     });
+  });
+});
+
+describe("password-changed confirmation email", () => {
+  async function resetOnce(auth: TestAuth) {
+    await requestReset(auth);
+    const { token } = await followLink(auth, lastResetUrl());
+    sendEmail.mockClear();
+    await resetWith(auth, token ?? "");
+    return token ?? "";
+  }
+
+  it("is sent once after a successful reset, to the account, pointing at /forgot-password", async () => {
+    const auth = makeAuth();
+    await createVerifiedUser(auth);
+    await resetOnce(auth);
+
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    const sent = sendEmail.mock.calls[0]?.[0];
+    expect(sent).toMatchObject({ to: EMAIL, subject: "Your Couch password was changed" });
+    expect(sent.text).toContain("http://localhost:3000/forgot-password");
+    expect(sent.html).not.toContain("/reset-password/");
+  });
+
+  it("is not sent when the token is reused, expired or made up", async () => {
+    const auth = makeAuth();
+    await createVerifiedUser(auth);
+    const token = await resetOnce(auth);
+    sendEmail.mockClear();
+
+    await expect(resetWith(auth, token, "yet-another-password")).rejects.toMatchObject({ body: { code: "INVALID_TOKEN" } });
+    await expect(resetWith(auth, "not-a-token")).rejects.toMatchObject({ body: { code: "INVALID_TOKEN" } });
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("is not sent when the new password is rejected for length", async () => {
+    const auth = makeAuth();
+    await createVerifiedUser(auth);
+    await requestReset(auth);
+    const { token } = await followLink(auth, lastResetUrl());
+    sendEmail.mockClear();
+
+    await expect(resetWith(auth, token ?? "", "short")).rejects.toMatchObject({ body: { code: "PASSWORD_TOO_SHORT" } });
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns without waiting for the send to finish", async () => {
+    vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
+    sendEmail.mockReturnValue(new Promise(() => {})); // never settles
+    const done = emailAndPassword.onPasswordReset({ user: { email: EMAIL, name: "Ada" } });
+    const outcome = await Promise.race([done.then(() => "returned"), new Promise((r) => setTimeout(() => r("blocked"), 200))]);
+    expect(outcome).toBe("returned");
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not throw if the base URL is not configured, so the password change still succeeds", async () => {
+    vi.stubEnv("BETTER_AUTH_URL", "");
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(emailAndPassword.onPasswordReset({ user: { email: EMAIL, name: "Ada" } })).resolves.toBeUndefined();
+    expect(sendEmail).not.toHaveBeenCalled();
+    errors.mockRestore();
   });
 });

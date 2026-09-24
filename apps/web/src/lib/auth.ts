@@ -5,7 +5,7 @@ import { getPrismaClient } from "@couch/database";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
-import { resetPasswordEmail, verificationEmail } from "./email-templates";
+import { passwordChangedEmail, resetPasswordEmail, verificationEmail } from "./email-templates";
 
 // Built lazily, and only on first use, the same way @couch/database's own
 // getPrismaClient() defers its DATABASE_URL read. betterAuth() calls
@@ -54,6 +54,22 @@ export const emailAndPassword = {
       expiresInMinutes: RESET_PASSWORD_TTL_SECONDS / 60,
     });
     runInBackground(sendEmail({ to: user.email, ...message }));
+  },
+  // Fires after a reset-with-token has changed the password, so it only runs
+  // on a real change (a rejected or reused token never reaches it). The email
+  // is informational and carries no reset link, only the /forgot-password page
+  // address. Not awaited, and a failure to build it must not turn a completed
+  // password change into an error response.
+  async onPasswordReset({ user }: { user: { email: string; name: string } }) {
+    try {
+      const message = passwordChangedEmail({
+        name: user.name,
+        forgotPasswordUrl: `${getBaseUrl()}/forgot-password`,
+      });
+      runInBackground(sendEmail({ to: user.email, ...message }));
+    } catch (err) {
+      console.error(`[email] password-changed email not sent: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
   },
 } as const;
 
