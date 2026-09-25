@@ -5,6 +5,7 @@ const room = (couchId: string, mediaId = "m1"): RoomState => ({
   couchId,
   mediaId,
   playback: createInitialPlaybackState(1_700_000_000_000),
+  playbackAccess: "open",
 });
 
 describe("in-memory RoomStore", () => {

@@ -45,6 +45,24 @@ describe("room.join when the database fails", () => {
   });
 });
 
+describe("playback commands and playback.setAccess before a join", () => {
+  it("answers not_joined, and never touches the database", () => {
+    const sent: ServerMessage[] = [];
+    const connection: Connection = { send: (message) => sent.push(message), close: () => {} };
+    const rooms = createRoomHandlers({ db: failingDb, store: createInMemoryRoomStore(), now: () => 0 });
+
+    rooms.onMessage({ userId: "u1" }, { v: 1, type: "playback.play", payload: { position: 1 } }, connection);
+    rooms.onMessage({ userId: "u1" }, { v: 1, type: "playback.setRate", payload: { rate: 1 } }, connection);
+    rooms.onMessage({ userId: "u1" }, { v: 1, type: "playback.setAccess", payload: { mode: "host" } }, connection);
+
+    expect(sent.map((m) => (m.type === "error" ? m.payload.code : m.type))).toEqual([
+      "not_joined",
+      "not_joined",
+      "not_joined",
+    ]);
+  });
+});
+
 describe("room.leave and room.kick before a join", () => {
   it("answers not_joined, and never touches the database", () => {
     const sent: ServerMessage[] = [];

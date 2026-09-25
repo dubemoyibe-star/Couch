@@ -1,4 +1,4 @@
-import type { PlaybackState } from "@couch/contracts";
+import type { PlaybackAccessMode, PlaybackState } from "@couch/contracts";
 
 /**
  * What the server knows about one couch that has media: the media being watched and its
@@ -10,6 +10,8 @@ export type RoomState = {
   /** Catalog id of the current media. */
   mediaId: string;
   playback: PlaybackState;
+  /** Who may send playback commands: everyone in the room, or only the host. */
+  playbackAccess: PlaybackAccessMode;
 };
 
 /**
