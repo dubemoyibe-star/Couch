@@ -4,6 +4,17 @@ Couch: watch together remotely with synchronized playback.
 
 Status: early development.
 
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| [apps/web](apps/web/README.md) | Next.js app: UI and HTTP route handlers. |
+| [apps/realtime](apps/realtime/README.md) | WebSocket service that authenticates connections and synchronizes rooms. |
+| [packages/contracts](packages/contracts/README.md) | Wire schemas and derived types (Zod). |
+| [packages/shared](packages/shared/README.md) | Pure cross-runtime logic: playback reducers, room state store, position and license rules. |
+| [packages/providers](packages/providers/README.md) | Content provider layer. Metadata and links only. |
+| [packages/database](packages/database/README.md) | Prisma and repositories over hosted Neon Postgres. |
+
 ## Docs
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): the packages, the dependency direction between them, and how it's enforced.
