@@ -53,6 +53,7 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   media_unavailable: "This couch has no media to control.",
   host_cannot_leave: "As the host, you cannot leave this couch.",
   cannot_remove_self: "You cannot remove yourself from the couch.",
+  unknown_type: "This message type is not supported yet.",
 };
 
 // 1008: policy violation. The user was removed from the only room the socket
@@ -311,6 +312,10 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
         transport((state, now) => applySeek(state, message.payload, now), message.id, connection);
       } else if (message.type === "playback.setRate") {
         transport((state, now) => applySetRate(state, message.payload, now), message.id, connection);
+      } else {
+        // In the contracts catalog but with no handler yet (chat.send). Refused,
+        // never silently dropped.
+        sendError(connection, "unknown_type", message.id);
       }
     },
 
