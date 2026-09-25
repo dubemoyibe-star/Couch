@@ -3,6 +3,9 @@ import { getCouchByInviteCode, getMembership, getPrismaClient, listMembers } fro
 import { getCurrentUser } from "@/lib/session";
 import { JoinInvitePanel } from "@/components/join-invite-panel";
 import { Card } from "@/components/ui/card";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Join a couch" };
 
 export default async function JoinCouchPage({ params }: PageProps<"/join/[code]">) {
   const user = await getCurrentUser();

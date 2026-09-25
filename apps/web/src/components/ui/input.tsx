@@ -75,7 +75,7 @@ export function Input({
             ? "transition-[border-color,box-shadow] duration-150 ease-out motion-reduce:transition-none"
             : calmTransition,
           focusTone === "brand"
-            ? "focus-visible:border-primary/70 focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]"
+            ? "focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]"
             : "focus-visible:border-focus focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
           error
             ? "border-danger ring-1 ring-inset ring-danger"
@@ -92,7 +92,7 @@ export function Input({
           <button
             type="button"
             onClick={() => setRevealed((value) => !value)}
-            aria-label={revealed ? "Hide password" : "Show password"}
+            aria-label="Show password"
             aria-pressed={revealed}
             className={cx(
               "absolute inset-y-0 right-1 my-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text",

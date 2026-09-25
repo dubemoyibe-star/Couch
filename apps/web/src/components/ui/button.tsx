@@ -17,8 +17,10 @@ const variants = {
     "rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover active:bg-[color-mix(in_oklab,var(--color-primary-hover)_90%,black)] motion-safe:active:translate-y-px",
   secondary:
     "rounded-md border border-border-strong bg-surface text-text hover:border-text-muted hover:bg-surface-muted active:bg-background",
+  // Hover and active blend toward --color-text, the opposite of the label color in both palettes,
+  // so the label contrast rises (or holds) instead of dropping as it would with a translucent fill.
   danger:
-    "rounded-md bg-danger text-background hover:bg-danger/85 active:bg-danger/75",
+    "rounded-md bg-danger text-background hover:bg-[color-mix(in_oklab,var(--color-danger)_85%,var(--color-text))] active:bg-[color-mix(in_oklab,var(--color-danger)_75%,var(--color-text))]",
 } as const;
 
 /** Button styling for an element that is not a <button>, such as a link that should look like one. */
@@ -43,37 +45,43 @@ export function Button({
   ...rest
 }: ButtonProps) {
   return (
-    <button
-      {...rest}
-      type={type}
-      // aria-disabled (not disabled) while loading keeps keyboard focus on the button.
-      aria-disabled={loading || undefined}
-      aria-busy={loading || undefined}
-      onClick={(event) => {
-        if (loading) {
-          event.preventDefault();
-          return;
-        }
-        onClick?.(event);
-      }}
-      className={cx(
-        buttonClassName(variant),
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        loading && "opacity-80 aria-busy:cursor-progress",
-        className,
-      )}
-    >
-      {loading ? (
-        <>
-          <span
-            aria-hidden="true"
-            className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
-          />
-          {loadingLabel}
-        </>
-      ) : (
-        children
-      )}
-    </button>
+    <>
+      <button
+        {...rest}
+        type={type}
+        // aria-disabled (not disabled) while loading keeps keyboard focus on the button.
+        aria-disabled={loading || undefined}
+        aria-busy={loading || undefined}
+        onClick={(event) => {
+          if (loading) {
+            event.preventDefault();
+            return;
+          }
+          onClick?.(event);
+        }}
+        className={cx(
+          buttonClassName(variant),
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          loading && "opacity-80 aria-busy:cursor-progress",
+          className,
+        )}
+      >
+        {loading ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="size-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
+            />
+            {loadingLabel}
+          </>
+        ) : (
+          children
+        )}
+      </button>
+      {/* Stays mounted so the change is announced; the spinner and label are for sighted users. */}
+      <span role="status" className="sr-only">
+        {loading ? loadingLabel : ""}
+      </span>
+    </>
   );
 }

@@ -11,12 +11,16 @@ import { signUpAction, type SignUpState } from "./actions";
 
 const initialState: SignUpState = { error: null, checkEmail: null };
 
+// The form is replaced by the confirmation, which would drop keyboard focus to the page start.
+// Moving focus to the confirmation keeps the visitor's place and has it read out.
+const focusOnMount = (element: HTMLElement | null) => element?.focus();
+
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUpAction, initialState);
 
   if (state.checkEmail) {
     return (
-      <div className="flex w-full flex-col gap-4">
+      <div ref={focusOnMount} tabIndex={-1} className="flex w-full flex-col gap-4 focus:outline-none">
         <h2 className="font-display text-xl font-semibold text-text">Check your email</h2>
         <AuthNotice tone="success">
           We sent a verification link to <strong>{state.checkEmail}</strong>. Open it to finish

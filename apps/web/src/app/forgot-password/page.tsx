@@ -2,6 +2,9 @@ import { ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { AuthShell, authLinkClass } from "@/components/auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Forgot password" };
 
 export default function ForgotPasswordPage() {
   return (

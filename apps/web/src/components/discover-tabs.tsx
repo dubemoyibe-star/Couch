@@ -55,9 +55,10 @@ export function DiscoverTabs({
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-    if (step === 0) return;
+    const jump = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null;
+    if (step === 0 && jump === null) return;
     event.preventDefault();
-    const next = tabs[(index + step + tabs.length) % tabs.length];
+    const next = tabs[jump ?? (index + step + tabs.length) % tabs.length];
     if (!next) return;
     setSelected(next.id);
     refs.current[next.id]?.focus();
@@ -65,7 +66,7 @@ export function DiscoverTabs({
 
   return (
     <section aria-labelledby={`${baseId}-heading`} className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+      <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
         <h2 id={`${baseId}-heading`} className="font-display text-2xl font-semibold text-text">
           Discover
         </h2>
@@ -95,10 +96,11 @@ export function DiscoverTabs({
               </button>
             );
           })}
-          <Link href="/catalog" className={tabClass(false)}>
-            Browse catalog
-          </Link>
         </div>
+        {/* A link is not a tab, so it sits beside the tablist rather than inside it. */}
+        <Link href="/catalog" className={tabClass(false)}>
+          Browse catalog
+        </Link>
       </div>
 
       <div id={`${baseId}-panel`} role="tabpanel" aria-labelledby={`${baseId}-${selected}`}>

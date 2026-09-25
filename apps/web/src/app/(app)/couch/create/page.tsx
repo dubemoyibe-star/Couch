@@ -3,6 +3,9 @@ import { Armchair } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/session";
 import { CreateCouchForm } from "./create-couch-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Create a couch" };
 
 export default async function CreateCouchPage() {
   const user = await getCurrentUser();

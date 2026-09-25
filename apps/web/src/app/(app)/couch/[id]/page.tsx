@@ -14,6 +14,9 @@ import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { LeaveCouchForm } from "@/components/leave-couch-form";
 import { NoMediaEmptyState } from "@/components/no-media-empty-state";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Your couch" };
 
 export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   const user = await getCurrentUser();

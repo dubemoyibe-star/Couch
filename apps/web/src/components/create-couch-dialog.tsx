@@ -21,7 +21,7 @@ export function CreateCouchDialog() {
           </h1>
           <p className="text-sm text-text-muted">Give it a name, then invite friends with a link.</p>
         </div>
-        <CreateCouchForm />
+        <CreateCouchForm autoFocus />
       </div>
     </ModalDialog>
   );

@@ -56,7 +56,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
         </span>
         <span
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/45 to-black/10"
+          className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/65 to-black/10"
         />
         <span className="flex w-full items-end justify-between gap-2 p-4 text-[#F4EEE7]">
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -101,11 +101,11 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
         </span>
         <span
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-black/40 to-black/5"
+          className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-black/65 to-black/5"
         />
         <span className="flex items-start justify-between gap-3">
           <Badge tone={role === "host" ? "primary" : "neutral"}>{role === "host" ? "Host" : "Participant"}</Badge>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-xs backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-xs backdrop-blur-sm">
             <Users aria-hidden="true" className="size-3.5" />
             {memberCount} {memberCount === 1 ? "member" : "members"}
           </span>

@@ -5,6 +5,9 @@ import { ResendVerification } from "@/components/resend-verification";
 import { buttonClassName } from "@/components/ui/button";
 import { verifyLinkErrorMessage } from "@/lib/auth-errors";
 import { getCurrentUser } from "@/lib/session";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Verify your email" };
 
 // Better Auth verifies the token at /api/auth/verify-email and redirects here:
 // with `?status=verified` on success (the user is then signed in), or with
