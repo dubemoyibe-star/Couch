@@ -32,7 +32,7 @@ export function NoCouchesEmptyState() {
           </p>
         </div>
 
-        <EmptyActions showInviteHint={false} />
+        <EmptyActions />
       </section>
     </div>
   );

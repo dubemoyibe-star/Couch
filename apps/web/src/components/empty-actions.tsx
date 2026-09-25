@@ -1,50 +1,22 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { JoinByCode } from "@/components/join-by-code";
 import { buttonClassName } from "@/components/ui/button";
-import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 
-/** Create and join actions for a new user. "Join a couch" reveals the invite box in place. */
-export function EmptyActions({ showInviteHint = true }: { readonly showInviteHint?: boolean }) {
-  const [joining, setJoining] = useState(false);
-
+/** Create and join actions for a new user: a create button, then the invite box always visible below it. */
+export function EmptyActions() {
   return (
     <div className="flex w-full flex-col items-center gap-5">
-      <div className="flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center">
-        <Link href="/couch/create" className={buttonClassName("primary", "w-full sm:w-auto")}>
-          <Plus aria-hidden="true" className="size-4" />
-          Create a couch
-        </Link>
-        <button
-          type="button"
-          aria-expanded={joining}
-          aria-controls="join-panel"
-          onClick={() => setJoining((open) => !open)}
-          className={cx(buttonClassName("secondary"), "w-full cursor-pointer sm:w-auto")}
-        >
-          <Users aria-hidden="true" className="size-4" />
-          Join a couch
-        </button>
+      <Link href="/couch/create" className={buttonClassName("primary", "w-full sm:w-auto")}>
+        <Plus aria-hidden="true" className="size-4" />
+        Create a couch
+      </Link>
+      <div className="flex w-full max-w-md items-center gap-3 text-xs uppercase tracking-widest text-text-muted" aria-hidden="true">
+        <span className="h-px flex-1 bg-border-strong" />
+        or
+        <span className="h-px flex-1 bg-border-strong" />
       </div>
-      <div id="join-panel" hidden={!joining} className="w-full max-w-md text-left">
-        <JoinByCode />
-      </div>
-      {showInviteHint ? (
-        <p className="flex flex-col items-center gap-1 text-sm text-text-muted">
-          <span aria-hidden="true" className="mb-2 h-px w-8 bg-border-strong" />
-          Have an invite?
-          <button
-            type="button"
-            onClick={() => setJoining(true)}
-            className={cx("cursor-pointer rounded-sm font-medium text-primary hover:text-primary-hover", calmTransition, focusRing)}
-          >
-            Join a couch
-          </button>
-        </p>
-      ) : null}
+      <JoinByCode className="w-full max-w-md text-left" />
     </div>
   );
 }
