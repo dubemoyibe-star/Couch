@@ -388,6 +388,7 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | `forbidden`           | The connection is in a couch, but the user's role does not allow the action. For example a participant sends `room.setMedia` or `room.kick`.              |
 | `couch_not_found`     | `room.join` names a couch that does not exist.                                                                                                             |
 | `media_unavailable`   | `room.setMedia` names media that is not in the catalog, or that cannot be played right now.                                                                |
+| `already_joined`      | `room.join` on a connection that has already joined, or is joining, a couch. A connection is in at most one room, and the join is refused, never moved.    |
 
 The first five come from `parseMessage` (`PARSE_ERROR_CODES`). The rest are sent after a message parsed, when the server cannot act on it. New codes are added to `ERROR_CODES`. Never rename or remove a code.
 

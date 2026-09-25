@@ -1,5 +1,8 @@
+import { getPrismaClient } from "@couch/database";
+import { createInMemoryRoomStore } from "@couch/shared";
 import { getAuth } from "./lib/auth";
 import { loadRealtimeEnv } from "./lib/env";
+import { createRoomHandlers } from "./lib/room-handlers";
 import { createRealtimeServer } from "./lib/server";
 import { authenticateSession } from "./lib/session";
 
@@ -26,11 +29,19 @@ async function main(): Promise<void> {
   const trusted = getAuth().options.trustedOrigins;
   if (!Array.isArray(trusted)) throw new Error("trustedOrigins must be a list of origins");
 
+  const rooms = createRoomHandlers({
+    db: getPrismaClient(),
+    store: createInMemoryRoomStore(),
+    now: Date.now,
+    onError: (error) => {
+      console.error(`[realtime] ${error instanceof Error ? error.message : "unexpected error"}`);
+    },
+  });
   const server = createRealtimeServer({
     authenticate: authenticateSession,
     allowedOrigins: trusted,
-    // There are no message handlers yet, so a message that parsed goes nowhere.
-    onMessage: () => {},
+    onMessage: rooms.onMessage,
+    onClose: rooms.onClose,
   });
 
   const port = await server.listen(readPort(process.env.PORT));
