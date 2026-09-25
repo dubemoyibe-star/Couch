@@ -14,6 +14,7 @@ import {
   leaveCouch,
   listMembers,
   removeMember,
+  setCurrentMedia,
   type PrismaClient,
 } from "@couch/database";
 import {
@@ -122,8 +123,9 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
       const { firstForUser } = connections.attach(connection, couchId, userId, self.role);
 
       let playback = null;
-      // A couch with no media has no room yet, so it is open until one exists.
-      let playbackAccess: PlaybackAccessMode = "open";
+      // A couch that never had media has no room, so it is open until one exists.
+      // A cleared couch keeps its room, and so its mode.
+      let playbackAccess: PlaybackAccessMode = deps.store.get(couchId)?.playbackAccess ?? "open";
       if (media) {
         // The room is created on first use. The database decides which media a
         // couch has, so a stored room for other media is replaced.
@@ -225,10 +227,38 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
     try {
       const room = deps.store.get(attached.couchId);
       // No media means no room, so there is nothing to control yet.
-      if (!room) return sendError(connection, "media_unavailable", replyTo);
+      if (!room?.playback) return sendError(connection, "media_unavailable", replyTo);
       deps.store.set({ ...room, playbackAccess: mode });
       // No `except`: the sender is attached too, so it gets the same message.
       broadcast(attached.couchId, { v: PROTOCOL_VERSION, type: "playback.accessChanged", payload: { mode } });
+    } catch (error) {
+      deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
+    }
+  }
+
+  // The cached role is a first check. `setCurrentMedia` re-checks the host in the
+  // database and owns the license gate, so nothing of it is repeated here. On any
+  // failure nothing is stored or broadcast: only the requester is answered.
+  async function setMedia(actingUserId: string, mediaId: string | null, replyTo: string | undefined, connection: Connection) {
+    const attached = connections.attachment(connection);
+    if (!attached) return sendError(connection, "not_joined", replyTo);
+    if (attached.role !== "host") return sendError(connection, "forbidden", replyTo);
+    const { couchId } = attached;
+    try {
+      const result = await setCurrentMedia(deps.db, { couchId, actingUserId, mediaId });
+      if (!result.ok) return sendError(connection, result.error, replyTo);
+      const media = mediaId ? await getCatalogMedia(deps.db, mediaId) : null;
+      // Written a moment ago through the same gate, so a null here means a takedown
+      // landed in between. The database now names media the room must not show.
+      if (mediaId && !media) return sendError(connection, "media_unavailable", replyTo);
+
+      // No await from here on. The mode is read now and written back, so a media
+      // change never resets it.
+      const playbackAccess = deps.store.get(couchId)?.playbackAccess ?? "open";
+      const playback = media ? createInitialPlaybackState(deps.now()) : null;
+      deps.store.set({ couchId, mediaId: media ? media.id : null, playback, playbackAccess });
+      broadcast(couchId, { v: PROTOCOL_VERSION, type: "room.mediaChanged", payload: { media, playback } });
     } catch (error) {
       deps.onError?.(error);
       sendError(connection, "internal_error", replyTo);
@@ -249,7 +279,7 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
     try {
       // A missing room means the couch has no media.
       const room = deps.store.get(attached.couchId);
-      if (!room) return sendError(connection, "media_unavailable", replyTo);
+      if (!room?.playback) return sendError(connection, "media_unavailable", replyTo);
       if (attached.role !== "host" && room.playbackAccess !== "open") return sendError(connection, "forbidden", replyTo);
       const playback = apply(room.playback, deps.now());
       deps.store.set({ ...room, playback });
@@ -269,6 +299,8 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
         void leave(identity.userId, message.id, connection);
       } else if (message.type === "room.kick") {
         void kick(identity.userId, message.payload.userId, message.id, connection);
+      } else if (message.type === "room.setMedia") {
+        void setMedia(identity.userId, message.payload.mediaId, message.id, connection);
       } else if (message.type === "playback.setAccess") {
         setAccess(message.payload.mode, message.id, connection);
       } else if (message.type === "playback.play") {

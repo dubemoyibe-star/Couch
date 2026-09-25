@@ -95,12 +95,17 @@ describe("room.setMedia", () => {
     });
   });
 
+  it("accepts null, which clears the media", () => {
+    expect(parseClient("room.setMedia", { mediaId: null }).ok).toBe(true);
+  });
+
   it("accepts an id at the catalog id limit", () => {
     const mediaId = "a".repeat(MEDIA_LIMITS.catalogId);
     expect(parseClient("room.setMedia", { mediaId }).ok).toBe(true);
   });
 
-  it.each(idCases(MEDIA_LIMITS.catalogId))("rejects a mediaId that is %s", (_name, mediaId) => {
+  // null is the one non-string value setMedia accepts: it clears the media.
+  it.each(idCases(MEDIA_LIMITS.catalogId).filter(([, value]) => value !== null))("rejects a mediaId that is %s", (_name, mediaId) => {
     expect(code(parseClient("room.setMedia", { mediaId }))).toBe("invalid_payload");
   });
 
@@ -257,9 +262,15 @@ describe("room.mediaChanged", () => {
     });
   });
 
+  it("accepts a cleared room: media and playback both null", () => {
+    const cleared = { media: null, playback: null };
+    expect(parseServer("room.mediaChanged", cleared)).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.mediaChanged", payload: cleared },
+    });
+  });
+
   it.each<[string, object]>([
-    ["null media", { media: null }],
-    ["null playback", { playback: null }],
     ["missing media", { media: undefined }],
     ["missing playback", { playback: undefined }],
     ["media without a license", { media: { ...catalogMedia, license: undefined } }],

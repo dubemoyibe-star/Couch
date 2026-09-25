@@ -1,15 +1,18 @@
 import type { PlaybackAccessMode, PlaybackState } from "@couch/contracts";
 
 /**
- * What the server knows about one couch that has media: the media being watched and its
- * playback state. A couch with no media has no room. Live connections and who is online
- * are not part of this: they hold sockets, so they belong to the realtime service.
+ * What the server knows about one couch: the media being watched, its playback state, and
+ * the playback access mode. `mediaId` is null exactly when `playback` is null: a couch whose
+ * media was cleared keeps its room so the access mode survives. A couch that never had
+ * media has no room. Live connections and who is online are not part of this: they hold
+ * sockets, so they belong to the realtime service.
  */
 export type RoomState = {
   couchId: string;
-  /** Catalog id of the current media. */
-  mediaId: string;
-  playback: PlaybackState;
+  /** Catalog id of the current media, or null when it was cleared. */
+  mediaId: string | null;
+  /** Null exactly when `mediaId` is null. */
+  playback: PlaybackState | null;
   /** Who may send playback commands: everyone in the room, or only the host. */
   playbackAccess: PlaybackAccessMode;
 };
