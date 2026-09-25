@@ -12,7 +12,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 }
 
 const licenseLink = cx(
-  "-my-2 rounded-sm py-2 underline underline-offset-4 hover:text-text",
+  "inline-flex min-h-11 items-center rounded-sm underline underline-offset-4 hover:text-text",
   calmTransition,
   focusRing,
 );
