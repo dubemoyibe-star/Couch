@@ -35,11 +35,11 @@ export function CopyInviteLink({ url }: { url: string }) {
           value={url}
           onFocus={(event) => event.target.select()}
           className={cx(
-            "min-h-10 min-w-0 flex-1 rounded-md border border-border-strong bg-surface-muted px-3 py-2 text-sm text-text-muted",
+            "min-h-11 min-w-0 flex-1 rounded-md border border-border-strong bg-surface-muted px-3 py-2 text-sm text-text-muted",
             inputFocus,
           )}
         />
-        <Button variant="secondary" onClick={handleCopy} className="min-h-10 px-4">
+        <Button variant="secondary" onClick={handleCopy} className="px-4">
           {copied ? (
             <Check aria-hidden="true" className="size-4" />
           ) : (

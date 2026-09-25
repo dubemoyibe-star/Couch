@@ -30,7 +30,7 @@ export default async function CouchesPage() {
           Create a couch
         </Link>
       </div>
-      <ul className="grid gap-5 lg:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {couches.map((room) => (
           <CouchCard key={room.couch.id} {...room} />
         ))}

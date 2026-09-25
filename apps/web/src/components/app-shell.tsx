@@ -44,7 +44,7 @@ export function AppShell({ name, children }: { readonly name: string; readonly c
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-3 px-4 pb-1 pt-3 sm:px-6 md:flex-nowrap md:justify-end md:pt-4">
-          <Link href="/" aria-label="Couch home" className={cx("rounded-sm md:hidden", focusRing)}>
+          <Link href="/" aria-label="Couch home" className={cx("inline-flex min-h-11 items-center rounded-sm md:hidden", focusRing)}>
             <Logo size={26} />
           </Link>
           <HeaderGreeting name={name.trim().split(/\s+/)[0] || name} />
@@ -55,7 +55,7 @@ export function AppShell({ name, children }: { readonly name: string; readonly c
               aria-label="Notifications (coming soon)"
               aria-disabled="true"
               className={cx(
-                "inline-flex size-10 cursor-not-allowed items-center justify-center rounded-full text-text-muted hover:bg-surface-muted hover:text-text",
+                "inline-flex size-11 cursor-not-allowed items-center justify-center rounded-full text-text-muted hover:bg-surface-muted hover:text-text",
                 calmTransition,
                 focusRing,
               )}
@@ -80,7 +80,7 @@ export function AppShell({ name, children }: { readonly name: string; readonly c
               aria-label="Search the catalog"
               placeholder="Search movies, shows..."
               className={cx(
-                "min-h-10 w-full rounded-md border border-border-strong bg-surface py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted",
+                "min-h-11 w-full rounded-md border border-border-strong bg-surface py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted",
                 inputFocus,
               )}
             />

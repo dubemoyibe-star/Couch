@@ -35,7 +35,7 @@ export function RemoveMemberForm({ couchId, targetUserId, memberName }: RemoveMe
         aria-label={`Remove ${memberName}`}
         onClick={() => dialogRef.current?.showModal()}
         className={cx(
-          "min-h-9 cursor-pointer rounded-md border border-border-strong bg-surface px-3 text-xs font-medium text-text hover:border-danger hover:bg-danger/10 active:bg-danger/15",
+          "min-h-11 cursor-pointer rounded-md border border-border-strong bg-surface px-3 text-xs font-medium text-text hover:border-danger hover:bg-danger/10 active:bg-danger/15",
           calmTransition,
           focusRing,
         )}

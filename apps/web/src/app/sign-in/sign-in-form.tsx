@@ -39,7 +39,7 @@ export function SignInForm() {
           icon={<Lock />}
           revealable
           labelAction={
-            <Link href="/forgot-password" className="rounded-sm text-xs font-medium text-primary hover:text-primary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            <Link href="/forgot-password" className="-my-2 rounded-sm py-2 text-xs font-medium text-primary hover:text-primary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus">
               Forgot password?
             </Link>
           }

@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
       </p>
       <ForgotPasswordForm />
       <p className="text-center text-sm">
-        <Link href="/sign-in" className={`${authLinkClass} inline-flex items-center gap-1.5`}>
+        <Link href="/sign-in" className={`${authLinkClass} inline-flex min-h-11 items-center gap-1.5`}>
           <ArrowLeft aria-hidden="true" className="size-4" />
           Back to sign in
         </Link>

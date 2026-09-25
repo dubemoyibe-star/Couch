@@ -26,7 +26,7 @@ export function UserMenu({
         aria-label={`Account menu for ${name}`}
         className={cx(
           "flex cursor-pointer list-none items-center gap-3 rounded-md [&::-webkit-details-marker]:hidden",
-          compact ? "rounded-full" : "w-full p-2 hover:bg-surface-muted",
+          compact ? "rounded-full p-1" : "w-full p-2 hover:bg-surface-muted",
           calmTransition,
           focusRing,
         )}

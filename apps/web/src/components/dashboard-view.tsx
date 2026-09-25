@@ -163,7 +163,7 @@ export function DashboardView({
                 <Link
                   href="/couches"
                   className={cx(
-                    "inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-primary hover:text-primary-hover",
+                    "inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-medium text-primary hover:text-primary-hover",
                     focusRing,
                   )}
                 >
@@ -171,7 +171,7 @@ export function DashboardView({
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>
               </div>
-              <ul className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
                 {rooms.slice(0, ROOMS_SHOWN).map((room) => (
                   <RoomTile key={room.couch.id} {...room} />
                 ))}

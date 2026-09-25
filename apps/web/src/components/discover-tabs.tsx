@@ -22,7 +22,7 @@ const tabs: readonly { readonly id: TabId; readonly label: string }[] = [
 
 const tabClass = (selected: boolean) =>
   cx(
-    "relative shrink-0 rounded-sm px-1 py-2 text-sm font-medium",
+    "relative inline-flex min-h-11 shrink-0 items-center rounded-sm px-1 text-sm font-medium",
     selected ? "text-primary" : "text-text-muted hover:text-text",
     calmTransition,
     focusRing,
@@ -66,7 +66,7 @@ export function DiscoverTabs({
 
   return (
     <section aria-labelledby={`${baseId}-heading`} className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-x-5 gap-y-2">
+      <div className="flex flex-wrap items-end gap-x-5">
         <h2 id={`${baseId}-heading`} className="font-display text-2xl font-semibold text-text">
           Discover
         </h2>
