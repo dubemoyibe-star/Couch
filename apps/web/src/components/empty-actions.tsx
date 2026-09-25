@@ -7,7 +7,7 @@ import { buttonClassName } from "@/components/ui/button";
 export function EmptyActions() {
   return (
     <div className="flex w-full flex-col items-center gap-5">
-      <Link href="/couch/create" className={buttonClassName("primary", "w-full sm:w-auto")}>
+      <Link href="/couch/create" className={buttonClassName("primary", "w-full max-w-md")}>
         <Plus aria-hidden="true" className="size-4" />
         Create a couch
       </Link>
