@@ -25,6 +25,8 @@ export type RealtimeServerOptions = {
   // Receives every message that parsed, with the connection's identity and the
   // connection itself.
   onMessage?: (identity: Authenticated, message: ClientMessage, connection: Connection) => void;
+  // Called with an exception a message handler threw synchronously.
+  onHandlerError?: (error: unknown) => void;
   // Called once when a connection has closed, however it closed.
   onClose?: (connection: Connection) => void;
   // How long close() waits for clients to finish the close handshake before
@@ -89,10 +91,16 @@ export function createRealtimeServer(options: RealtimeServerOptions): RealtimeSe
       if (!identity) return;
       const result = interpretFrame(data, isBinary);
       if (!result.ok) {
-        ws.send(JSON.stringify(result.reply));
+        connection.send(result.reply);
         return;
       }
-      options.onMessage?.(identity, result.message, connection);
+      // A handler that throws must never become an uncaught exception, which
+      // would take every room down. The connection is left as it was.
+      try {
+        options.onMessage?.(identity, result.message, connection);
+      } catch (error) {
+        options.onHandlerError?.(error);
+      }
     });
     ws.on("close", () => options.onClose?.(connection));
   });

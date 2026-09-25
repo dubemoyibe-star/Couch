@@ -191,3 +191,29 @@ describe("realtime server shutdown", () => {
     await expect(openSocket(port, { origin: ORIGIN, cookie: "session=good" })).rejects.toThrow();
   });
 });
+
+describe("a message handler that throws", () => {
+  it("is reported and does not crash the process or close the connection", async () => {
+    const failures: unknown[] = [];
+    let calls = 0;
+    server = createRealtimeServer({
+      authenticate,
+      allowedOrigins: [ORIGIN],
+      onMessage: () => {
+        calls += 1;
+        if (calls === 1) throw new Error("boom");
+      },
+      onHandlerError: (error) => failures.push(error),
+      closeTimeoutMs: 1000,
+    });
+    const port = await server.listen(0, "127.0.0.1");
+    const ws = await connect(port);
+    ws.send(join("a"));
+    ws.send(join("b"));
+    await settle();
+    expect(failures).toHaveLength(1);
+    expect(calls).toBe(2);
+    expect(ws.readyState).toBe(ws.OPEN);
+    ws.close();
+  });
+});

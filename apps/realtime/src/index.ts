@@ -42,6 +42,9 @@ async function main(): Promise<void> {
     allowedOrigins: trusted,
     onMessage: rooms.onMessage,
     onClose: rooms.onClose,
+    onHandlerError: (error) => {
+      console.error(`[realtime] ${error instanceof Error ? error.message : "unexpected error"}`);
+    },
   });
 
   const port = await server.listen(readPort(process.env.PORT));
