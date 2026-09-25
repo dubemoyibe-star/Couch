@@ -28,6 +28,8 @@ export type ParseErrorCode = (typeof PARSE_ERROR_CODES)[number];
  *   changed and the client may retry.
  * - `already_joined`: `room.join` on a connection that has joined, or is joining, a couch.
  *   A connection is in at most one room.
+ * - `host_cannot_leave`: `room.leave` from the host. Host transfer is not supported.
+ * - `cannot_remove_self`: `room.kick` naming the sender.
  */
 export const ERROR_CODES = [
   ...PARSE_ERROR_CODES,
@@ -38,6 +40,8 @@ export const ERROR_CODES = [
   "media_unavailable",
   "already_joined",
   "internal_error",
+  "host_cannot_leave",
+  "cannot_remove_self",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

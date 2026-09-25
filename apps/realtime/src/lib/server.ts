@@ -15,8 +15,8 @@ export type Authenticate = (headers: Headers) => Promise<Authenticated | null>;
 
 // One open socket, as the message handlers see it. The object itself is the
 // connection's identity for bookkeeping. `send` does nothing once the socket is
-// no longer open.
-export type Connection = { send(message: ServerMessage): void };
+// no longer open. `close` starts the close handshake with the client.
+export type Connection = { send(message: ServerMessage): void; close(code: number, reason: string): void };
 
 export type RealtimeServerOptions = {
   authenticate: Authenticate;
@@ -79,6 +79,9 @@ export function createRealtimeServer(options: RealtimeServerOptions): RealtimeSe
     const connection: Connection = {
       send(message) {
         if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
+      },
+      close(code, reason) {
+        if (ws.readyState === ws.OPEN) ws.close(code, reason);
       },
     };
     ws.on("message", (data: Buffer, isBinary: boolean) => {
