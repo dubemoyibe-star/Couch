@@ -104,8 +104,10 @@ export const roomMediaChangedEvent = defineEvent({
 });
 
 /**
- * Server to client: someone became a member of the room. Sent to the members already in
- * it. A member who joins receives `room.state` instead, which already lists them.
+ * Server to client: a member made their first connection to the room. Sent to the
+ * connections already in it. A member who is offline in the list and connects again is
+ * announced the same way, so a client adds the member or updates the entry. The connection
+ * that joined receives `room.state` instead, which already lists them.
  */
 export const roomMemberJoinedEvent = defineEvent({
   type: "room.memberJoined",
@@ -124,9 +126,9 @@ export const roomMemberLeftEvent = defineEvent({
 });
 
 /**
- * Server to client: a connection change of an EXISTING member, online or offline. It is
- * derived from connections. It never announces a new or removed member: see
- * `room.memberJoined` and `room.memberLeft`.
+ * Server to client: a member opened a further connection while already connected (online),
+ * or closed their last one (offline). It is derived from connections. It never announces a
+ * first connection or a removed member: see `room.memberJoined` and `room.memberLeft`.
  */
 export const presenceUpdateEvent = defineEvent({
   type: "presence.update",

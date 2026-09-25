@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { Duplex } from "node:stream";
 import type { AddressInfo } from "node:net";
-import type { ClientMessage } from "@couch/contracts";
+import type { ClientMessage, ServerMessage } from "@couch/contracts";
 import { WebSocketServer, type WebSocket } from "ws";
 import { MAX_FRAME_BYTES, interpretFrame } from "./inbound";
 
@@ -13,12 +13,20 @@ export type Authenticated = { readonly userId: string };
 // Resolves the request's cookie to a session, or null when there is none.
 export type Authenticate = (headers: Headers) => Promise<Authenticated | null>;
 
+// One open socket, as the message handlers see it. The object itself is the
+// connection's identity for bookkeeping. `send` does nothing once the socket is
+// no longer open.
+export type Connection = { send(message: ServerMessage): void };
+
 export type RealtimeServerOptions = {
   authenticate: Authenticate;
   // Exact origins (scheme, host and port) allowed to open a connection.
   allowedOrigins: readonly string[];
-  // Receives every message that parsed, with the connection's identity.
-  onMessage?: (identity: Authenticated, message: ClientMessage) => void;
+  // Receives every message that parsed, with the connection's identity and the
+  // connection itself.
+  onMessage?: (identity: Authenticated, message: ClientMessage, connection: Connection) => void;
+  // Called once when a connection has closed, however it closed.
+  onClose?: (connection: Connection) => void;
   // How long close() waits for clients to finish the close handshake before
   // dropping them.
   closeTimeoutMs?: number;
@@ -68,6 +76,11 @@ export function createRealtimeServer(options: RealtimeServerOptions): RealtimeSe
     // An error on one socket (an oversized frame, a reset) must never take
     // the process down. ws closes the connection itself.
     ws.on("error", () => {});
+    const connection: Connection = {
+      send(message) {
+        if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
+      },
+    };
     ws.on("message", (data: Buffer, isBinary: boolean) => {
       const identity = identities.get(ws);
       if (!identity) return;
@@ -76,8 +89,9 @@ export function createRealtimeServer(options: RealtimeServerOptions): RealtimeSe
         ws.send(JSON.stringify(result.reply));
         return;
       }
-      options.onMessage?.(identity, result.message);
+      options.onMessage?.(identity, result.message, connection);
     });
+    ws.on("close", () => options.onClose?.(connection));
   });
 
   async function onUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {

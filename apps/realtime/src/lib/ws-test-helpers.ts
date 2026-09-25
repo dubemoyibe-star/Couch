@@ -29,6 +29,29 @@ export function nextMessage(ws: WebSocket): Promise<string> {
   });
 }
 
+export type Received = { v: number; type: string; id?: string; payload: Record<string, unknown> };
+
+// Records every message a client socket receives, parsed. Start it right after
+// the socket opens so nothing is missed.
+export function record(ws: WebSocket) {
+  const messages: Received[] = [];
+  ws.on("message", (data) => messages.push(JSON.parse(data.toString()) as Received));
+  return {
+    messages,
+    // Resolves with the messages once at least `count` have arrived.
+    async waitFor(count: number, timeoutMs = 5000): Promise<Received[]> {
+      const deadline = Date.now() + timeoutMs;
+      while (messages.length < count) {
+        if (Date.now() > deadline) throw new Error(`expected ${count} message(s), got ${messages.length}`);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      return messages;
+    },
+  };
+}
+
+export const settle = (ms = 300) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 export function nextClose(ws: WebSocket): Promise<number> {
   return new Promise((resolve) => ws.once("close", (code) => resolve(code)));
 }

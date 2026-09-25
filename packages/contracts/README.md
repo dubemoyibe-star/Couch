@@ -294,7 +294,7 @@ Exported as `MEDIA_LIMITS`. String lengths count Unicode code points, which is h
 | client    | `playback.setRate`  | `{ rate }`                                                       | Change the playback speed.                                 | A joined member. The server decides which roles may.  |
 | server    | `room.state`        | `{ couch, self, members, media, playback }`                      | Full room snapshot, sent on join and on reconnect.         | Server only.                                          |
 | server    | `room.mediaChanged` | `{ media, playback }`                                            | The room switched to another media item.                   | Server only.                                          |
-| server    | `room.memberJoined` | `{ member }`                                                     | Someone became a member. `member` is `{ userId, displayName, role, online }`. | Server only.                                          |
+| server    | `room.memberJoined` | `{ member }`                                                     | A member's first connection to the room. `member` is `{ userId, displayName, role, online }`. | Server only.                                          |
 | server    | `room.memberLeft`   | `{ userId }`                                                     | A member was removed for good: they left or were kicked.   | Server only.                                          |
 | server    | `presence.update`   | `{ userId, online }`                                             | An existing member went online or offline.                 | Server only.                                          |
 | server    | `chat.message`      | `{ id, userId, displayName, text, sentAt }`                      | A chat message, with the sender and time set by the server. | Server only.                                          |
@@ -315,8 +315,8 @@ A client keeps its member list current from four server messages. Each has one j
 | Moment                                                             | Message             | Notes                                                                                                                      |
 | ------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | A member joins, or reconnects                                      | `room.state`        | Sent to the one who joined or reconnected. It replaces everything the client knew and already lists them.                  |
-| Someone becomes a member of the room                               | `room.memberJoined` | Sent to the members already there, with the new member's `userId`, `displayName`, `role` and `online`. Add them to the list. |
-| An existing member connects or drops their last connection         | `presence.update`   | Only for a member the client already has. It changes `online` and nothing else. It never adds or removes a member.         |
+| A member's first connection to the room                            | `room.memberJoined` | Sent to the connections already there, with the member's `userId`, `displayName`, `role` and `online`. Add them to the list, or update the entry if the member is already listed (they were offline). |
+| A member opens a further connection, or drops their last one       | `presence.update`   | Online when a member who is already connected opens another connection (a second tab). Offline when their last connection closes. It changes `online` and nothing else. It never adds or removes a member. |
 | A member is removed for good, because they left or were kicked     | `room.memberLeft`   | Remove them from the list. A member who only disconnects is not removed: that is a `presence.update`.                       |
 
 A kicked member also receives `room.kicked`, and the others receive `room.memberLeft` for them.
@@ -388,6 +388,8 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | `forbidden`           | The connection is in a couch, but the user's role does not allow the action. For example a participant sends `room.setMedia` or `room.kick`.              |
 | `couch_not_found`     | `room.join` names a couch that does not exist.                                                                                                             |
 | `media_unavailable`   | `room.setMedia` names media that is not in the catalog, or that cannot be played right now.                                                                |
+| `internal_error`      | The server failed while handling a message that parsed, for example a database error during `room.join`. Nothing was changed and the client may retry.  |
+| `already_joined`      | `room.join` on a connection that has already joined, or is joining, a couch. A connection is in at most one room, and the join is refused, never moved.    |
 
 The first five come from `parseMessage` (`PARSE_ERROR_CODES`). The rest are sent after a message parsed, when the server cannot act on it. New codes are added to `ERROR_CODES`. Never rename or remove a code.
 
