@@ -45,6 +45,17 @@ The lists are deliberately minimal. Declared today:
 - `@couch/shared`: contracts, for types only (`import type`), so it has no runtime dependency on zod.
 - `@couch/database`: contracts and shared. The catalog repository validates rows with the contracts schemas and the shared `isUseAuthorized`.
 
+### Shared authentication core
+
+Both apps must read a session cookie the same way, so the parts of the Better Auth configuration that must not diverge live in one place: `createAuthCoreOptions()` in `packages/database/src/auth-core.ts`, exported as `@couch/database/auth-core`. It holds the Prisma adapter (built on the existing `getPrismaClient()`), the secret, the base URL, session and cookie settings, trusted origins and the `name` to `displayName` field mapping. It holds no social providers and no email or verification hooks. Each app calls `betterAuth()` itself with the core plus its own additions (`apps/web/src/lib/auth.ts`) or nothing else (`apps/realtime/src/lib/auth.ts`, which only validates sessions).
+
+Why inside `@couch/database` and not a new package or `apps/web`:
+
+- Apps never import from each other, so it cannot live in an app.
+- The core is tied to the Prisma adapter and the shared client that `@couch/database` already owns. A separate package would need to depend on `@couch/database` anyway, adding a package and an edge for a single function.
+- It adds no edge to the dependency graph. `@couch/database` gains only the third-party `better-auth` dependency, pinned to the same version as `apps/web`.
+- It is a subpath export, `@couch/database/auth-core`, not part of the package index, so code that only needs the repositories does not load Better Auth.
+
 `@couch/contracts` and `@couch/providers` declare no `@couch/*` dependencies because they contain no code that uses one. Add each dependency where it is first used.
 
 The base tsconfig sets `lib: ["ES2022"]` and `types: []`, so a package sees neither DOM nor Node globals unless it opts in. `apps/web` opts in to DOM and `@types/node`; `apps/realtime` opts in to `@types/node`. This is what keeps `shared` runtime-agnostic.
@@ -53,7 +64,7 @@ The base tsconfig sets `lib: ["ES2022"]` and `types: []`, so a package sees neit
 
 Decision: packages export their TypeScript source directly. There is no build step and no `dist`.
 
-Each package sets `"exports": { ".": "./src/index.ts" }`, and consumers depend on it with `workspace:*`.
+Each package sets `"exports": { ".": "./src/index.ts" }` (`@couch/database` adds the `./auth-core` subpath), and consumers depend on it with `workspace:*`.
 
 - **apps/web**: the Next.js 16 docs (`transpilePackages`) state that Turbopack transpiles workspace packages automatically, and webpack does the same for the App Router. No `transpilePackages` entry is needed, so `next.config.ts` is unchanged. If a package ever has to be listed there (for example a Pages Router or a `node_modules` dependency that ships raw TypeScript), add it in that issue.
 - **Type checking**: the base tsconfig uses `moduleResolution: "bundler"`, which resolves the `exports` map to the `.ts` file, so `tsc --noEmit` checks across packages without project references or a build.

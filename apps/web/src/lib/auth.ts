@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { google } from "better-auth/social-providers";
 import { getPrismaClient, deleteUnverifiedUser } from "@couch/database";
+import { createAuthCoreOptions } from "@couch/database/auth-core";
 import { runInBackground } from "./background";
 import { getBaseUrl } from "./base-url";
 import { sendEmail } from "./email";
@@ -164,9 +164,12 @@ function buildAuth() {
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
   return betterAuth({
-    // Better Auth builds the Google callback URL (/api/auth/callback/google)
-    // from this. A wrong value causes redirect_uri_mismatch.
-    baseURL: getBaseUrl(),
+    // Database adapter, secret, base URL (which Better Auth also builds the
+    // Google callback URL /api/auth/callback/google from; a wrong value causes
+    // redirect_uri_mismatch), session and cookie settings, trusted origins and
+    // the user field mapping are shared with apps/realtime. See
+    // packages/database/src/auth-core.ts.
+    ...createAuthCoreOptions(),
     ...(googleClientId && googleClientSecret
       ? {
           socialProviders: {
@@ -185,18 +188,6 @@ function buildAuth() {
         }
       : {}),
     account: { accountLinking },
-    database: prismaAdapter(getPrismaClient(), {
-      provider: "postgresql",
-    }),
-    // The existing User model keeps `displayName` instead of adding a second,
-    // overlapping `name` field. This maps Better Auth's `name` concept onto the
-    // `displayName` column. See the schema comment on `model User` in
-    // packages/database/prisma/schema.prisma.
-    user: {
-      fields: {
-        name: "displayName",
-      },
-    },
     emailAndPassword,
     emailVerification,
     databaseHooks,

@@ -11,7 +11,8 @@
   "dependencies": {
     "@couch/contracts": "workspace:*",
     "@couch/database": "workspace:*",
-    "@couch/shared": "workspace:*"
+    "@couch/shared": "workspace:*",
+    "better-auth": "1.7.5"
   },
   "devDependencies": {
     "@types/node": "^24"
