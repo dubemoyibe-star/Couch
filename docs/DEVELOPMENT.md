@@ -4,11 +4,11 @@
 
 The database is hosted Neon Postgres (Postgres 18). There is no local Postgres and no docker-compose.
 
-| Environment | `COUCH_DB_ENV` | Where it lives | Env file |
-| --- | --- | --- | --- |
-| Production | `prod` | Neon `production` branch | none. Credentials exist only in the hosting provider's environment variables. |
-| Development | `dev` | Neon `development` branch, default database | `.env.local` at the repo root |
-| Test | `test` | A separate database named `testing` inside the `development` branch | `.env.test` at the repo root |
+| Environment | `COUCH_DB_ENV` | Where it lives                                                      | Env file                                                                      |
+| ----------- | -------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Production  | `prod`         | Neon `production` branch                                            | none. Credentials exist only in the hosting provider's environment variables. |
+| Development | `dev`          | Neon `development` branch, default database                         | `.env.local` at the repo root                                                 |
+| Test        | `test`         | A separate database named `testing` inside the `development` branch | `.env.test` at the repo root                                                  |
 
 **Never put production credentials in a local file.** `.env.local` and `.env.test` hold development and test values only. Every `.env` and `.env.*` file except `.env.example` is gitignored.
 
@@ -29,14 +29,14 @@ Copy `.env.example` to `.env.local` and fill it with the dev strings and `COUCH_
 
 Switching environment switches `DATABASE_URL`, `DIRECT_URL` and `COUCH_DB_ENV` together, because they come from one file. Values in the chosen file replace values already exported in the shell.
 
-| Tool | Reads | Selected by |
-| --- | --- | --- |
-| Prisma CLI (`db:*` scripts) | `.env.local` | default `prisma.config.ts` |
-| Prisma CLI (`db:*:test` scripts) | `.env.test` | `--config prisma.test.config.ts` |
-| Next.js (`next dev`) | `.env.local` at the repo root | `apps/web/next.config.ts`. Next itself only reads files inside `apps/web`, and skips `.env.local` when `NODE_ENV=test`. |
-| `apps/realtime` process | `.env.local` or `.env.test` at the repo root | its entry point calls `loadRealtimeEnv("local" or "test")` before anything reads the environment, using the same `loadEnvFile` as the Prisma configs. Not Next.js, so no automatic loading. |
-| `pnpm test` (unit tests) | no env file | `packages/database/vitest.config.ts` |
-| `pnpm test:db` (database tests) | `.env.test` | `packages/database/vitest.db.config.ts` global setup |
+| Tool                             | Reads                                        | Selected by                                                                                                                                                                                 |
+| -------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prisma CLI (`db:*` scripts)      | `.env.local`                                 | default `prisma.config.ts`                                                                                                                                                                  |
+| Prisma CLI (`db:*:test` scripts) | `.env.test`                                  | `--config prisma.test.config.ts`                                                                                                                                                            |
+| Next.js (`next dev`)             | `.env.local` at the repo root                | `apps/web/next.config.ts`. Next itself only reads files inside `apps/web`, and skips `.env.local` when `NODE_ENV=test`.                                                                     |
+| `apps/realtime` process          | `.env.local` or `.env.test` at the repo root | its entry point calls `loadRealtimeEnv("local" or "test")` before anything reads the environment, using the same `loadEnvFile` as the Prisma configs. Not Next.js, so no automatic loading. |
+| `pnpm test` (unit tests)         | no env file                                  | `packages/database/vitest.config.ts`                                                                                                                                                        |
+| `pnpm test:db` (database tests)  | `.env.test`                                  | `packages/database/vitest.db.config.ts` global setup                                                                                                                                        |
 
 The Prisma CLI does not load dotenv files by itself, so `prisma.config.ts` loads the file before doing anything else. Production builds and servers read no local file.
 
@@ -46,10 +46,10 @@ A fresh clone needs no env file and no database variable to install, type check,
 
 Tests that touch a database are named `*.db.test.ts`. Every other test is a unit test.
 
-| Command | Runs | Needs |
-| --- | --- | --- |
-| `pnpm test` | Every test except `*.db.test.ts` | Nothing. No database, no env file. |
-| `pnpm test:db` | Only `*.db.test.ts` | `.env.test` with `COUCH_DB_ENV=test` and both URLs naming the database `testing` |
+| Command        | Runs                             | Needs                                                                            |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------------- |
+| `pnpm test`    | Every test except `*.db.test.ts` | Nothing. No database, no env file.                                               |
+| `pnpm test:db` | Only `*.db.test.ts`              | `.env.test` with `COUCH_DB_ENV=test` and both URLs naming the database `testing` |
 
 `pnpm test:db` runs `test:db` in every package that defines it (`pnpm -r`). In `packages/database` it uses `vitest.db.config.ts`, which:
 
@@ -74,15 +74,15 @@ Prisma Migrate has a built-in safeguard: when it detects that it was started by 
 
 Run these from the repo root. The scripts belong to `@couch/database`.
 
-| Goal | Command |
-| --- | --- |
-| Generate the client | `pnpm --filter @couch/database db:generate` (also runs on install) |
-| Create and apply a migration on dev | `pnpm --filter @couch/database db:migrate --name <name>` |
-| Apply existing migrations on dev | `pnpm --filter @couch/database db:migrate:deploy` |
-| Apply existing migrations on test | `pnpm --filter @couch/database db:migrate:deploy:test` |
-| Reset dev (drops all data, re-applies migrations) | `pnpm --filter @couch/database db:reset` |
-| Reset test | `pnpm --filter @couch/database db:reset:test` |
-| Production | The hosting provider's deploy step runs `db:migrate:deploy` with the provider's environment variables and no env file. |
+| Goal                                              | Command                                                                                                                |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Generate the client                               | `pnpm --filter @couch/database db:generate` (also runs on install)                                                     |
+| Create and apply a migration on dev               | `pnpm --filter @couch/database db:migrate --name <name>`                                                               |
+| Apply existing migrations on dev                  | `pnpm --filter @couch/database db:migrate:deploy`                                                                      |
+| Apply existing migrations on test                 | `pnpm --filter @couch/database db:migrate:deploy:test`                                                                 |
+| Reset dev (drops all data, re-applies migrations) | `pnpm --filter @couch/database db:reset`                                                                               |
+| Reset test                                        | `pnpm --filter @couch/database db:reset:test`                                                                          |
+| Production                                        | The hosting provider's deploy step runs `db:migrate:deploy` with the provider's environment variables and no env file. |
 
 The generated client is written to `packages/database/src/generated` and is not committed.
 
@@ -143,4 +143,14 @@ The database adapter, secret, base URL, session and cookie settings, trusted ori
 - **Identity**: the validated user id is attached to the connection at the upgrade and is the only identity for every message that connection sends. A message payload is never trusted for it.
 - **Messages**: each text frame is parsed with `parseMessage` and `clientEvents`. A failure is answered with the contract's `error` message over the same connection, which stays open. Binary frames are answered with `invalid_json`. The socket refuses a frame over twice `MAX_CLIENT_MESSAGE_BYTES` and closes with code 1009, see the contracts README.
 - **Shutdown**: `SIGTERM` and `SIGINT` stop accepting connections and close open ones with code 1001, then exit. A client that does not finish closing within 5 seconds is dropped.
+- **Local run**: `pnpm --filter @couch/realtime dev` runs `tsx watch` and restarts on file changes. It reads `.env.local` (see [How each tool picks its environment](#how-each-tool-picks-its-environment)), so a fresh clone needs the same `.env.local` as `apps/web`, with `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` identical in both. Start `apps/web` on 3000 and this on 3001 in two terminals.
+- **Manual check**: sign in through `apps/web` in a browser and copy the session cookie (`better-auth.session_token`, or `__Secure-better-auth.session_token` over https) from the browser's storage view. Then open a raw WebSocket with that cookie and an `Origin` equal to `BETTER_AUTH_URL`, from `apps/realtime`:
+  -Replace <value> with your Better Auth session token.
+
+```sh
+node -e "const W=require('ws');const s=new W('ws://localhost:3001',{headers:{origin:'http://localhost:3000',cookie:process.argv[1]}});s.on('open',()=>{console.log('open');s.close()});s.on('unexpected-response',(_,r)=>console.log('refused',r.statusCode))" "better-auth.session_token=<value>"
+```
+
+`open` means the handshake passed. `refused 401` is a missing or invalid session, `refused 403` a wrong `Origin`.
+
 - **Tests**: `pnpm test` runs the server against a real ws server and clients with a stand-in session lookup. `pnpm test:db` runs it again against real sessions in the `testing` database.
