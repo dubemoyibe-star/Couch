@@ -69,3 +69,26 @@ It returns true only when all of these hold:
 Deliberately not checked: that `verifiedAt` is not in the future. That needs a clock, and this function takes none. A caller with a clock that wants the rule applies it on top.
 
 The function checks that a record is complete and consistent. It cannot tell whether the values are true: they come from a person who verified the source.
+
+## Playback reducers
+
+`applyPlay`, `applyPause`, `applySeek` and `applySetRate` each take `(state, payload, serverNowMs)` and return a new `PlaybackState`. They never modify `state`, do no authorization (the caller decides who may send a command) and know nothing about rooms, sockets or storage.
+
+Every call adds exactly 1 to `revision` and sets `serverTimestamp` to `serverNowMs` (epoch MILLISECONDS, server clock).
+
+| Function       | Payload        | Effect                                                                                                     |
+| -------------- | -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `applyPlay`    | `{ position }` | `status` becomes `playing`, `position` is set.                                                             |
+| `applyPause`   | `{ position }` | `status` becomes `paused`, `position` is set.                                                              |
+| `applySeek`    | `{ position }` | `position` is set, `status` is unchanged.                                                                  |
+| `applySetRate` | `{ rate }`     | `playbackRate` is set. While playing, `position` is first advanced to `serverNowMs` at the old rate.       |
+
+A position is clamped to 0 through `POSITION_MAX_SECONDS` (86400, the same value as the contracts constant, checked by a test). NaN becomes 0. A rate is not checked: the caller has already validated the payload against the contracts schema.
+
+`createInitialPlaybackState(serverNowMs)` builds the state of a new room: paused, position 0, rate 1, revision `INITIAL_REVISION` (0), so the first command produces revision 1. Revision never resets after that.
+
+## `RoomStore`
+
+`RoomStore` stores a `RoomState` (`couchId`, `mediaId`, `playback`) per couch: `get(couchId)` and `set(room)`. `createInMemoryRoomStore()` is a Map-backed implementation. Rooms live for the life of the process, so there is no eviction or delete.
+
+It holds plain data only. Open connections and who is online hold sockets, so they are kept by the realtime service and not here.
