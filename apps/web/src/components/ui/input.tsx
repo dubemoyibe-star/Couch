@@ -84,7 +84,7 @@ export function Input({
               : "border-border-strong hover:border-text-muted",
           "disabled:cursor-not-allowed disabled:opacity-60",
           icon ? "pl-10" : false,
-          revealable && "pr-11",
+          revealable && "pr-12",
           className,
         )}
       />
@@ -95,7 +95,7 @@ export function Input({
             aria-label="Show password"
             aria-pressed={revealed}
             className={cx(
-              "absolute inset-y-0 right-1 my-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text",
+              "absolute inset-y-0 right-0 my-auto flex size-11 cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text",
               calmTransition,
               focusTone === "brand"
                 ? "focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary"

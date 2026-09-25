@@ -65,7 +65,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   const currentMediaUnavailable = couch.currentMediaId !== null && currentMedia === null;
 
   const secondaryLink = cx(
-    "rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
+    "inline-flex min-h-11 items-center rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
     calmTransition,
     focusRing,
   );

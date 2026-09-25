@@ -50,7 +50,7 @@ export function JoinInvitePanel({
           <Link
             href="/"
             className={cx(
-              "rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
+              "inline-flex min-h-11 items-center rounded-sm text-sm text-text-muted underline underline-offset-4 hover:text-text",
               calmTransition,
               focusRing,
             )}

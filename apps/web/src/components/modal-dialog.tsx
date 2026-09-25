@@ -46,7 +46,7 @@ export function ModalDialog({
         aria-label="Close"
         onClick={() => ref.current?.close()}
         className={cx(
-          "absolute right-3 top-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full text-text-muted hover:bg-danger/10 hover:text-danger active:bg-danger/15 active:text-danger",
+          "absolute right-2 top-2 z-10 flex size-11 cursor-pointer items-center justify-center rounded-full text-text-muted hover:bg-danger/10 hover:text-danger active:bg-danger/15 active:text-danger",
           calmTransition,
           focusRing,
         )}

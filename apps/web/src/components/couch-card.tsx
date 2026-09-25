@@ -112,7 +112,7 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
         </span>
         <span className="flex items-end justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-1.5">
-            <span className="line-clamp-2 font-display text-2xl font-semibold leading-tight">{couch.name}</span>
+            <span className="line-clamp-2 break-words font-display text-2xl font-semibold leading-tight">{couch.name}</span>
             <span className="line-clamp-2 text-sm text-[#E4D8CA]">
               {media ? (
                 <>

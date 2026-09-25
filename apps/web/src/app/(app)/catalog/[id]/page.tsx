@@ -12,7 +12,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 }
 
 const licenseLink = cx(
-  "rounded-sm underline underline-offset-4 hover:text-text",
+  "-my-2 rounded-sm py-2 underline underline-offset-4 hover:text-text",
   calmTransition,
   focusRing,
 );
@@ -83,7 +83,7 @@ export default async function CatalogMediaPage({
       <Link
         href={backHref}
         className={cx(
-          "inline-flex items-center gap-1.5 self-start rounded-sm text-sm text-text-muted hover:text-text",
+          "inline-flex min-h-11 items-center gap-1.5 self-start rounded-sm text-sm text-text-muted hover:text-text",
           calmTransition,
           focusRing,
         )}
