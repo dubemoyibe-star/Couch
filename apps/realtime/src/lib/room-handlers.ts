@@ -21,8 +21,8 @@ export type RoomHandlerDeps = {
   store: RoomStore;
   // Epoch milliseconds on the server clock. Injected so nothing here reads one.
   now: () => number;
-  // Called with an unexpected failure while handling a message. The message is
-  // dropped and the connection is left as it was.
+  // Called with an unexpected failure while handling a message. The client is
+  // answered with `internal_error` and the connection is left as it was.
   onError?: (error: unknown) => void;
 };
 
@@ -35,6 +35,7 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   not_a_member: "You are not a member of this couch.",
   couch_not_found: "This couch does not exist.",
   already_joined: "This connection has already joined a couch.",
+  internal_error: "The server could not complete the request.",
 };
 
 function sendError(connection: Connection, code: ErrorCode, replyTo: string | undefined): void {
@@ -133,6 +134,7 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
     } catch (error) {
       connections.abort(connection);
       deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
     }
   }
 

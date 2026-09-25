@@ -153,7 +153,7 @@ describe("the message catalog", () => {
 });
 
 describe("error codes", () => {
-  it.each(["not_a_member", "not_joined", "forbidden", "couch_not_found", "media_unavailable", "already_joined"])(
+  it.each(["not_a_member", "not_joined", "forbidden", "couch_not_found", "media_unavailable", "already_joined", "internal_error"])(
     "%s is a known code and round-trips in an error event",
     (errorCode) => {
       expect(isKnownErrorCode(errorCode)).toBe(true);

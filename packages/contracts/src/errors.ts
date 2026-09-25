@@ -24,6 +24,8 @@ export type ParseErrorCode = (typeof PARSE_ERROR_CODES)[number];
  * - `couch_not_found`: `room.join` named a couch that does not exist.
  * - `media_unavailable`: `room.setMedia` named media that is not in the catalog or cannot
  *   be played right now.
+ * - `internal_error`: the server failed while handling a message that parsed. Nothing was
+ *   changed and the client may retry.
  * - `already_joined`: `room.join` on a connection that has joined, or is joining, a couch.
  *   A connection is in at most one room.
  */
@@ -35,6 +37,7 @@ export const ERROR_CODES = [
   "couch_not_found",
   "media_unavailable",
   "already_joined",
+  "internal_error",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
