@@ -68,19 +68,9 @@ export function RemoveMemberForm({ couchId, targetUserId, memberName }: RemoveMe
             >
               Cancel
             </Button>
-            {/* A plain button, not the Button primitive, so its danger fill is not fighting the primary variant. */}
-            <button
-              type="submit"
-              disabled={pending}
-              aria-busy={pending || undefined}
-              className={cx(
-                "min-h-10 cursor-pointer rounded-md bg-danger px-4 text-sm font-medium text-background hover:bg-danger/85 active:bg-danger/75 disabled:cursor-progress disabled:opacity-70",
-                calmTransition,
-                focusRing,
-              )}
-            >
-              {pending ? "Removing…" : "Remove"}
-            </button>
+            <Button type="submit" variant="danger" loading={pending} loadingLabel="Removing…" className="min-h-10 px-4">
+              Remove
+            </Button>
           </div>
         </div>
       </dialog>

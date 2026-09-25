@@ -30,7 +30,7 @@ export function SetCurrentMediaForm({ couchId, mediaId, children, variant }: Set
     <form action={formAction} className="flex flex-col">
       <input type="hidden" name="couchId" value={couchId} />
       {mediaId ? <input type="hidden" name="mediaId" value={mediaId} /> : null}
-      <Button type="submit" variant={variant} loading={pending} className="self-start">
+      <Button type="submit" variant={variant} loading={pending} loadingLabel="Saving…" className="self-start">
         {children}
       </Button>
       <FormError message={state.error} compact />

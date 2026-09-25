@@ -1,6 +1,7 @@
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { CloseDetailsOnOutside } from "@/components/close-details-on-outside";
+import { SignOutButton } from "@/components/sign-out-button";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { signOutAction } from "@/app/sign-out/actions";
 
@@ -48,17 +49,7 @@ export function UserMenu({
         )}
       >
         <form action={signOutAction}>
-          <button
-            type="submit"
-            className={cx(
-              "flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-sm px-3 text-sm font-medium text-text hover:bg-surface-muted",
-              calmTransition,
-              focusRing,
-            )}
-          >
-            <LogOut aria-hidden="true" className="size-4" />
-            Sign out
-          </button>
+          <SignOutButton />
         </form>
       </div>
     </details>

@@ -135,7 +135,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
                     <img
                       src={item.posterUrl}
                       alt=""
-                      className="aspect-[2/3] w-full rounded-media object-cover shadow-md motion-safe:transition-transform motion-safe:duration-200 group-hover:-translate-y-1"
+                      className="aspect-[2/3] w-full rounded-media object-cover shadow-md motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:-translate-y-1"
                     />
                   ) : (
                     <div className="flex aspect-[2/3] w-full items-center justify-center rounded-media border border-border bg-surface-muted px-3 text-center font-display text-lg text-text-muted">

@@ -2,8 +2,8 @@ import type { ButtonHTMLAttributes } from "react";
 import { calmTransition, cx, focusRing } from "./cx";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  /** primary: softer radius, filled. secondary: more structured, outlined on a surface. */
-  readonly variant?: "primary" | "secondary";
+  /** primary: softer radius, filled. secondary: more structured, outlined on a surface. danger: filled destructive confirmation. */
+  readonly variant?: "primary" | "secondary" | "danger";
   /** Pending state, for example a submitting form. Keeps focus, blocks clicks, announces busy. */
   readonly loading?: boolean;
   /** Visible text while loading, so the state is not conveyed by the spinner alone. */
@@ -14,13 +14,15 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 // Primary is a solid fill against the page, so it has no border to rely on.
 const variants = {
   primary:
-    "rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover active:bg-[color-mix(in_oklab,var(--color-primary-hover)_90%,black)] active:translate-y-px",
+    "rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover active:bg-[color-mix(in_oklab,var(--color-primary-hover)_90%,black)] motion-safe:active:translate-y-px",
   secondary:
     "rounded-md border border-border-strong bg-surface text-text hover:border-text-muted hover:bg-surface-muted active:bg-background",
+  danger:
+    "rounded-md bg-danger text-background hover:bg-danger/85 active:bg-danger/75",
 } as const;
 
 /** Button styling for an element that is not a <button>, such as a link that should look like one. */
-export function buttonClassName(variant: "primary" | "secondary" = "primary", className?: string) {
+export function buttonClassName(variant: "primary" | "secondary" | "danger" = "primary", className?: string) {
   return cx(
     "inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium",
     calmTransition,
