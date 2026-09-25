@@ -60,6 +60,10 @@ Why inside `@couch/database` and not a new package or `apps/web`:
 
 The base tsconfig sets `lib: ["ES2022"]` and `types: []`, so a package sees neither DOM nor Node globals unless it opts in. `apps/web` opts in to DOM and `@types/node`; `apps/realtime` opts in to `@types/node`. This is what keeps `shared` runtime-agnostic.
 
+### Room state and connections
+
+Room state is split by whether it needs a socket. `@couch/shared` holds the pure part: the playback reducers (`applyPlay`, `applyPause`, `applySeek`, `applySetRate`), `createInitialPlaybackState`, and the `RoomStore` interface with its in-memory implementation, which keeps one `RoomState` (couch id, media id, playback) per couch. It has no I/O and no clock, so it is tested without sockets or a database. `apps/realtime` holds what needs live connection objects: the open sockets and who is online. Authorization, such as the host check, is applied by the realtime message handlers before they call a reducer.
+
 ## Consuming workspace packages
 
 Decision: packages export their TypeScript source directly. There is no build step and no `dist`.

@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# @couch/web
 
-## Getting Started
+The Couch web app: a Next.js (App Router) app with the UI and the HTTP route handlers. It signs users in with Better Auth, lists and creates couches, and shows the licensed media catalog.
 
-First, run the development server:
+This Next.js version has breaking changes from older releases. Read the relevant guide in `node_modules/next/dist/docs/` before changing framework-level code (see [AGENTS.md](AGENTS.md)).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Run
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+From the repo root:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | What it does |
+| --- | --- |
+| `pnpm --filter @couch/web dev` | Development server on http://localhost:3000. |
+| `pnpm --filter @couch/web build` | Production build. |
+| `pnpm --filter @couch/web start` | Serve the production build. |
+| `pnpm --filter @couch/web typecheck` | `next typegen` then `tsc --noEmit`. |
+| `pnpm --filter @couch/web lint` | ESLint. |
+| `pnpm --filter @couch/web test` | Unit tests. No database needed. |
+| `pnpm --filter @couch/web sync:catalog` | Sync the catalog manifest into the database. |
+| `pnpm --filter @couch/web sync:catalog:test` | The same, against `.env.test`. |
+| `pnpm --filter @couch/web send:test-email` | Send a test email through Resend, using `.env.local`. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Environment files, database environments and the `COUCH_DB_ENV` guard are in [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md). The catalog sync and its licensing rules are in [docs/LICENSING.md](../../docs/LICENSING.md). Fake catalog data must only be synced with `--catalog-dir` and `sync:catalog:test`, never into the dev database and never from the real `packages/providers/catalog/`.
 
-## Learn More
+## Layout
 
-To learn more about Next.js, take a look at the following resources:
+| Path | Contents |
+| --- | --- |
+| `src/app/(app)/` | Signed-in pages: home, `couches`, `couch/create`, `couch/[id]`, `join/[code]`, `catalog` and `catalog/[id]`, with modal routes under `@modal`. |
+| `src/app/sign-in`, `sign-up`, `sign-out`, `forgot-password`, `reset-password`, `verify-email` | Authentication pages. |
+| `src/app/api/auth/[...all]` | The Better Auth route handler. |
+| `src/lib/` | Auth configuration and client, email, session helpers, couch and invite-code helpers. |
+| `scripts/` | The catalog sync and the test-email script. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Dependencies on other packages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`@couch/contracts`, `@couch/shared`, `@couch/providers` and `@couch/database`. Packages export TypeScript source directly, and Next.js transpiles them, so no `transpilePackages` entry is needed. See [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md).
