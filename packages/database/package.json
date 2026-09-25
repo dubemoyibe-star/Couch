@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./auth-core": "./src/auth-core.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -23,7 +24,8 @@
     "@couch/contracts": "workspace:*",
     "@couch/shared": "workspace:*",
     "@prisma/adapter-pg": "7.10.0",
-    "@prisma/client": "7.10.0"
+    "@prisma/client": "7.10.0",
+    "better-auth": "1.7.5"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

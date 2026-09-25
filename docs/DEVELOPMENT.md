@@ -34,6 +34,7 @@ Switching environment switches `DATABASE_URL`, `DIRECT_URL` and `COUCH_DB_ENV` t
 | Prisma CLI (`db:*` scripts) | `.env.local` | default `prisma.config.ts` |
 | Prisma CLI (`db:*:test` scripts) | `.env.test` | `--config prisma.test.config.ts` |
 | Next.js (`next dev`) | `.env.local` at the repo root | `apps/web/next.config.ts`. Next itself only reads files inside `apps/web`, and skips `.env.local` when `NODE_ENV=test`. |
+| `apps/realtime` process | `.env.local` or `.env.test` at the repo root | its entry point calls `loadRealtimeEnv("local" or "test")` before anything reads the environment, using the same `loadEnvFile` as the Prisma configs. Not Next.js, so no automatic loading. |
 | `pnpm test` (unit tests) | no env file | `packages/database/vitest.config.ts` |
 | `pnpm test:db` (database tests) | `.env.test` | `packages/database/vitest.db.config.ts` global setup |
 
@@ -126,3 +127,9 @@ Sign-in is handled by Better Auth (`apps/web/src/lib/auth.ts`), using its Prisma
 Env vars: `BETTER_AUTH_SECRET` (generate with `openssl rand -base64 32`) and `BETTER_AUTH_URL` (the app's own base URL). Add real values to `.env.local` and `.env.test`; `.env.example` has placeholders only.
 
 `apps/web/src/lib/session.ts` exports `getCurrentUser()`, which reads the session for the current request through `getAuth().api.getSession`. Later pages and route handlers should call it instead of reimplementing session lookup. It reads `headers()` before calling `getAuth()`, not after: `headers()` is what tells Next a route depends on the current request and must render dynamically rather than being prerendered at build time, so that bailout needs to happen before any database-backed code runs.
+
+### Shared core and apps/realtime
+
+The database adapter, secret, base URL, session and cookie settings, trusted origins and the `name` field mapping come from `createAuthCoreOptions()` (`@couch/database/auth-core`, see [ARCHITECTURE.md](ARCHITECTURE.md)), which `apps/web/src/lib/auth.ts` spreads into its own `betterAuth()` call. The core refuses to build when `BETTER_AUTH_SECRET` or `BETTER_AUTH_URL` is missing, so a process never falls back to Better Auth's built-in default secret. `apps/realtime/src/lib/auth.ts` builds its own instance from the same core with nothing else, and only calls `auth.api.getSession({ headers })`. `getSession` is not Next.js specific: it needs a `Headers` object carrying the session cookie, and returns `null` when there is no valid session. Both processes must use the same `BETTER_AUTH_SECRET` (it signs the cookie) and the same `BETTER_AUTH_URL` (an https URL gives the cookie a `__Secure-` name prefix, so a different scheme means a different cookie name).
+
+`apps/realtime` needs `DATABASE_URL`, `DIRECT_URL`, `COUCH_DB_ENV`, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`. It does not need `RESEND_API_KEY` or the Google variables. Its auth instance and Prisma client are built on first use, never at import time.
