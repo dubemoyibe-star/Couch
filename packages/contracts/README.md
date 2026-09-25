@@ -293,7 +293,7 @@ Exported as `MEDIA_LIMITS`. String lengths count Unicode code points, which is h
 | client    | `room.join`         | `{ couchId }`                                                    | Join a couch.                                              | Any authenticated connection.                         |
 | client    | `room.leave`        | `{}`                                                             | Leave the joined couch.                                    | A joined member.                                      |
 | client    | `chat.send`         | `{ text }`                                                       | Send a chat message to the room.                           | A joined member.                                      |
-| client    | `room.setMedia`     | `{ mediaId }`                                                    | Change the media the room is watching.                     | Host only. The server enforces it.                    |
+| client    | `room.setMedia`     | `{ mediaId }`, or `{ mediaId: null }` to clear                   | Change the media the room is watching, or clear it.        | Host only. The server enforces it.                    |
 | client    | `room.kick`         | `{ userId }`                                                     | Remove a member. `userId` is the target, never the sender. | Host only. The server enforces it.                    |
 | client    | `playback.play`     | `{ position }`                                                   | Start or resume playback.                                  | A joined member. The server decides which roles may.  |
 | client    | `playback.pause`    | `{ position }`                                                   | Pause playback.                                            | A joined member. The server decides which roles may.  |
@@ -343,7 +343,7 @@ A kicked member also receives `room.kicked`, and the others receive `room.member
 
 Invariant: `media` is null exactly when `playback` is null. A room with no media has no playback, and a room with media always has a playback state. The schema does not enforce this on purpose. A server bug that breaks it should not make a client drop the whole snapshot, so the client decides how to render a mismatch. It is covered by a test on valid examples instead.
 
-`room.mediaChanged` carries a non-null `media` and `playback`, so a room that already has media switches to another item in one message.
+`room.mediaChanged` carries `media` and `playback` together: both set when the room switches to another item in one message, both null when the host clears the media. The same invariant applies and the schema does not enforce it.
 
 ### Identity, names and text
 

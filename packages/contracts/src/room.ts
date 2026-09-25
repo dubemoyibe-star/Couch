@@ -58,13 +58,13 @@ export const roomLeaveEvent = defineEvent({
 });
 
 /**
- * Client to server: change the media the room is watching. Host only. The contract only
- * shapes the message. The server enforces the role.
+ * Client to server: change the media the room is watching. `mediaId: null` clears it. Host
+ * only. The contract only shapes the message. The server enforces the role.
  */
 export const roomSetMediaEvent = defineEvent({
   type: "room.setMedia",
   direction: "client",
-  payload: { mediaId: mediaIdSchema },
+  payload: { mediaId: mediaIdSchema.nullable() },
 });
 
 /**
@@ -98,11 +98,15 @@ export const roomStateEvent = defineEvent({
   },
 });
 
-/** Server to client: the room switched to another media item and its playback state. */
+/**
+ * Server to client: the room switched to another media item and its playback state, or the
+ * host cleared the media. Same invariant as `room.state`: `media` is null exactly when
+ * `playback` is null.
+ */
 export const roomMediaChangedEvent = defineEvent({
   type: "room.mediaChanged",
   direction: "server",
-  payload: { media: catalogMediaWireSchema, playback: playbackStateSchema },
+  payload: { media: catalogMediaWireSchema.nullable(), playback: playbackStateSchema.nullable() },
 });
 
 /**
