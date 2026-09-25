@@ -51,6 +51,7 @@ describe("the message catalog", () => {
         "playback.pause",
         "playback.seek",
         "playback.setRate",
+        "playback.setAccess",
       ].sort(),
     );
     expect(serverEvents.map((event) => event.type).sort()).toEqual(
@@ -63,6 +64,7 @@ describe("the message catalog", () => {
         "chat.message",
         "room.kicked",
         "playback.sync",
+        "playback.accessChanged",
         "error",
       ].sort(),
     );
@@ -195,6 +197,7 @@ describe("worst-case room.state size", () => {
           revision: Number.MAX_SAFE_INTEGER,
           serverTimestamp: Number.MAX_SAFE_INTEGER,
         },
+        playbackAccess: "open", // the longer of the two modes
       },
     };
     const raw = json(message);

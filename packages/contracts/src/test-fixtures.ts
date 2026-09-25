@@ -51,6 +51,7 @@ export const roomState: RoomState["payload"] = {
   ],
   media: catalogMedia,
   playback: playbackState,
+  playbackAccess: "open",
 };
 
 /** A valid payload for every event in the catalog, keyed by type. */
@@ -64,6 +65,7 @@ export const validPayloads: Record<string, unknown> = {
   "playback.pause": { position: 1.5 },
   "playback.seek": { position: 30 },
   "playback.setRate": { rate: 1.25 },
+  "playback.setAccess": { mode: "host" },
   "room.state": roomState,
   "room.mediaChanged": { media: catalogMedia, playback: playbackState },
   "room.memberJoined": {
@@ -80,6 +82,7 @@ export const validPayloads: Record<string, unknown> = {
   },
   "room.kicked": { reason: "Removed by the host" },
   "playback.sync": { state: playbackState },
+  "playback.accessChanged": { mode: "host" },
   error: { code: "forbidden", message: "Not allowed.", replyTo: "c-1" },
 };
 

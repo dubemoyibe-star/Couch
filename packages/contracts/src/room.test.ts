@@ -144,6 +144,14 @@ describe("room.state", () => {
     });
   });
 
+  it.each(["open", "host"])("round-trips playbackAccess %s", (playbackAccess) => {
+    const snapshot = withState({ playbackAccess });
+    expect(parseServer("room.state", snapshot)).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.state", payload: snapshot },
+    });
+  });
+
   it("round-trips a snapshot with no media and no playback", () => {
     const empty = withState({ media: null, playback: null });
     expect(parseServer("room.state", empty)).toEqual({
@@ -193,6 +201,10 @@ describe("room.state", () => {
     ["members that is not an array", { members: {} }],
     ["media that is not a catalog item", { media: { ...catalogMedia, license: undefined } }],
     ["playback with a bad status", { playback: { ...playbackState, status: "buffering" } }],
+    ["a missing playbackAccess", { playbackAccess: undefined }],
+    ["a null playbackAccess", { playbackAccess: null }],
+    ["an unknown playbackAccess mode", { playbackAccess: "everyone" }],
+    ["a wrong-case playbackAccess mode", { playbackAccess: "Host" }],
   ])("rejects %s", (_name, patch) => {
     expect(code(parseServer("room.state", withState(patch)))).toBe("invalid_payload");
   });

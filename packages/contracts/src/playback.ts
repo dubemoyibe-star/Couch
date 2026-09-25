@@ -28,6 +28,17 @@ const positionSchema = z.number().min(0).max(PLAYBACK_POSITION_MAX_SECONDS);
 const rateSchema = z.number().min(PLAYBACK_RATE_MIN).max(PLAYBACK_RATE_MAX);
 
 /**
+ * Who may send the playback transport commands (play, pause, seek, setRate): every member
+ * (`"open"`, the default) or only the host (`"host"`). It does not affect `room.setMedia` or
+ * `room.kick`, which are always host only.
+ */
+export const PLAYBACK_ACCESS_MODES = ["open", "host"] as const;
+
+export type PlaybackAccessMode = (typeof PLAYBACK_ACCESS_MODES)[number];
+
+export const playbackAccessModeSchema = z.enum(PLAYBACK_ACCESS_MODES);
+
+/**
  * The playback state of a room, as the server knows it. Standalone so other server
  * messages can embed it. It carries no media id: media belongs to room state.
  *
@@ -80,6 +91,27 @@ export const playbackSetRateEvent = defineEvent({
 });
 
 /**
+ * Client to server: change who may send playback transport commands. Only a host may send
+ * it. The contract only shapes the message: the server enforces the role and answers a
+ * non-host with the `forbidden` error code.
+ */
+export const playbackSetAccessEvent = defineEvent({
+  type: "playback.setAccess",
+  direction: "client",
+  payload: { mode: playbackAccessModeSchema },
+});
+
+/**
+ * Server to client: the playback access mode changed. Broadcast to the room when the host
+ * changes it. A client that joins later learns the mode from `room.state.playbackAccess`.
+ */
+export const playbackAccessChangedEvent = defineEvent({
+  type: "playback.accessChanged",
+  direction: "server",
+  payload: { mode: playbackAccessModeSchema },
+});
+
+/**
  * Server to client: the authoritative playback state. A client discards a sync whose
  * `revision` is lower than the one it holds and treats an equal revision as idempotent.
  */
@@ -95,15 +127,18 @@ export const playbackClientEvents = [
   playbackPauseEvent,
   playbackSeekEvent,
   playbackSetRateEvent,
+  playbackSetAccessEvent,
 ] as const;
 
 /** Every playback event a client accepts, in the shape parseMessage takes. */
-export const playbackServerEvents = [playbackSyncEvent] as const;
+export const playbackServerEvents = [playbackSyncEvent, playbackAccessChangedEvent] as const;
 
 export type PlaybackPlay = MessageOf<typeof playbackPlayEvent>;
 export type PlaybackPause = MessageOf<typeof playbackPauseEvent>;
 export type PlaybackSeek = MessageOf<typeof playbackSeekEvent>;
 export type PlaybackSetRate = MessageOf<typeof playbackSetRateEvent>;
+export type PlaybackSetAccess = MessageOf<typeof playbackSetAccessEvent>;
+export type PlaybackAccessChanged = MessageOf<typeof playbackAccessChangedEvent>;
 export type PlaybackSync = MessageOf<typeof playbackSyncEvent>;
 export type PlaybackClientMessage = MessageOf<(typeof playbackClientEvents)[number]>;
 export type PlaybackServerMessage = MessageOf<(typeof playbackServerEvents)[number]>;

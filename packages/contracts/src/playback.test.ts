@@ -4,6 +4,7 @@ import {
   PLAYBACK_RATE_MAX,
   PLAYBACK_RATE_MIN,
   parseMessage,
+  PLAYBACK_ACCESS_MODES,
   playbackClientEvents,
   playbackServerEvents,
   playbackStateSchema,
@@ -252,5 +253,65 @@ describe("playback.sync", () => {
       '{"v":1,"type":"playback.sync","payload":{"state":{"status":"paused","position":0,' +
       '"playbackRate":1,"revision":9007199254740993,"serverTimestamp":1}}}';
     expect(code(parseServer(raw))).toBe("invalid_payload");
+  });
+});
+
+describe("playback access mode", () => {
+  it("has exactly two values", () => {
+    expect([...PLAYBACK_ACCESS_MODES]).toEqual(["open", "host"]);
+  });
+
+  describe("playback.setAccess (client)", () => {
+    it.each(["open", "host"])("accepts mode %s", (mode) => {
+      const message = { v: 1, type: "playback.setAccess", payload: { mode } };
+      expect(parseClient(json(message))).toEqual({ ok: true, data: message });
+    });
+
+    it.each<[string, unknown]>([
+      ["a missing mode", {}],
+      ["an unknown mode", { mode: "everyone" }],
+      ["a wrong-case mode", { mode: "HOST" }],
+      ["a null mode", { mode: null }],
+      ["a boolean mode", { mode: true }],
+      ["an extra key", { mode: "host", userId: "u" }],
+    ])("rejects %s", (_name, payload) => {
+      expect(code(parseClient(command("playback.setAccess", payload)))).toBe("invalid_payload");
+    });
+
+    it("is not accepted from the server side", () => {
+      expect(code(parseServer(command("playback.setAccess", { mode: "host" })))).toBe(
+        "unknown_type",
+      );
+    });
+  });
+
+  describe("playback.accessChanged (server)", () => {
+    it.each(["open", "host"])("accepts mode %s", (mode) => {
+      const message = { v: 1, type: "playback.accessChanged", payload: { mode } };
+      expect(parseServer(json(message))).toEqual({ ok: true, data: message });
+    });
+
+    it("strips an unknown key", () => {
+      expect(parseServer(command("playback.accessChanged", { mode: "open", extra: 1 }))).toEqual({
+        ok: true,
+        data: { v: 1, type: "playback.accessChanged", payload: { mode: "open" } },
+      });
+    });
+
+    it.each<[string, unknown]>([
+      ["a missing mode", {}],
+      ["an unknown mode", { mode: "nobody" }],
+      ["a null mode", { mode: null }],
+    ])("rejects %s", (_name, payload) => {
+      expect(code(parseServer(command("playback.accessChanged", payload)))).toBe(
+        "invalid_payload",
+      );
+    });
+
+    it("is not accepted from the client side", () => {
+      expect(code(parseClient(command("playback.accessChanged", { mode: "host" })))).toBe(
+        "unknown_type",
+      );
+    });
   });
 });
