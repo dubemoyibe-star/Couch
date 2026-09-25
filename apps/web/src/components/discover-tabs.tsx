@@ -66,7 +66,7 @@ export function DiscoverTabs({
 
   return (
     <section aria-labelledby={`${baseId}-heading`} className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-x-5">
+      <div className="flex flex-wrap items-baseline gap-x-5">
         <h2 id={`${baseId}-heading`} className="font-display text-2xl font-semibold text-text">
           Discover
         </h2>

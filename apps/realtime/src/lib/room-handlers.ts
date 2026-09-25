@@ -138,6 +138,8 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
           members: roster,
           media,
           playback,
+          // Rooms do not track the mode yet, so every room is open.
+          playbackAccess: "open",
         },
       });
 

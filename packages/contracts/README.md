@@ -71,6 +71,7 @@ Breaking (bump `v`):
 Additive (no bump):
 
 - A new type.
+- A new required field on a server message that adds information and changes no existing field. Clients strip keys they do not know, so an older client keeps working. `room.state.playbackAccess`, `playback.setAccess` and `playback.accessChanged` were added this way, with no version bump.
 - A new optional field.
 - A new `ErrorCode`. Clients treat a code they do not know as a generic error (see Error codes).
 
@@ -159,6 +160,12 @@ Client to server commands (`playbackClientEvents`):
 Commands never carry a revision, a timestamp, a user id or a role. Unknown keys are rejected, as for every client event.
 
 Server to client (`playbackServerEvents`): `playback.sync` with `payload: { state: PlaybackState }`. Unknown keys are stripped.
+
+### Playback access
+
+`PLAYBACK_ACCESS_MODES` is `["open", "host"]`, with `playbackAccessModeSchema` and the `PlaybackAccessMode` type. In `"open"` (the default) every joined member may send the transport commands `playback.play`, `playback.pause`, `playback.seek` and `playback.setRate`. In `"host"` only the host may. The mode controls transport commands only. It does not affect `room.setMedia` or `room.kick`, which are always host only. The mode is ephemeral room state held by the realtime server, never stored in the database.
+
+`playback.setAccess` (`{ mode }`) is client to server and only a host may send it. The schema cannot check the role: the server enforces it and answers a non-host with the `forbidden` error code. When the host changes the mode the server broadcasts `playback.accessChanged` (`{ mode }`) to the room, and `room.state.playbackAccess` carries the current mode to anyone who joins or reconnects.
 
 Revision rule: a client discards a `playback.sync` whose `revision` is lower than the one it holds, and treats an equal `revision` as idempotent (applying it again changes nothing). A stale sync that arrives late therefore never rewinds the client.
 
@@ -292,13 +299,15 @@ Exported as `MEDIA_LIMITS`. String lengths count Unicode code points, which is h
 | client    | `playback.pause`    | `{ position }`                                                   | Pause playback.                                            | A joined member. The server decides which roles may.  |
 | client    | `playback.seek`     | `{ position }`                                                   | Jump to a position.                                        | A joined member. The server decides which roles may.  |
 | client    | `playback.setRate`  | `{ rate }`                                                       | Change the playback speed.                                 | A joined member. The server decides which roles may.  |
-| server    | `room.state`        | `{ couch, self, members, media, playback }`                      | Full room snapshot, sent on join and on reconnect.         | Server only.                                          |
+| server    | `room.state`        | `{ couch, self, members, media, playback, playbackAccess }`      | Full room snapshot, sent on join and on reconnect.         | Server only.                                          |
 | server    | `room.mediaChanged` | `{ media, playback }`                                            | The room switched to another media item.                   | Server only.                                          |
 | server    | `room.memberJoined` | `{ member }`                                                     | A member's first connection to the room. `member` is `{ userId, displayName, role, online }`. | Server only.                                          |
 | server    | `room.memberLeft`   | `{ userId }`                                                     | A member was removed for good: they left or were kicked.   | Server only.                                          |
 | server    | `presence.update`   | `{ userId, online }`                                             | An existing member went online or offline.                 | Server only.                                          |
 | server    | `chat.message`      | `{ id, userId, displayName, text, sentAt }`                      | A chat message, with the sender and time set by the server. | Server only.                                          |
 | server    | `room.kicked`       | `{ reason? }`                                                    | The recipient was removed from the room.                   | Server only.                                          |
+| client    | `playback.setAccess` | `{ mode }` | Set who may send playback commands: `"open"` (everyone) or `"host"` (host only). | Host only. The server enforces it and answers a non-host with `forbidden`. |
+| server    | `playback.accessChanged` | `{ mode }` | The host changed who may send playback commands. `mode` is `"open"` or `"host"`. | Server only. |
 | server    | `playback.sync`     | `{ state }`                                                      | The authoritative playback state.                          | Server only.                                          |
 | server    | `error`             | `{ code, message, replyTo? }`                                    | A message was rejected or could not be acted on.           | Server only.                                          |
 
@@ -329,6 +338,7 @@ A kicked member also receives `room.kicked`, and the others receive `room.member
 | `self`     | `{ userId, role }`       | The recipient's own identity and role, as the server knows them.                    |
 | `members`  | array, at most `ROOM_MEMBERS_MAX` | Each is `{ userId, displayName, role, online }`.                           |
 | `media`    | `CatalogMedia` or null   | The current media item, wire flavor (unknown keys stripped). Present, never omitted. |
+| `playbackAccess` | `"open"` or `"host"` | The current playback access mode (see Playback access). Required: every room has one from the moment it exists. |
 | `playback` | `PlaybackState` or null  | The current playback state. Present, never omitted.                                 |
 
 Invariant: `media` is null exactly when `playback` is null. A room with no media has no playback, and a room with media always has a playback state. The schema does not enforce this on purpose. A server bug that breaks it should not make a client drop the whole snapshot, so the client decides how to render a mismatch. It is covered by a test on valid examples instead.
@@ -367,8 +377,8 @@ The largest `room.state` the schema allows is `ROOM_MEMBERS_MAX` members with ma
 
 | Text                                                                      | Size, in bytes | Against `MAX_CLIENT_MESSAGE_BYTES` (65,536) | Against `MAX_SERVER_MESSAGE_BYTES` (262,144) |
 | ------------------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------- |
-| ASCII                                                                     | 42,947         | Under                                       | Under                                        |
-| Every free-text field and every id filled with 4-byte characters          | 149,207        | Over                                        | Under                                        |
+| ASCII                                                                     | 42,971         | Under                                       | Under                                        |
+| Every free-text field and every id filled with 4-byte characters          | 149,231        | Over                                        | Under                                        |
 
 In the 4-byte case the parts the schema limits to ASCII stay ASCII: the `providerId` slug, the `https://example.com/` start of each url, the role and the dates. A code point is at most 4 bytes and a JSON escape such as `\"` is 2, so 4-byte characters are the worst case for size. The test also checks that `parseMessage` accepts the 4-byte message with the server events and refuses it with the client events, which is the reason there are two caps.
 

@@ -2,7 +2,7 @@ import * as z from "zod";
 import { defineEvent, type MessageOf } from "./envelope";
 import { singleLineText, trimmedText } from "./fields";
 import { catalogMediaWireSchema } from "./media";
-import { playbackStateSchema } from "./playback";
+import { playbackAccessModeSchema, playbackStateSchema } from "./playback";
 import {
   couchIdSchema,
   displayNameSchema,
@@ -93,6 +93,8 @@ export const roomStateEvent = defineEvent({
     members: z.array(roomMemberSchema).max(ROOM_MEMBERS_MAX),
     media: catalogMediaWireSchema.nullable(),
     playback: playbackStateSchema.nullable(),
+    /** Who may send playback transport commands right now. Every room has a mode. */
+    playbackAccess: playbackAccessModeSchema,
   },
 });
 
