@@ -390,6 +390,8 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | `media_unavailable`   | `room.setMedia` names media that is not in the catalog, or that cannot be played right now.                                                                |
 | `internal_error`      | The server failed while handling a message that parsed, for example a database error during `room.join`. Nothing was changed and the client may retry.  |
 | `already_joined`      | `room.join` on a connection that has already joined, or is joining, a couch. A connection is in at most one room, and the join is refused, never moved.    |
+| `host_cannot_leave`   | `room.leave` from the host. Host transfer is not supported, so the host cannot leave. The connection stays in the room.                                    |
+| `cannot_remove_self`  | `room.kick` naming the sender. The host cannot remove themselves.                                                                                          |
 
 The first five come from `parseMessage` (`PARSE_ERROR_CODES`). The rest are sent after a message parsed, when the server cannot act on it. New codes are added to `ERROR_CODES`. Never rename or remove a code.
 

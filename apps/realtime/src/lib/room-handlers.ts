@@ -9,7 +9,9 @@ import {
   getCatalogMedia,
   getCouch,
   getMembership,
+  leaveCouch,
   listMembers,
+  removeMember,
   type PrismaClient,
 } from "@couch/database";
 import { createInitialPlaybackState, type RoomStore } from "@couch/shared";
@@ -36,7 +38,15 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   couch_not_found: "This couch does not exist.",
   already_joined: "This connection has already joined a couch.",
   internal_error: "The server could not complete the request.",
+  not_joined: "This connection has not joined a couch.",
+  forbidden: "Only the host can do that.",
+  host_cannot_leave: "As the host, you cannot leave this couch.",
+  cannot_remove_self: "You cannot remove yourself from the couch.",
 };
+
+// 1008: policy violation. The user was removed from the only room the socket
+// could be in, so the socket has no further purpose.
+const CLOSE_REMOVED = 1008;
 
 function sendError(connection: Connection, code: ErrorCode, replyTo: string | undefined): void {
   connection.send({
@@ -51,6 +61,14 @@ function sendError(connection: Connection, code: ErrorCode, replyTo: string | un
 // refused with `already_joined`. It never moves the connection. Presence is
 // derived from the attached connections, so a raw disconnect updates it without
 // a `room.leave`.
+//
+// `room.leave` and `room.kick` remove the membership row, then detach every
+// connection the user has in that room, whichever connection asked. The others
+// in the room get one `room.memberLeft` per event, however many connections
+// the user had. A leaver's connections all receive `room.memberLeft` naming
+// themselves, which tells each tab it is out (their sockets stay open and may
+// join again). A kicked user's connections receive `room.kicked` and their
+// sockets are closed.
 export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
   const connections = createRoomConnections<Connection>();
 
@@ -91,7 +109,7 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
 
       // From here to the end there is no await, so the snapshot and the
       // broadcast see the same set of attached connections.
-      const { firstForUser } = connections.attach(connection, couchId, userId);
+      const { firstForUser } = connections.attach(connection, couchId, userId, self.role);
 
       let playback = null;
       if (media) {
@@ -138,10 +156,56 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
     }
   }
 
+  async function leave(userId: string, replyTo: string | undefined, connection: Connection) {
+    // The room is the one this connection is attached to, never a payload.
+    const attached = connections.attachment(connection);
+    if (!attached) return sendError(connection, "not_joined", replyTo);
+    const { couchId } = attached;
+    try {
+      const result = await leaveCouch(deps.db, { couchId, userId });
+      if (!result.ok) return sendError(connection, result.error, replyTo);
+      // No await from here on. The row is gone, so the user's connections are
+      // detached by user id even if the asking one closed in the meantime.
+      const message: ServerMessage = { v: PROTOCOL_VERSION, type: "room.memberLeft", payload: { userId } };
+      const own = connections.detachUser(couchId, userId);
+      broadcast(couchId, message);
+      for (const each of own) each.send(message);
+    } catch (error) {
+      deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
+    }
+  }
+
+  async function kick(actingUserId: string, targetUserId: string, replyTo: string | undefined, connection: Connection) {
+    const attached = connections.attachment(connection);
+    if (!attached) return sendError(connection, "not_joined", replyTo);
+    // The cached role is a first check. The database re-checks it below.
+    if (attached.role !== "host") return sendError(connection, "forbidden", replyTo);
+    const { couchId } = attached;
+    try {
+      const result = await removeMember(deps.db, { couchId, actingUserId, targetUserId });
+      if (!result.ok) return sendError(connection, result.error, replyTo);
+      const targets = connections.detachUser(couchId, targetUserId);
+      for (const target of targets) {
+        target.send({ v: PROTOCOL_VERSION, type: "room.kicked", payload: {} });
+        target.close(CLOSE_REMOVED, "removed from couch");
+      }
+      broadcast(couchId, { v: PROTOCOL_VERSION, type: "room.memberLeft", payload: { userId: targetUserId } });
+    } catch (error) {
+      deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
+    }
+  }
+
   return {
     onMessage(identity, message, connection) {
-      if (message.type !== "room.join") return;
-      void join(identity.userId, message.payload.couchId, message.id, connection);
+      if (message.type === "room.join") {
+        void join(identity.userId, message.payload.couchId, message.id, connection);
+      } else if (message.type === "room.leave") {
+        void leave(identity.userId, message.id, connection);
+      } else if (message.type === "room.kick") {
+        void kick(identity.userId, message.payload.userId, message.id, connection);
+      }
     },
 
     onClose(connection) {

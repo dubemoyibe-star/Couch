@@ -8,7 +8,8 @@
 // before any asynchronous work, so a second join that arrives while the first is
 // still being resolved is refused instead of racing it.
 
-type Attachment = { couchId: string; userId: string };
+type Role = "host" | "participant";
+type Attachment = { couchId: string; userId: string; role: Role };
 
 export type Detached = {
   readonly couchId: string;
@@ -27,7 +28,14 @@ export type RoomConnections<C extends object> = {
   isOpen(connection: C): boolean;
   // Attaches a claimed connection. `firstForUser` is true when no other
   // connection of that user was in the room.
-  attach(connection: C, couchId: string, userId: string): { firstForUser: boolean };
+  // `role` is the member's role when they joined, kept as the room's cached
+  // membership. It is a first check only: the database decides.
+  attach(connection: C, couchId: string, userId: string, role: Role): { firstForUser: boolean };
+  // The room, user and cached role this connection is attached to, or null.
+  attachment(connection: C): { couchId: string; userId: string; role: Role } | null;
+  // Detaches every connection of the user in the room, and returns them. They
+  // stay open and may join again. Used when the user stops being a member.
+  detachUser(couchId: string, userId: string): C[];
   // Removes the connection, whether attached, joining, or neither, and marks it
   // closed. Returns what it was attached to, or null.
   close(connection: C): Detached | null;
@@ -56,15 +64,29 @@ export function createRoomConnections<C extends object>(): RoomConnections<C> {
 
     isOpen: (connection) => !closed.has(connection),
 
-    attach(connection, couchId, userId) {
+    attach(connection, couchId, userId, role) {
       let users = rooms.get(couchId);
       if (!users) rooms.set(couchId, (users = new Map()));
       let set = users.get(userId);
       const firstForUser = !set || set.size === 0;
       if (!set) users.set(userId, (set = new Set()));
       set.add(connection);
-      attachments.set(connection, { couchId, userId });
+      attachments.set(connection, { couchId, userId, role });
       return { firstForUser };
+    },
+
+    attachment: (connection) => attachments.get(connection) ?? null,
+
+    detachUser(couchId, userId) {
+      const users = rooms.get(couchId);
+      const detached = [...(users?.get(userId) ?? [])];
+      for (const connection of detached) {
+        attachments.delete(connection);
+        claimed.delete(connection);
+      }
+      users?.delete(userId);
+      if (users && users.size === 0) rooms.delete(couchId);
+      return detached;
     },
 
     close(connection) {
@@ -79,7 +101,7 @@ export function createRoomConnections<C extends object>(): RoomConnections<C> {
       const wasLast = !set || set.size === 0;
       if (wasLast) users?.delete(attachment.userId);
       if (users && users.size === 0) rooms.delete(attachment.couchId);
-      return { ...attachment, wasLast };
+      return { couchId: attachment.couchId, userId: attachment.userId, wasLast };
     },
 
     isOnline: (couchId, userId) => (rooms.get(couchId)?.get(userId)?.size ?? 0) > 0,
