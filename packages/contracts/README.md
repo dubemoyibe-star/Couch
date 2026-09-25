@@ -110,7 +110,7 @@ Why 256 KiB: the largest server message is `room.state`. With every field at its
 
 A list that mixes directions is held to the smaller cap, the client cap, and so is an empty list. A message is never held to a looser limit than the strictest event that could accept it. Only the limit depends on the direction. The stages and their order do not.
 
-The realtime server must configure its WebSocket maximum payload to `MAX_CLIENT_MESSAGE_BYTES`, so the socket layer drops an oversized client frame before it is buffered whole. `parseMessage` then enforces the same cap on what does arrive.
+The realtime server bounds its WebSocket maximum payload at a multiple of `MAX_CLIENT_MESSAGE_BYTES` (twice the cap), so the socket layer drops a grossly oversized client frame before it is buffered whole. It is not set to the cap itself: the socket library closes the connection with code 1009 and cannot send a reply once it has refused a frame, so a frame just over the cap would never get `message_too_large`. `parseMessage` enforces the cap on what does arrive, and the client keeps its connection.
 
 The byte count uses a small pure function (`utf8ByteLength`) instead of `TextEncoder` or `Buffer`, because this package's TypeScript config exposes neither DOM nor Node globals. A test checks it against `TextEncoder`.
 

@@ -4,17 +4,23 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
     "@couch/contracts": "workspace:*",
     "@couch/database": "workspace:*",
     "@couch/shared": "workspace:*",
-    "better-auth": "1.7.5"
+    "better-auth": "1.7.5",
+    "tsx": "^4.23.15",
+    "ws": "8.21.3"
   },
   "devDependencies": {
-    "@types/node": "^24"
+    "@types/node": "^24",
+    "@types/ws": "8.18.1"
   }
 }
