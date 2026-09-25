@@ -4,11 +4,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   assertDatabaseEnv,
   createCouch,
+  deactivateMissing,
   getPrismaClient,
   joinCouch,
   setCurrentMedia,
   upsertCatalogMedia,
 } from "@couch/database";
+import type { MediaWithLicense } from "@couch/contracts";
 import { createInMemoryRoomStore } from "@couch/shared";
 import { getAuth } from "./auth";
 import { createRoomHandlers } from "./room-handlers";
@@ -19,7 +21,8 @@ import { openSocket, record, settle } from "./ws-test-helpers";
 assertDatabaseEnv(process.env, "test-suite");
 
 // Real users, sessions, couches and members in the test database, a real ws
-// server, and real client connections. Every row is removed afterward.
+// server, and real client connections. Users, sessions, couches and members are removed afterward. The catalog
+// fixture can only be deactivated (see afterAll).
 const secret = process.env.BETTER_AUTH_SECRET ?? "";
 const baseUrl = process.env.BETTER_AUTH_URL ?? "";
 const cookieName = `${baseUrl.startsWith("https:") ? "__Secure-" : ""}better-auth.session_token`;
@@ -32,10 +35,35 @@ function cookieFor(token: string): string {
 const join = (couchId: string, id?: string) =>
   JSON.stringify({ v: 1, type: "room.join", ...(id ? { id } : {}), payload: { couchId } });
 
+const fixtureFor = (providerId: string): MediaWithLicense => ({
+      providerId,
+      providerMediaId: "item-1",
+      title: "TEST FIXTURE media",
+      description: null,
+      durationSeconds: 60,
+      posterUrl: null,
+      releaseYear: null,
+      license: {
+        licenseName: "TEST FIXTURE License",
+        licenseVersion: null,
+        licenseUrl: "https://example.com/license",
+        sourceUrl: "https://example.com/items/1",
+        rightsholder: null,
+        attributionRequired: false,
+        attribution: null,
+        intendedUseAllowed: true,
+        commercialUseAllowed: false,
+        additionalRestrictions: null,
+        verifiedAt: "2026-02-03",
+        verificationNotes: null,
+      },
+    });
+
 describe("room.join with real connections", () => {
   const prisma = getPrismaClient();
   const run = randomBytes(4).toString("hex");
   const providerId = `dbtest-rt-${run}`;
+  const fixture = fixtureFor(providerId);
   const day = 24 * 60 * 60 * 1000;
   const users: Record<"host" | "member" | "outsider", { id: string; token: string }> = {
     host: { id: "", token: randomUUID() },
@@ -75,29 +103,7 @@ describe("room.join with real connections", () => {
     otherCouchId = (await createCouch(prisma, { ownerId: users.host.id, name: "TEST FIXTURE other" })).couch.id;
     emptyCouchId = (await createCouch(prisma, { ownerId: users.host.id, name: "TEST FIXTURE empty" })).couch.id;
 
-    const media = await upsertCatalogMedia(prisma, {
-      providerId,
-      providerMediaId: "item-1",
-      title: "TEST FIXTURE media",
-      description: null,
-      durationSeconds: 60,
-      posterUrl: null,
-      releaseYear: null,
-      license: {
-        licenseName: "TEST FIXTURE License",
-        licenseVersion: null,
-        licenseUrl: "https://example.com/license",
-        sourceUrl: "https://example.com/items/1",
-        rightsholder: null,
-        attributionRequired: false,
-        attribution: null,
-        intendedUseAllowed: true,
-        commercialUseAllowed: false,
-        additionalRestrictions: null,
-        verifiedAt: "2026-02-03",
-        verificationNotes: null,
-      },
-    });
+    const media = await upsertCatalogMedia(prisma, fixture);
     if (!media) throw new Error("fixture media was refused");
     mediaId = media.id;
     const set = await setCurrentMedia(prisma, { couchId, actingUserId: users.host.id, mediaId });
@@ -132,9 +138,10 @@ describe("room.join with real connections", () => {
     await prisma.couchMember.deleteMany({ where: { userId: { in: ids } } });
     await prisma.couch.deleteMany({ where: { ownerId: { in: ids } } });
     await prisma.user.deleteMany({ where: { id: { in: ids } } });
-    const rows = await prisma.media.findMany({ where: { providerId }, select: { licenseRecordId: true } });
-    await prisma.media.deleteMany({ where: { providerId } });
-    await prisma.licenseRecord.deleteMany({ where: { id: { in: rows.map((row) => row.licenseRecordId) } } });
+    // The catalog has no delete, and code outside packages/database may not
+    // touch its tables, so the fixture is left inactive under its unique
+    // `dbtest-rt-` provider id.
+    await deactivateMissing(prisma, providerId, []);
     await prisma.$disconnect();
   });
 
@@ -222,7 +229,7 @@ describe("room.join with real connections", () => {
     const takenDown = (await createCouch(prisma, { ownerId: users.host.id, name: "TEST FIXTURE takedown" })).couch;
     const set = await setCurrentMedia(prisma, { couchId: takenDown.id, actingUserId: users.host.id, mediaId });
     if (!set.ok) throw new Error("could not set media");
-    await prisma.media.update({ where: { id: mediaId }, data: { isActive: false } });
+    await deactivateMissing(prisma, providerId, []);
     try {
       const host = await connect("host");
       host.ws.send(join(takenDown.id));
@@ -231,7 +238,7 @@ describe("room.join with real connections", () => {
       host.ws.close();
       await settle();
     } finally {
-      await prisma.media.update({ where: { id: mediaId }, data: { isActive: true } });
+      await upsertCatalogMedia(prisma, fixture);
     }
   });
 
