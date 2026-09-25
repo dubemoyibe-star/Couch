@@ -2,6 +2,8 @@ import {
   PROTOCOL_VERSION,
   type ClientMessage,
   type ErrorCode,
+  type PlaybackAccessMode,
+  type PlaybackState,
   type RoomMember,
   type ServerMessage,
 } from "@couch/contracts";
@@ -14,7 +16,14 @@ import {
   removeMember,
   type PrismaClient,
 } from "@couch/database";
-import { createInitialPlaybackState, type RoomStore } from "@couch/shared";
+import {
+  applyPause,
+  applyPlay,
+  applySeek,
+  applySetRate,
+  createInitialPlaybackState,
+  type RoomStore,
+} from "@couch/shared";
 import { createRoomConnections } from "./room-connections";
 import type { Authenticated, Connection } from "./server";
 
@@ -40,6 +49,7 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   internal_error: "The server could not complete the request.",
   not_joined: "This connection has not joined a couch.",
   forbidden: "Only the host can do that.",
+  media_unavailable: "This couch has no media to control.",
   host_cannot_leave: "As the host, you cannot leave this couch.",
   cannot_remove_self: "You cannot remove yourself from the couch.",
 };
@@ -112,15 +122,24 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
       const { firstForUser } = connections.attach(connection, couchId, userId, self.role);
 
       let playback = null;
+      // A couch with no media has no room yet, so it is open until one exists.
+      let playbackAccess: PlaybackAccessMode = "open";
       if (media) {
         // The room is created on first use. The database decides which media a
         // couch has, so a stored room for other media is replaced.
+        // A new room is open. Replacing one for other media keeps its access mode.
         let room = deps.store.get(couchId);
         if (!room || room.mediaId !== media.id) {
-          room = { couchId, mediaId: media.id, playback: createInitialPlaybackState(deps.now()) };
+          room = {
+            couchId,
+            mediaId: media.id,
+            playback: createInitialPlaybackState(deps.now()),
+            playbackAccess: room?.playbackAccess ?? "open",
+          };
           deps.store.set(room);
         }
         playback = room.playback;
+        playbackAccess = room.playbackAccess;
       }
 
       const roster: RoomMember[] = members.map((member) => ({
@@ -138,8 +157,7 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
           members: roster,
           media,
           playback,
-          // Rooms do not track the mode yet, so every room is open.
-          playbackAccess: "open",
+          playbackAccess,
         },
       });
 
@@ -199,6 +217,50 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
     }
   }
 
+  function setAccess(mode: PlaybackAccessMode, replyTo: string | undefined, connection: Connection) {
+    const attached = connections.attachment(connection);
+    if (!attached) return sendError(connection, "not_joined", replyTo);
+    // The role is the one cached at join, never anything from the payload.
+    if (attached.role !== "host") return sendError(connection, "forbidden", replyTo);
+    try {
+      const room = deps.store.get(attached.couchId);
+      // No media means no room, so there is nothing to control yet.
+      if (!room) return sendError(connection, "media_unavailable", replyTo);
+      deps.store.set({ ...room, playbackAccess: mode });
+      // No `except`: the sender is attached too, so it gets the same message.
+      broadcast(attached.couchId, { v: PROTOCOL_VERSION, type: "playback.accessChanged", payload: { mode } });
+    } catch (error) {
+      deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
+    }
+  }
+
+  // Every transport command is judged and applied here, synchronously. Nothing
+  // awaits between reading the room and storing the new state, so two commands
+  // can never interleave: the single-threaded event loop runs each handler to
+  // completion, one at a time, and each revision is built on the previous one.
+  function transport(
+    apply: (state: PlaybackState, now: number) => PlaybackState,
+    replyTo: string | undefined,
+    connection: Connection,
+  ) {
+    const attached = connections.attachment(connection);
+    if (!attached) return sendError(connection, "not_joined", replyTo);
+    try {
+      // A missing room means the couch has no media.
+      const room = deps.store.get(attached.couchId);
+      if (!room) return sendError(connection, "media_unavailable", replyTo);
+      if (attached.role !== "host" && room.playbackAccess !== "open") return sendError(connection, "forbidden", replyTo);
+      const playback = apply(room.playback, deps.now());
+      deps.store.set({ ...room, playback });
+      const sync: ServerMessage = { v: PROTOCOL_VERSION, type: "playback.sync", payload: { state: playback } };
+      broadcast(attached.couchId, sync);
+    } catch (error) {
+      deps.onError?.(error);
+      sendError(connection, "internal_error", replyTo);
+    }
+  }
+
   return {
     onMessage(identity, message, connection) {
       if (message.type === "room.join") {
@@ -207,6 +269,16 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
         void leave(identity.userId, message.id, connection);
       } else if (message.type === "room.kick") {
         void kick(identity.userId, message.payload.userId, message.id, connection);
+      } else if (message.type === "playback.setAccess") {
+        setAccess(message.payload.mode, message.id, connection);
+      } else if (message.type === "playback.play") {
+        transport((state, now) => applyPlay(state, message.payload, now), message.id, connection);
+      } else if (message.type === "playback.pause") {
+        transport((state, now) => applyPause(state, message.payload, now), message.id, connection);
+      } else if (message.type === "playback.seek") {
+        transport((state, now) => applySeek(state, message.payload, now), message.id, connection);
+      } else if (message.type === "playback.setRate") {
+        transport((state, now) => applySetRate(state, message.payload, now), message.id, connection);
       }
     },
 
