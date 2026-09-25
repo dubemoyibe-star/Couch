@@ -72,12 +72,18 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
 
+      # BETTER_AUTH_SECRET and BETTER_AUTH_URL are fake, non-secret values for
+      # the CI service container only. The realtime tests sign their own session
+      # cookies with the same secret the server verifies them with, so any
+      # value works as long as both sides read the same one.
       - name: Database tests
         run: pnpm test:db
         env:
           COUCH_DB_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/testing?sslmode=disable
+          BETTER_AUTH_SECRET: ci-test-only-not-a-real-secret
+          BETTER_AUTH_URL: http://localhost:3000
 
       - name: Check no committed media
         run: pnpm check:no-media

@@ -69,7 +69,7 @@ Each package sets `"exports": { ".": "./src/index.ts" }` (`@couch/database` adds
 - **apps/web**: the Next.js 16 docs (`transpilePackages`) state that Turbopack transpiles workspace packages automatically, and webpack does the same for the App Router. No `transpilePackages` entry is needed, so `next.config.ts` is unchanged. If a package ever has to be listed there (for example a Pages Router or a `node_modules` dependency that ships raw TypeScript), add it in that issue.
 - **Type checking**: the base tsconfig uses `moduleResolution: "bundler"`, which resolves the `exports` map to the `.ts` file, so `tsc --noEmit` checks across packages without project references or a build.
 - **Tests**: Vitest transforms TypeScript on the fly, so tests import package source directly.
-- **apps/realtime**: type checking and tests work as above. The runtime for the service (for example `tsx` or a bundler) is chosen in the issue that builds the service. Node cannot run these files as-is, because the sources use extensionless imports.
+- **apps/realtime**: type checking and tests work as above. Node cannot run these files as-is, because the sources use extensionless imports, so the service runs under `tsx` (`pnpm --filter @couch/realtime start`).
 
 Why not build packages to `dist`: it adds a build graph, watch-mode ordering, and stale-output bugs for no gain at this size. Revisit only if a package must be published or consumed by something that cannot compile TypeScript.
 

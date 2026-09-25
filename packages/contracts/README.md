@@ -110,7 +110,20 @@ Why 256 KiB: the largest server message is `room.state`. With every field at its
 
 A list that mixes directions is held to the smaller cap, the client cap, and so is an empty list. A message is never held to a looser limit than the strictest event that could accept it. Only the limit depends on the direction. The stages and their order do not.
 
-The realtime server must configure its WebSocket maximum payload to `MAX_CLIENT_MESSAGE_BYTES`, so the socket layer drops an oversized client frame before it is buffered whole. `parseMessage` then enforces the same cap on what does arrive.
+### Two thresholds on the realtime server
+
+The realtime server enforces client message size at two layers, with two different numbers and two different outcomes:
+
+| Threshold | Value | Enforced by | What the client sees |
+| --- | --- | --- | --- |
+| Soft cap: `MAX_CLIENT_MESSAGE_BYTES` | 64 KiB (65,536) | `parseMessage` (stage 1) | An `error` message with code `message_too_large`. The connection stays open and the client can send its next message. |
+| Hard cutoff: the WebSocket max payload, set to 2 x the soft cap | 128 KiB (131,072) | The `ws` library, before the frame is buffered whole | The connection is closed with WebSocket close code 1009 ("message too big"). No `error` message is sent. |
+
+A message of 64 KiB or less is parsed normally. One between 64 KiB and 128 KiB is read in full, refused by `parseMessage`, and answered with `message_too_large`. One over 128 KiB is never read in full: the socket layer drops it and ends the connection.
+
+Why two numbers and not one: the point of a socket-level limit is to stop the server buffering an arbitrarily large frame. But when `ws` refuses a frame it closes the connection immediately, and the socket is already closing by the time application code sees the error, so nothing can be sent back. If the socket limit equalled the soft cap, every over-cap message would end the connection with a bare 1009, and `message_too_large` would never be sent at all, which defeats the reply this contract defines. Setting the socket limit above the soft cap lets ordinary oversized messages get the graceful reply, while a frame far past any legitimate size still gets the abrupt close. The cost is that the server may buffer up to 128 KiB per message instead of 64 KiB. The hard cutoff is a multiple of the soft cap, so changing `MAX_CLIENT_MESSAGE_BYTES` moves both.
+
+A client should treat close code 1009 as "I sent something far too large", not as a network failure to retry blindly.
 
 The byte count uses a small pure function (`utf8ByteLength`) instead of `TextEncoder` or `Buffer`, because this package's TypeScript config exposes neither DOM nor Node globals. A test checks it against `TextEncoder`.
 
