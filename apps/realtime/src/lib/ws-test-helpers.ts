@@ -40,9 +40,15 @@ export function record(ws: WebSocket) {
     messages,
     // Resolves with the messages once at least `count` have arrived.
     async waitFor(count: number, timeoutMs = 5000): Promise<Received[]> {
-      const deadline = Date.now() + timeoutMs;
+      const started = Date.now();
+      const deadline = started + timeoutMs;
       while (messages.length < count) {
-        if (Date.now() > deadline) throw new Error(`expected ${count} message(s), got ${messages.length}`);
+        if (Date.now() > deadline) {
+          const seen = messages.map((m) => (m.type === "error" ? `error:${String(m.payload.code)}` : m.type));
+          throw new Error(
+            `expected ${count} message(s), got ${messages.length} after ${Date.now() - started}ms [${seen.join(", ")}], socket readyState ${ws.readyState}`,
+          );
+        }
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
       return messages;

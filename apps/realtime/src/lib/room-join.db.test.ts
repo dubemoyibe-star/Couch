@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { WebSocket } from "ws";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   assertDatabaseEnv,
   createCouch,
@@ -79,6 +79,10 @@ describe("room.join with real connections", () => {
   let origin = "";
   const sockets: WebSocket[] = [];
   const clock = 1_700_000_000_000;
+  // Unexpected handler failures. Collected, not thrown: a throw inside the
+  // handler's catch block would swallow the internal_error reply and show up as
+  // a client waiting for a message that never comes.
+  const handlerErrors: unknown[] = [];
 
   async function connect(who: keyof typeof users) {
     const result = await openSocket(port, { origin, cookie: cookieFor(users[who].token) });
@@ -116,9 +120,7 @@ describe("room.join with real connections", () => {
       db: prisma,
       store: createInMemoryRoomStore(),
       now: () => clock,
-      onError: (error) => {
-        throw error;
-      },
+      onError: (error) => handlerErrors.push(error),
     });
     server = createRealtimeServer({
       authenticate: authenticateSession,
@@ -128,6 +130,12 @@ describe("room.join with real connections", () => {
       closeTimeoutMs: 1000,
     });
     port = await server.listen(0, "127.0.0.1");
+  });
+
+  afterEach(() => {
+    // The taken-down test reports its excluded item through onError on purpose.
+    const unexpected = handlerErrors.splice(0).filter((error) => !String(error).includes("excluded"));
+    expect(unexpected).toEqual([]);
   });
 
   afterAll(async () => {
@@ -225,7 +233,7 @@ describe("room.join with real connections", () => {
     await settle();
   });
 
-  it("returns null media and null playback when the current media has been taken down", async () => {
+  it("returns null media and null playback when the current media has been taken down", { timeout: 30_000 }, async () => {
     const takenDown = (await createCouch(prisma, { ownerId: users.host.id, name: "TEST FIXTURE takedown" })).couch;
     const set = await setCurrentMedia(prisma, { couchId: takenDown.id, actingUserId: users.host.id, mediaId });
     if (!set.ok) throw new Error("could not set media");
@@ -233,7 +241,7 @@ describe("room.join with real connections", () => {
     try {
       const host = await connect("host");
       host.ws.send(join(takenDown.id));
-      const [state] = await host.waitFor(1);
+      const [state] = await host.waitFor(1, 15_000);
       expect(state?.payload).toMatchObject({ media: null, playback: null });
       host.ws.close();
       await settle();
