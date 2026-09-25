@@ -19,7 +19,7 @@ export function NewCouchTile({ hint = "Start a new watch party" }: { readonly hi
       >
         <span
           aria-hidden="true"
-          className="flex size-9 items-center justify-center rounded-full border border-current motion-safe:transition-transform group-hover:scale-110"
+          className="flex size-9 items-center justify-center rounded-full border border-current motion-safe:transition-transform motion-safe:group-hover:scale-105"
         >
           <Plus className="size-5" />
         </span>
@@ -51,7 +51,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
             name={couch.name}
             bordered={false}
             monogram={false}
-            className="size-full motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-105"
+            className="size-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
           />
         </span>
         <span
@@ -68,7 +68,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
           </span>
           <ChevronRight
             aria-hidden="true"
-            className="size-5 shrink-0 text-[#E4D8CA] motion-safe:transition-transform group-hover:translate-x-0.5"
+            className="size-5 shrink-0 text-[#E4D8CA] motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
           />
         </span>
       </Link>
@@ -96,7 +96,7 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
             name={media?.title ?? couch.name}
             bordered={false}
             monogram={false}
-            className="size-full motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-105"
+            className="size-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
           />
         </span>
         <span
@@ -125,7 +125,7 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
           </span>
           <ChevronRight
             aria-hidden="true"
-            className="size-6 shrink-0 text-[#E4D8CA] motion-safe:transition-transform group-hover:translate-x-0.5"
+            className="size-6 shrink-0 text-[#E4D8CA] motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
           />
         </span>
       </Link>

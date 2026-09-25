@@ -124,7 +124,7 @@ export function DiscoverTabs({
                     url={item.posterUrl}
                     seed={item.id}
                     name={item.title}
-                    className="aspect-video w-full rounded-md motion-safe:transition-transform motion-safe:duration-300 group-hover:-translate-y-0.5"
+                    className="aspect-video w-full rounded-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:-translate-y-0.5"
                   />
                   <span className="flex flex-col">
                     <span className="text-sm font-medium text-text">{item.title}</span>
