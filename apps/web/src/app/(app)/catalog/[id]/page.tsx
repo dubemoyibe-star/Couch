@@ -5,6 +5,7 @@ import { getCatalogMedia, getCouch, getMembership, getPrismaClient } from "@couc
 import { getCurrentUser } from "@/lib/session";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
+import type { Metadata } from "next";
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -27,6 +28,8 @@ function formatDuration(durationSeconds: number): string {
   }
   return `${minutes}:${paddedSeconds}`;
 }
+
+export const metadata: Metadata = { title: "Catalog title" };
 
 export default async function CatalogMediaPage({
   params,

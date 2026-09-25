@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { couchNameSchema } from "@couch/contracts";
 import { createCouch, getPrismaClient } from "@couch/database";
+import { couchNameErrorMessage } from "@/lib/couch-name-error";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { mapToUserMessage } from "@/lib/repo-error-messages";
 
@@ -36,7 +37,7 @@ export async function runCreateCouchAction(
 
   const parsed = couchNameSchema.safeParse(formData.get("name"));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "That couch name is not valid." };
+    return { error: couchNameErrorMessage(parsed.error.issues[0]) };
   }
 
   let couchId: string;

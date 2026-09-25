@@ -3,8 +3,11 @@ import { getPrismaClient, listCatalogMedia } from "@couch/database";
 import { DashboardView } from "@/components/dashboard-view";
 import { loadCouchRooms } from "@/lib/couch-rooms";
 import { getCurrentUser } from "@/lib/session";
+import type { Metadata } from "next";
 
 const CATALOG_ROW = 12;
+
+export const metadata: Metadata = { title: "Home" };
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();

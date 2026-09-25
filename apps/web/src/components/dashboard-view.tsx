@@ -40,8 +40,8 @@ function Hero({ children, full = false }: { readonly children: ReactNode; readon
         className={cx(
           "absolute inset-x-0 top-0 -z-10",
           full
-            ? "h-152 bg-[radial-gradient(70%_80%_at_50%_45%,color-mix(in_oklab,var(--color-background)_88%,transparent),color-mix(in_oklab,var(--color-background)_35%,transparent))]"
-            : "h-full bg-linear-to-r from-background from-25% via-background/70 to-transparent max-sm:bg-background/70",
+            ? "h-152 bg-[radial-gradient(70%_80%_at_50%_45%,color-mix(in_oklab,var(--color-background)_90%,transparent),color-mix(in_oklab,var(--color-background)_65%,transparent))]"
+            : "h-full bg-linear-to-r from-background from-25% via-background/70 to-transparent max-lg:bg-background/70",
         )}
       />
       {children}
@@ -53,7 +53,7 @@ function Hero({ children, full = false }: { readonly children: ReactNode; readon
 function ContinueWatching({ room }: { readonly room: CouchRoom }) {
   const { couch, role, memberCount, media } = room;
   return (
-    <div className="flex w-full max-w-xl flex-col gap-4 rounded-md border border-border bg-black/45 p-4 backdrop-blur-sm">
+    <div className="flex w-full max-w-xl flex-col gap-4 rounded-md border border-border bg-black/60 p-4 backdrop-blur-sm">
       <div className="flex gap-4">
         <Poster
           url={media?.posterUrl ?? null}
@@ -183,7 +183,9 @@ export function DashboardView({
           <Hero full>
             <div className="flex flex-col items-center gap-5 px-5 py-14 text-center sm:py-20">
               {mobileGreeting}
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Your living room is empty</p>
+              <p className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
+                Your living room is empty
+              </p>
               <h1 className="max-w-lg font-display text-3xl font-semibold leading-tight text-text sm:text-5xl">
                 Start a movie night with your people.
               </h1>

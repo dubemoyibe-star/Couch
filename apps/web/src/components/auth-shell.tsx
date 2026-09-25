@@ -11,9 +11,12 @@ export const authLinkClass = cx(
   focusRing,
 );
 
-/** Link styling without the underline, for links that sit beside a form. */
+/**
+ * Link styling for a link inside a sentence beside a form. It keeps the underline: the accent
+ * color is under 3:1 against the surrounding muted text, so color alone would not mark it as a link.
+ */
 export const authQuietLinkClass = cx(
-  "rounded-sm font-medium text-primary hover:text-primary-hover",
+  "rounded-sm font-medium text-primary underline underline-offset-4 hover:text-primary-hover",
   focusRing,
 );
 
@@ -46,7 +49,7 @@ export function AuthShell({
   readonly children: ReactNode;
 }) {
   return (
-    <div
+    <main
       className={cx("flex flex-1 flex-col items-center justify-center gap-6 px-6 py-12", backdrop)}
     >
       <Logo size={30} />
@@ -57,7 +60,7 @@ export function AuthShell({
         </div>
         {children}
       </Card>
-    </div>
+    </main>
   );
 }
 

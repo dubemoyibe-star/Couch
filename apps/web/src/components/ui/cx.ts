@@ -17,4 +17,4 @@ export const calmTransition =
  * they all match the sign-in and sign-up fields.
  */
 export const inputFocus =
-  "transition-[border-color,box-shadow] duration-150 ease-out motion-reduce:transition-none not-focus:hover:border-text-muted focus-visible:border-primary/70 focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]";
+  "transition-[border-color,box-shadow] duration-150 ease-out motion-reduce:transition-none not-focus:hover:border-text-muted focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-transparent focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-primary)_14%,transparent)]";

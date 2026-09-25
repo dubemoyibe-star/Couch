@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { cx, inputFocus } from "@/components/ui/cx";
 import { parseInviteCode } from "@/lib/invite-input";
 
-const ERROR_VISIBLE_MS = 5000;
-
 /** Takes a pasted invite link or code and opens its join page, which checks it on the server. */
 export function JoinByCode({ className }: { readonly className?: string }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  // The message clears itself after a few seconds.
-  useEffect(() => {
-    if (!error) return;
-    const timer = setTimeout(() => setError(null), ERROR_VISIBLE_MS);
-    return () => clearTimeout(timer);
-  }, [error]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +39,8 @@ export function JoinByCode({ className }: { readonly className?: string }) {
           }}
           placeholder="Paste an invite link"
           autoComplete="off"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "join-invite-error" : undefined}
           spellCheck={false}
           className={cx(
             "min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-text placeholder:text-text-muted",
@@ -58,7 +51,7 @@ export function JoinByCode({ className }: { readonly className?: string }) {
           Join
         </Button>
       </div>
-      <FormError message={error} />
+      <FormError id="join-invite-error" message={error} />
     </form>
   );
 }

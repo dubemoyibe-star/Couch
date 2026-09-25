@@ -4,6 +4,9 @@ import { AuthNotice, AuthShell, authButtonClass } from "@/components/auth-shell"
 import { buttonClassName } from "@/components/ui/button";
 import { resetLinkErrorMessage } from "@/lib/auth-errors";
 import { ResetPasswordForm } from "./reset-password-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Choose a new password" };
 
 // Better Auth checks the emailed link at /api/auth/reset-password/<token> and
 // redirects here with `?token=<TOKEN>` when it is usable, or `?error=INVALID_TOKEN`

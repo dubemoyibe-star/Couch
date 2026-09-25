@@ -7,6 +7,9 @@ import { NoCouchesEmptyState } from "@/components/no-couches-empty-state";
 import { buttonClassName } from "@/components/ui/button";
 import { loadCouchRooms } from "@/lib/couch-rooms";
 import { getCurrentUser } from "@/lib/session";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "My couches" };
 
 export default async function CouchesPage() {
   const user = await getCurrentUser();

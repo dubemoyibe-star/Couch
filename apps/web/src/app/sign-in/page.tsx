@@ -2,6 +2,9 @@ import Link from "next/link";
 import { AuthDivider, AuthSplit, authQuietLinkClass } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { SignInForm } from "./sign-in-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 export default async function SignInPage({
   searchParams,

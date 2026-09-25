@@ -6,12 +6,15 @@ import { Card } from "@/components/ui/card";
 import { buttonClassName } from "@/components/ui/button";
 import { cx, focusRing, inputFocus } from "@/components/ui/cx";
 import { getCurrentUser } from "@/lib/session";
+import type { Metadata } from "next";
 
 const PAGE_SIZE = 24;
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+export const metadata: Metadata = { title: "Catalog" };
 
 export default async function CatalogPage({ searchParams }: PageProps<"/catalog">) {
   const user = await getCurrentUser();
@@ -82,7 +85,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
         </Card>
       ) : null}
 
-      <form action="/catalog" role="search" className="flex max-w-lg gap-2">
+      <form action="/catalog" role="search" aria-label="Search titles" className="flex max-w-lg gap-2">
         {pickingFor ? <input type="hidden" name="forCouch" value={pickingFor.id} /> : null}
         <input
           type="search"

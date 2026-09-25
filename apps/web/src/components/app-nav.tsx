@@ -37,11 +37,14 @@ export function AppNav({ variant }: { readonly variant: "sidebar" | "tabs" }) {
               aria-current={active ? "page" : undefined}
               className={cx(
                 "flex min-h-14 flex-col items-center justify-center gap-1 text-xs font-medium",
+                "relative",
                 active ? "text-primary" : "text-text-muted",
                 calmTransition,
                 focusRing,
               )}
             >
+              {/* The bar marks the current tab with a shape, not only the color. */}
+              {active ? <span aria-hidden="true" className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-primary" /> : null}
               {item.icon}
               {item.label}
             </Link>
@@ -62,7 +65,10 @@ export function AppNav({ variant }: { readonly variant: "sidebar" | "tabs" }) {
             aria-current={active ? "page" : undefined}
             className={cx(
               "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium",
-              active ? "bg-primary/15 text-primary" : "text-text-muted hover:bg-surface-muted hover:text-text",
+              // The label stays --color-text on the tint (primary text on it is under 4.5:1); the icon carries the accent.
+              active
+                ? "bg-primary/15 text-text [&>svg]:text-primary"
+                : "text-text-muted hover:bg-surface-muted hover:text-text",
               calmTransition,
               focusRing,
             )}

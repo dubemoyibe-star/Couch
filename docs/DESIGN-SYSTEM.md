@@ -216,9 +216,11 @@ Per component:
   The label text uses `text` (not the status color) so it stays above 4.5:1
   in both palettes; the status color is only a leading dot next to a label
   that names the status.
-- **FormError / FormSuccess**: not interactive. Use `danger` and `success`
-  text (all above 4.5:1 on `background`) with an icon and a screen-reader
-  prefix.
+- **FormError**: not interactive. `danger` text (above 4.5:1 on `background`
+  and on `surface`) with an icon and a screen-reader prefix.
+- **FormSuccess**: not interactive. The message uses `text`; only the icon uses
+  `success`, because light `success` on `surface` is 4.20:1, under 4.5:1 for
+  body text. It also carries a screen-reader prefix.
 
 ## Typography
 
@@ -293,3 +295,38 @@ between sections, less space between related elements — so small steps
 (`gap-12`/`gap-16`/`py-20`+) work for section breaks. No new spacing tokens
 were added. This is a convention for later issues to follow, not a new
 token.
+
+## Accessibility
+
+The target is WCAG 2.1 AA. The token ratios above are for flat backgrounds; the
+rules below cover what they do not.
+
+- **Focus**: every interactive element shows `--color-focus` as a 3px outline
+  (`focusRing`), except text fields, which use a full-strength `primary` border
+  plus a soft halo (`inputFocus`). The border is `primary`, not a translucent
+  mix: `primary` at 70% measured 2.73:1 against `surface` in the light palette.
+- **State is never color alone**: badges carry a text label, errors and
+  successes carry an icon and a screen-reader prefix, the current bottom tab
+  has a bar, and the current sidebar item has a tint and `aria-current`.
+- **Danger button**: hover and active blend the fill toward `text`, which is
+  the opposite of the label color in both palettes, so label contrast rises
+  instead of falling as it does with a translucent fill.
+- **Text over images** must be checked on the rendered page, since the
+  background is not a token. The hero scene keeps its text above 4.5:1 (3:1 for
+  large text) with scrims: a flat `background/70` layer below `lg`, and a radial
+  layer of 90% falling to 65% in the empty hero. Text in the accent color needs
+  a nearly opaque backing (accent on the brightest scene pixel is about 2:1), so
+  the eyebrow label sits on a solid chip. Poster cards use a bottom fade that
+  stays at least 65% black behind the text, and their member-count pill is
+  `black/70`; measured worst case is a pure white poster.
+- **Links inside a sentence** are underlined. The accent color is under 3:1
+  against the surrounding muted text, so color alone does not mark a link.
+- **Pending buttons** show a spinner and a label and also update a
+  `role="status"` region that stays mounted, so the change is announced.
+- **Icon-only controls** have an accessible name (`Show password`,
+  `Close`, `Account menu for <name>`). A toggle keeps one name and exposes its
+  state with `aria-pressed`.
+- **Native elements**: the modal is a `<dialog>` opened with `showModal()`, so it
+  has the `dialog` role, traps focus and makes the page inert without added ARIA.
+  The account menu is a `<details>`; nothing overrides its role. The outside-click,
+  Escape and focus-out handlers only set `open`.

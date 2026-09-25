@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { resetPasswordErrorMessage } from "@/lib/auth-errors";
 
+// The form is replaced by the confirmation, which would drop keyboard focus to the page start.
+const focusOnMount = (element: HTMLElement | null) => element?.focus();
+
 export function ResetPasswordForm({ token }: { readonly token: string }) {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -33,7 +36,7 @@ export function ResetPasswordForm({ token }: { readonly token: string }) {
 
   if (done) {
     return (
-      <div className="flex w-full flex-col gap-4">
+      <div ref={focusOnMount} tabIndex={-1} className="flex w-full flex-col gap-4 focus:outline-none">
         <AuthNotice tone="success">Your password has been changed. You can now sign in.</AuthNotice>
         <Link href="/sign-in" className={buttonClassName("primary", authButtonClass)}>
           Sign in
