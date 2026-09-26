@@ -12,6 +12,7 @@ import { calmTransition, cx, focusRing } from "@/components/ui/cx";
 import { CopyInviteLink } from "@/components/copy-invite-link";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
+import { CouchVisibilityForm } from "@/components/couch-visibility-form";
 import { LeaveCouchForm } from "@/components/leave-couch-form";
 import { NoMediaEmptyState } from "@/components/no-media-empty-state";
 import type { Metadata } from "next";
@@ -170,6 +171,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
       {inviteUrl || !isHost ? (
         <Card as="section" className="flex flex-col gap-5">
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
+          {isHost ? <CouchVisibilityForm key={String(couch.isPublic)} couchId={couch.id} isPublic={couch.isPublic} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
         </Card>
       ) : null}

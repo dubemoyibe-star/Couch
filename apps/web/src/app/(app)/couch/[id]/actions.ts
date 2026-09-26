@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getPrismaClient, leaveCouch, removeMember, setCurrentMedia } from "@couch/database";
+import { getPrismaClient, leaveCouch, removeMember, setCouchVisibility, setCurrentMedia } from "@couch/database";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { mapToUserMessage } from "@/lib/repo-error-messages";
 
@@ -149,4 +149,55 @@ export async function leaveCouchAction(
   formData: FormData,
 ): Promise<LeaveCouchState> {
   return runLeaveCouchAction(prevState, formData, { getCurrentUser, leaveCouch });
+}
+
+export type SetCouchVisibilityState = {
+  readonly error: string | null;
+};
+
+export type SetCouchVisibilityDeps = {
+  readonly getCurrentUser: () => Promise<CurrentUser | null>;
+  readonly setCouchVisibility: typeof setCouchVisibility;
+};
+
+/**
+ * Same defense-in-depth pattern as the actions above. Host status is not
+ * trusted from the client: `setCouchVisibility` re-checks the acting user's
+ * role and returns `forbidden` for a non-host. `isPublic` must be exactly
+ * "true" or "false".
+ */
+export async function runSetCouchVisibilityAction(
+  _prevState: SetCouchVisibilityState,
+  formData: FormData,
+  deps: SetCouchVisibilityDeps,
+): Promise<SetCouchVisibilityState> {
+  const user = await deps.getCurrentUser();
+  if (!user) return { error: "You must be signed in to do that." };
+
+  const couchId = formData.get("couchId");
+  const rawIsPublic = formData.get("isPublic");
+  if (
+    typeof couchId !== "string" ||
+    couchId.length === 0 ||
+    (rawIsPublic !== "true" && rawIsPublic !== "false")
+  ) {
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  const db = getPrismaClient();
+  const result = await deps.setCouchVisibility(db, {
+    couchId,
+    actingUserId: user.id,
+    isPublic: rawIsPublic === "true",
+  });
+  if (!result.ok) return { error: mapToUserMessage(result.error) };
+
+  redirect(`/couch/${couchId}`);
+}
+
+export async function setCouchVisibilityAction(
+  prevState: SetCouchVisibilityState,
+  formData: FormData,
+): Promise<SetCouchVisibilityState> {
+  return runSetCouchVisibilityAction(prevState, formData, { getCurrentUser, setCouchVisibility });
 }
