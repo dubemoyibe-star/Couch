@@ -61,7 +61,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
         />
         <span className="flex w-full items-end justify-between gap-2 p-4 text-[#F4EEE7]">
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-display text-lg font-semibold">{couch.name}</span>
+            <span className="truncate font-display text-lg font-semibold" title={couch.name}>{couch.name}</span>
             <span className="truncate text-xs text-[#E4D8CA]">
               {memberCount} {memberCount === 1 ? "member" : "members"} ·{" "}
               {media ? media.title : "Nothing on yet"}
@@ -113,8 +113,8 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
         </span>
         <span className="flex items-end justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-1.5">
-            <span className="line-clamp-2 break-words font-display text-2xl font-semibold leading-tight">{couch.name}</span>
-            <span className="line-clamp-2 text-sm text-[#E4D8CA]">
+            <span className="line-clamp-2 [overflow-wrap:anywhere] font-display text-2xl font-semibold leading-tight" title={couch.name}>{couch.name}</span>
+            <span className="line-clamp-2 [overflow-wrap:anywhere] text-sm text-[#E4D8CA]" title={media?.title}>
               {media ? (
                 <>
                   <span className="text-[#F4EEE7]">On the screen:</span> {media.title}
@@ -184,8 +184,8 @@ export function PublicCouchCard({
       </span>
       <span className="flex items-end justify-between gap-3">
         <span className="flex min-w-0 flex-col gap-1.5">
-          <span className="line-clamp-2 break-words font-display text-2xl font-semibold leading-tight">{name}</span>
-          <span className="line-clamp-2 text-sm text-[#E4D8CA]">
+          <span className="line-clamp-2 [overflow-wrap:anywhere] font-display text-2xl font-semibold leading-tight" title={name}>{name}</span>
+          <span className="line-clamp-2 [overflow-wrap:anywhere] text-sm text-[#E4D8CA]" title={media?.title}>
             {media ? (
               <>
                 <span className="text-[#F4EEE7]">On the screen:</span> {media.title}
@@ -211,7 +211,7 @@ export function PublicCouchCard({
   );
 
   return (
-    <li>
+    <li className="min-w-0">
       {isMember ? (
         <Link href={`/couch/${id}`} className={cx(cardClass, focusRing)}>
           {body}
