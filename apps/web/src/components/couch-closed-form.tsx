@@ -1,45 +1,38 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { Globe, Lock } from "lucide-react";
+import { DoorClosed, DoorOpen } from "lucide-react";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
-import {
-  setCouchVisibilityAction,
-  type SetCouchVisibilityState,
-} from "@/app/(app)/couch/[id]/actions";
+import { setCouchClosedAction, type SetCouchClosedState } from "@/app/(app)/couch/[id]/actions";
 
-const initialState: SetCouchVisibilityState = { error: null };
-
-type CouchVisibilityFormProps = {
-  readonly couchId: string;
-  readonly isPublic: boolean;
-};
+const initialState: SetCouchClosedState = { error: null };
 
 /**
- * A host-only control that switches a couch between public and private. The
- * button only opens a confirmation; nothing is submitted until the host
- * confirms in the dialog. The page keys this component on the current
- * visibility, so it remounts (and the dialog closes) once a change lands.
+ * A host-only control that closes a couch to new members or reopens it.
+ * Existing members are unaffected either way. The button only opens a
+ * confirmation; nothing is submitted until the host confirms in the dialog.
+ * The page keys this component on the current state, so it remounts (and the
+ * dialog closes) once a change lands.
  */
-export function CouchVisibilityForm({ couchId, isPublic }: CouchVisibilityFormProps) {
-  const [state, formAction, pending] = useActionState(setCouchVisibilityAction, initialState);
+export function CouchClosedForm({ couchId, isClosed }: { readonly couchId: string; readonly isClosed: boolean }) {
+  const [state, formAction, pending] = useActionState(setCouchClosedAction, initialState);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const Icon = isPublic ? Globe : Lock;
-  const ActionIcon = isPublic ? Lock : Globe;
-  const nextLabel = isPublic ? "Make private" : "Make public";
+  const Icon = isClosed ? DoorClosed : DoorOpen;
+  const ActionIcon = isClosed ? DoorOpen : DoorClosed;
+  const nextLabel = isClosed ? "Reopen couch" : "Close couch";
 
   return (
     <form action={formAction} className="flex flex-col gap-2">
       <input type="hidden" name="couchId" value={couchId} />
-      <input type="hidden" name="isPublic" value={isPublic ? "false" : "true"} />
+      <input type="hidden" name="isClosed" value={isClosed ? "false" : "true"} />
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex items-start gap-3">
           <Icon aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-text-muted" />
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-text">{isPublic ? "Public couch" : "Private couch"}</span>
+            <span className="text-sm font-medium text-text">{isClosed ? "Closed to new members" : "Open to new members"}</span>
             <span className="text-sm text-text-muted">
-              {isPublic ? "Anyone can find and join it." : "Only people with the invite link can join."}
+              {isClosed ? "Nobody new can join until you reopen it." : "Anyone with access can still join."}
             </span>
           </div>
         </div>
@@ -50,7 +43,7 @@ export function CouchVisibilityForm({ couchId, isPublic }: CouchVisibilityFormPr
       </div>
       <dialog
         ref={dialogRef}
-        aria-labelledby="visibility-title"
+        aria-labelledby="closed-title"
         onClick={(event) => {
           if (event.target === event.currentTarget) dialogRef.current?.close();
         }}
@@ -58,13 +51,13 @@ export function CouchVisibilityForm({ couchId, isPublic }: CouchVisibilityFormPr
       >
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <h2 id="visibility-title" className="font-display text-xl font-semibold">
-              {isPublic ? "Make this couch private?" : "Make this couch public?"}
+            <h2 id="closed-title" className="font-display text-xl font-semibold">
+              {isClosed ? "Reopen this couch?" : "Close this couch?"}
             </h2>
             <p className="text-sm text-text-muted">
-              {isPublic
-                ? "It will no longer be listed, and only people with the invite link can join. Current members stay."
-                : "Anyone will be able to find and join it. You can make it private again at any time."}
+              {isClosed
+                ? "New people will be able to join again, and a public couch will be listed again."
+                : "Nobody new will be able to join, and a public couch will be hidden from Find a couch. Current members stay. You can reopen it at any time."}
             </p>
           </div>
           <FormError message={state.error} compact />

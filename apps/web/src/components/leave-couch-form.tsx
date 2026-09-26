@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { LogOut } from "lucide-react";
 import { FormError } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ export function LeaveCouchForm({ couchId }: LeaveCouchFormProps) {
         onClick={() => dialogRef.current?.showModal()}
         className="min-h-10 px-4 hover:border-danger! hover:bg-danger/10! active:bg-danger/15!"
       >
+        <LogOut aria-hidden="true" className="size-4" />
         Leave this couch
       </Button>
       <dialog

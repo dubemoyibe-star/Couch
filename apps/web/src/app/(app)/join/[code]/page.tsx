@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCouchByInviteCode, getMembership, getPrismaClient, listMembers } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
 import { JoinInvitePanel } from "@/components/join-invite-panel";
+import { ClosedCouchNotice } from "@/components/closed-couch-notice";
 import { Card } from "@/components/ui/card";
 import type { Metadata } from "next";
 
@@ -18,6 +19,16 @@ export default async function JoinCouchPage({ params }: PageProps<"/join/[code]"
 
   const membership = await getMembership(db, { couchId: couch.id, userId: user.id });
   if (membership) redirect(`/couch/${couch.id}`);
+
+  if (couch.isClosed) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+        <Card as="section" className="w-full max-w-md p-8 text-center">
+          <ClosedCouchNotice couchName={couch.name} showBack />
+        </Card>
+      </div>
+    );
+  }
 
   const members = await listMembers(db, couch.id);
 

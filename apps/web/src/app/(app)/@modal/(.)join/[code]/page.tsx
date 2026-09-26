@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCouchByInviteCode, getMembership, getPrismaClient, listMembers } from "@couch/database";
 import { JoinInvitePanel } from "@/components/join-invite-panel";
+import { ClosedCouchNotice } from "@/components/closed-couch-notice";
 import { ModalDialog } from "@/components/modal-dialog";
 import { getCurrentUser } from "@/lib/session";
 
@@ -28,6 +29,14 @@ export default async function JoinCouchModal({ params }: PageProps<"/join/[code]
 
   const membership = await getMembership(db, { couchId: couch.id, userId: user.id });
   if (membership) redirect(`/couch/${couch.id}`);
+
+  if (couch.isClosed) {
+    return (
+      <ModalDialog labelledBy="join-couch-title" className="p-8 text-center">
+        <ClosedCouchNotice couchName={couch.name} />
+      </ModalDialog>
+    );
+  }
 
   const members = await listMembers(db, couch.id);
 

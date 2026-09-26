@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCatalogMedia, getCouch, getMembership, getPrismaClient, listMembers } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
 import { getBaseUrl } from "@/lib/base-url";
-import { Users } from "lucide-react";
+import { ArrowLeftRight, Square, Users } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { CopyInviteLink } from "@/components/copy-invite-link";
 import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { CouchVisibilityForm } from "@/components/couch-visibility-form";
+import { CouchClosedForm } from "@/components/couch-closed-form";
 import { LeaveCouchForm } from "@/components/leave-couch-form";
 import { NoMediaEmptyState } from "@/components/no-media-empty-state";
 import type { Metadata } from "next";
@@ -115,9 +116,19 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
               {isHost ? (
                 <div className="flex flex-wrap items-start justify-center gap-3 sm:justify-start">
                   <Link href={pickHref} className={buttonClassName("secondary", "px-5")}>
+                    <ArrowLeftRight aria-hidden="true" className="size-4" />
                     Change
                   </Link>
-                  <SetCurrentMediaForm couchId={couch.id} variant="secondary">
+                  <SetCurrentMediaForm
+                    couchId={couch.id}
+                    variant="secondary"
+                    confirm={{
+                      title: "Stop watching?",
+                      description: "This clears what is on the screen for everyone. You can pick something again at any time.",
+                      confirmLabel: "Stop watching",
+                    }}
+                  >
+                    <Square aria-hidden="true" className="size-4" />
                     Stop watching
                   </SetCurrentMediaForm>
                 </div>
@@ -171,7 +182,8 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
       {inviteUrl || !isHost ? (
         <Card as="section" className="flex flex-col gap-5">
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
-          {isHost ? <CouchVisibilityForm key={String(couch.isPublic)} couchId={couch.id} isPublic={couch.isPublic} /> : null}
+          {isHost ? <CouchVisibilityForm key={`public-${couch.isPublic}`} couchId={couch.id} isPublic={couch.isPublic} /> : null}
+          {isHost ? <CouchClosedForm key={`closed-${couch.isClosed}`} couchId={couch.id} isClosed={couch.isClosed} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
         </Card>
       ) : null}

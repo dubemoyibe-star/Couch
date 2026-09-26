@@ -12,6 +12,7 @@
 const REPO_ERROR_MESSAGES: Record<string, string> = {
   couch_not_found: "That couch could not be found.",
   couch_full: "This couch is full.",
+  couch_closed: "This couch isn't accepting new members right now.",
   not_a_member: "You are not a member of this couch.",
   host_cannot_leave: "As the host, you cannot leave this couch.",
   forbidden: "You do not have permission to do that.",
