@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getPrismaClient, leaveCouch, removeMember, setCouchClosed, setCouchVisibility, setCurrentMedia } from "@couch/database";
+import { deleteCouch, getPrismaClient, leaveCouch, removeMember, setCouchClosed, setCouchVisibility, setCurrentMedia } from "@couch/database";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { mapToUserMessage } from "@/lib/repo-error-messages";
+import { requestRealtimeTeardown, type TeardownResult } from "@/lib/realtime-teardown";
 
 export type SetCurrentMediaState = {
   readonly error: string | null;
@@ -251,4 +252,63 @@ export async function setCouchClosedAction(
   formData: FormData,
 ): Promise<SetCouchClosedState> {
   return runSetCouchClosedAction(prevState, formData, { getCurrentUser, setCouchClosed });
+}
+
+export type DeleteCouchState = {
+  readonly error: string | null;
+};
+
+export type DeleteCouchDeps = {
+  readonly getCurrentUser: () => Promise<CurrentUser | null>;
+  readonly deleteCouch: typeof deleteCouch;
+  readonly requestTeardown: (couchId: string) => Promise<TeardownResult>;
+  readonly logError: (message: string) => void;
+};
+
+/**
+ * Same defense-in-depth pattern as the actions above. The database delete is
+ * the source of truth and runs first; `deleteCouch` re-checks the host role.
+ * Only after it succeeds is the realtime service asked to end the live room,
+ * and that call is best-effort: a failure is logged and never reported as a
+ * failed delete, because the couch is already gone.
+ */
+export async function runDeleteCouchAction(
+  _prevState: DeleteCouchState,
+  formData: FormData,
+  deps: DeleteCouchDeps,
+): Promise<DeleteCouchState> {
+  const user = await deps.getCurrentUser();
+  if (!user) return { error: "You must be signed in to do that." };
+
+  const couchId = formData.get("couchId");
+  if (typeof couchId !== "string" || couchId.length === 0) {
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  const db = getPrismaClient();
+  const result = await deps.deleteCouch(db, { couchId, actingUserId: user.id });
+  if (!result.ok) return { error: mapToUserMessage(result.error) };
+
+  const teardown = await deps.requestTeardown(couchId);
+  if (!teardown.ok) {
+    deps.logError(`[realtime] teardown failed for deleted couch ${couchId}: ${teardown.reason}`);
+  }
+
+  redirect("/?deleted=1");
+}
+
+export async function deleteCouchAction(
+  prevState: DeleteCouchState,
+  formData: FormData,
+): Promise<DeleteCouchState> {
+  return runDeleteCouchAction(prevState, formData, {
+    getCurrentUser,
+    deleteCouch,
+    requestTeardown: (couchId) =>
+      requestRealtimeTeardown(couchId, {
+        url: process.env.REALTIME_INTERNAL_URL,
+        secret: process.env.REALTIME_INTERNAL_SECRET,
+      }),
+    logError: (message) => console.error(message),
+  });
 }

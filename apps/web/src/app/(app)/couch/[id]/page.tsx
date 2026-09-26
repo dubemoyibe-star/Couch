@@ -14,6 +14,7 @@ import { SetCurrentMediaForm } from "@/components/set-current-media-form";
 import { RemoveMemberForm } from "@/components/remove-member-form";
 import { CouchVisibilityForm } from "@/components/couch-visibility-form";
 import { CouchClosedForm } from "@/components/couch-closed-form";
+import { DeleteCouchForm } from "@/components/delete-couch-form";
 import { LeaveCouchForm } from "@/components/leave-couch-form";
 import { NoMediaEmptyState } from "@/components/no-media-empty-state";
 import type { Metadata } from "next";
@@ -184,6 +185,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
           {isHost ? <CouchVisibilityForm key={`public-${couch.isPublic}`} couchId={couch.id} isPublic={couch.isPublic} /> : null}
           {isHost ? <CouchClosedForm key={`closed-${couch.isClosed}`} couchId={couch.id} isClosed={couch.isClosed} /> : null}
+          {isHost ? <DeleteCouchForm couchId={couch.id} couchName={couch.name} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
         </Card>
       ) : null}
