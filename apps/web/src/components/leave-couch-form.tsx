@@ -26,7 +26,11 @@ export function LeaveCouchForm({ couchId }: LeaveCouchFormProps) {
   return (
     <form action={formAction} className="flex flex-col items-start gap-1">
       <input type="hidden" name="couchId" value={couchId} />
-      <Button variant="secondary" onClick={() => dialogRef.current?.showModal()} className="min-h-10 px-4">
+      <Button
+        variant="secondary"
+        onClick={() => dialogRef.current?.showModal()}
+        className="min-h-10 px-4 hover:border-danger! hover:bg-danger/10! active:bg-danger/15!"
+      >
         Leave this couch
       </Button>
       <dialog
