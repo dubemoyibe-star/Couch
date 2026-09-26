@@ -10,6 +10,10 @@ describe("mapToUserMessage", () => {
     expect(mapToUserMessage("couch_full")).toBe("This couch is full.");
   });
 
+  it("maps couch_closed", () => {
+    expect(mapToUserMessage("couch_closed")).toBe("This couch isn't accepting new members right now.");
+  });
+
   it("maps not_a_member", () => {
     expect(mapToUserMessage("not_a_member")).toBe("You are not a member of this couch.");
   });

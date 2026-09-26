@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getPrismaClient, leaveCouch, removeMember, setCouchVisibility, setCurrentMedia } from "@couch/database";
+import { getPrismaClient, leaveCouch, removeMember, setCouchClosed, setCouchVisibility, setCurrentMedia } from "@couch/database";
 import { getCurrentUser, type CurrentUser } from "@/lib/session";
 import { mapToUserMessage } from "@/lib/repo-error-messages";
 
@@ -200,4 +200,55 @@ export async function setCouchVisibilityAction(
   formData: FormData,
 ): Promise<SetCouchVisibilityState> {
   return runSetCouchVisibilityAction(prevState, formData, { getCurrentUser, setCouchVisibility });
+}
+
+export type SetCouchClosedState = {
+  readonly error: string | null;
+};
+
+export type SetCouchClosedDeps = {
+  readonly getCurrentUser: () => Promise<CurrentUser | null>;
+  readonly setCouchClosed: typeof setCouchClosed;
+};
+
+/**
+ * Same defense-in-depth pattern as the actions above. Host status is not
+ * trusted from the client: `setCouchClosed` re-checks the acting user's role
+ * and returns `forbidden` for a non-host. `isClosed` must be exactly "true"
+ * or "false".
+ */
+export async function runSetCouchClosedAction(
+  _prevState: SetCouchClosedState,
+  formData: FormData,
+  deps: SetCouchClosedDeps,
+): Promise<SetCouchClosedState> {
+  const user = await deps.getCurrentUser();
+  if (!user) return { error: "You must be signed in to do that." };
+
+  const couchId = formData.get("couchId");
+  const rawIsClosed = formData.get("isClosed");
+  if (
+    typeof couchId !== "string" ||
+    couchId.length === 0 ||
+    (rawIsClosed !== "true" && rawIsClosed !== "false")
+  ) {
+    return { error: "Something went wrong. Please try again." };
+  }
+
+  const db = getPrismaClient();
+  const result = await deps.setCouchClosed(db, {
+    couchId,
+    actingUserId: user.id,
+    isClosed: rawIsClosed === "true",
+  });
+  if (!result.ok) return { error: mapToUserMessage(result.error) };
+
+  redirect(`/couch/${couchId}`);
+}
+
+export async function setCouchClosedAction(
+  prevState: SetCouchClosedState,
+  formData: FormData,
+): Promise<SetCouchClosedState> {
+  return runSetCouchClosedAction(prevState, formData, { getCurrentUser, setCouchClosed });
 }
