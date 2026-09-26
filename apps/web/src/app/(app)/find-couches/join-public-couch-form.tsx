@@ -11,12 +11,16 @@ export function JoinPublicCouchForm({ couchId }: { readonly couchId: string }) {
   const [state, formAction, pending] = useActionState(joinPublicCouchAction, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col items-end gap-1">
+    <form action={formAction} className="flex shrink-0 flex-col items-end gap-2">
       <input type="hidden" name="couchId" value={couchId} />
-      <Button type="submit" loading={pending} loadingLabel="Joining…">
+      <Button type="submit" loading={pending} loadingLabel="Joining…" className="min-h-10 whitespace-nowrap px-4">
         Join couch
       </Button>
-      <FormError message={state.error} compact />
+      {state.error ? (
+        <div className="max-w-48 rounded-md bg-black/80 px-2.5 py-1.5 backdrop-blur-sm">
+          <FormError message={state.error} compact />
+        </div>
+      ) : null}
     </form>
   );
 }

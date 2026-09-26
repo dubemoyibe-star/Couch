@@ -204,9 +204,7 @@ export function PublicCouchCard({
             />
           </span>
         ) : (
-          <span className="shrink-0 rounded-md bg-black/70 p-1 backdrop-blur-sm">
-            <JoinPublicCouchForm couchId={id} />
-          </span>
+          <JoinPublicCouchForm couchId={id} />
         )}
       </span>
     </>
