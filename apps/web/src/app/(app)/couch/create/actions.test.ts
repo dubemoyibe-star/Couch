@@ -95,6 +95,36 @@ describe("runCreateCouchAction", () => {
       ),
     ).rejects.toThrow("REDIRECT:/couch/couch-1");
 
-    expect(createCouch).toHaveBeenCalledWith({}, { ownerId: "user-1", name: "Movie night" });
+    expect(createCouch).toHaveBeenCalledWith({}, { ownerId: "user-1", name: "Movie night", isPublic: false });
+  });
+
+  async function createWith(visibility: string | null) {
+    const { runCreateCouchAction } = await import("./actions");
+    const createCouch = vi.fn<(db: unknown, input: unknown) => Promise<never>>(async () => ({ couch: { id: "couch-1" } }) as never);
+    const formData = new FormData();
+    formData.set("name", "Movie night");
+    if (visibility !== null) formData.set("visibility", visibility);
+    await expect(
+      runCreateCouchAction({ error: null }, formData, {
+        getCurrentUser: async () => ({ id: "user-1", email: "a@b.com", displayName: "A" }),
+        createCouch,
+      }),
+    ).rejects.toThrow("REDIRECT:/couch/couch-1");
+    return createCouch;
+  }
+
+  it("passes isPublic true when the visibility choice is public", async () => {
+    const createCouch = await createWith("public");
+    expect(createCouch).toHaveBeenCalledWith({}, { ownerId: "user-1", name: "Movie night", isPublic: true });
+  });
+
+  it("passes isPublic false when the visibility choice is private", async () => {
+    const createCouch = await createWith("private");
+    expect(createCouch).toHaveBeenCalledWith({}, { ownerId: "user-1", name: "Movie night", isPublic: false });
+  });
+
+  it("stays private when no visibility choice or an unknown one is submitted", async () => {
+    expect((await createWith(null)).mock.calls[0]?.[1]).toMatchObject({ isPublic: false });
+    expect((await createWith("everyone")).mock.calls[0]?.[1]).toMatchObject({ isPublic: false });
   });
 });

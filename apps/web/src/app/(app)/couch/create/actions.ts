@@ -40,10 +40,14 @@ export async function runCreateCouchAction(
     return { error: couchNameErrorMessage(parsed.error.issues[0]) };
   }
 
+  // Only an explicit "public" makes the couch public; a missing or unknown
+  // value stays private.
+  const isPublic = formData.get("visibility") === "public";
+
   let couchId: string;
   try {
     const db = getPrismaClient();
-    const { couch } = await deps.createCouch(db, { ownerId: user.id, name: parsed.data });
+    const { couch } = await deps.createCouch(db, { ownerId: user.id, name: parsed.data, isPublic });
     couchId = couch.id;
   } catch {
     return { error: mapToUserMessage("create_couch_failed") };

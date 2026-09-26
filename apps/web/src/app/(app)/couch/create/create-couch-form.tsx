@@ -40,6 +40,17 @@ export function CreateCouchForm({ autoFocus = false }: { readonly autoFocus?: bo
         onChange={(event) => setName(event.target.value)}
         onBlur={() => setTouched(true)}
       />
+      <fieldset className="mt-4 flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium text-text">Visibility</legend>
+        <label className="flex min-h-11 items-center gap-3 text-text">
+          <input type="radio" name="visibility" value="private" defaultChecked className="size-4" />
+          <span>Private: only people with the invite link can join</span>
+        </label>
+        <label className="flex min-h-11 items-center gap-3 text-text">
+          <input type="radio" name="visibility" value="public" className="size-4" />
+          <span>Public: anyone can find and join</span>
+        </label>
+      </fieldset>
       <Button type="submit" loading={pending} loadingLabel="Creating…" className={cx(authButtonClass, "mt-3")}>
         Create couch
       </Button>
