@@ -37,7 +37,7 @@ export function JoinInvitePanel({
       <div className="flex flex-col items-center gap-5 p-6 text-center sm:p-8">
         <div className="flex flex-col items-center gap-2">
           <p className="text-sm text-text-muted">You&apos;ve been invited to</p>
-          <h1 id="join-couch-title" className="font-display text-3xl font-semibold leading-tight text-text">
+          <h1 id="join-couch-title" className="max-w-full break-words font-display text-3xl font-semibold leading-tight text-text">
             {couchName}
           </h1>
           <p className="inline-flex items-center gap-1.5 text-sm text-text-muted">

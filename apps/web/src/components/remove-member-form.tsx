@@ -52,7 +52,7 @@ export function RemoveMemberForm({ couchId, targetUserId, memberName }: RemoveMe
       >
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <h2 id={`remove-${targetUserId}-title`} className="font-display text-xl font-semibold">
+            <h2 id={`remove-${targetUserId}-title`} className="break-words font-display text-xl font-semibold">
               Remove {memberName}?
             </h2>
             <p className="text-sm text-text-muted">

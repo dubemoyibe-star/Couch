@@ -37,7 +37,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   if (!membership) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-        <h1 className="font-display text-2xl font-semibold text-text">
+        <h1 className="max-w-full break-words font-display text-2xl font-semibold text-text">
           You&apos;re not a member of {couch.name}
         </h1>
         <p className="text-text-muted">Ask whoever invited you for the invite link to join.</p>
@@ -75,7 +75,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-10">
       <header className="flex flex-col gap-2">
-        <h1 className="font-display text-3xl font-semibold text-text sm:text-4xl">{couch.name}</h1>
+        <h1 className="break-words font-display text-3xl font-semibold text-text sm:text-4xl">{couch.name}</h1>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-text-muted">
           <Badge tone={isHost ? "primary" : "neutral"}>{isHost ? "Host" : "Participant"}</Badge>
           <span className="inline-flex items-center gap-1.5">
@@ -107,7 +107,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
             )}
             <div className="flex w-full flex-1 flex-col justify-between gap-6 text-center sm:text-left">
               <div className="flex flex-col items-center gap-2 sm:items-start">
-                <p className="font-display text-2xl font-semibold text-text sm:text-3xl">{currentMedia.title}</p>
+                <p className="break-words font-display text-2xl font-semibold text-text sm:text-3xl">{currentMedia.title}</p>
                 <Link href={`/catalog/${currentMedia.id}`} className={cx(secondaryLink, "self-start")}>
                   View details
                 </Link>
