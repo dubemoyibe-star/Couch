@@ -125,7 +125,7 @@ export type JoinCouchInput = {
   readonly userId: string;
 };
 
-export type JoinCouchError = "couch_not_found" | "couch_full";
+export type JoinCouchError = "couch_not_found" | "couch_closed" | "couch_full";
 
 /**
  * Joins a couch, or returns the existing membership unchanged if the user is
@@ -133,8 +133,10 @@ export type JoinCouchError = "couch_not_found" | "couch_full";
  * existing member is never downgraded, and an existing member can rejoin a
  * couch that is otherwise full.
  *
- * A new member is refused with `couch_full` once the couch already has
- * `ROOM_MEMBERS_MAX` members.
+ * A new member is refused with `couch_closed` when the host has closed the
+ * couch, and then with `couch_full` once the couch already has
+ * `ROOM_MEMBERS_MAX` members. Both checks come after the existing-member
+ * check, so a member can always rejoin.
  *
  * Atomicity: the couch row is locked (`SELECT ... FOR UPDATE`) inside the
  * transaction before the membership count is read. A second, concurrent join
@@ -162,6 +164,12 @@ export async function joinCouch(
       where: { couchId_userId: { couchId: input.couchId, userId: input.userId } },
     });
     if (existing) return ok(toMembership(existing));
+
+    const couchState = await tx.couch.findUnique({
+      where: { id: input.couchId },
+      select: { isClosed: true },
+    });
+    if (couchState?.isClosed) return err("couch_closed");
 
     const memberCount = await tx.couchMember.count({ where: { couchId: input.couchId } });
     if (memberCount >= ROOM_MEMBERS_MAX) return err("couch_full");
@@ -387,6 +395,42 @@ export async function setCouchVisibility(
   });
 }
 
+export type SetCouchClosedInput = {
+  readonly couchId: string;
+  readonly actingUserId: string;
+  readonly isClosed: boolean;
+};
+
+export type SetCouchClosedError = "forbidden" | "couch_not_found";
+
+/**
+ * Closes or reopens a couch. A closed couch refuses new members
+ * (`joinCouch`) and is left out of `listPublicCouches`; existing members are
+ * unaffected. Only a HOST may call this: a non-host member, or a user who is
+ * not a member, gets `forbidden`, and a couch that does not exist gets
+ * `couch_not_found`.
+ */
+export async function setCouchClosed(
+  db: PrismaClient,
+  input: SetCouchClosedInput,
+): Promise<RepoResult<Couch, SetCouchClosedError>> {
+  return db.$transaction(async (tx) => {
+    const couch = await tx.couch.findUnique({ where: { id: input.couchId }, select: { id: true } });
+    if (!couch) return err("couch_not_found");
+
+    const actor = await tx.couchMember.findUnique({
+      where: { couchId_userId: { couchId: input.couchId, userId: input.actingUserId } },
+    });
+    if (!actor || actor.role !== "HOST") return err("forbidden");
+
+    const row = await tx.couch.update({
+      where: { id: input.couchId },
+      data: { isClosed: input.isClosed },
+    });
+    return ok(toCouch(row));
+  });
+}
+
 export type ListPublicCouchesOptions = {
   /** Case-insensitive substring of the couch name. `%`, `_` and `\` are literal text. */
   readonly query?: string;
@@ -405,7 +449,7 @@ export type PublicCouchPage = {
 /**
  * One page of public couches, ordered by name and then id, both ascending,
  * paged by the id of the last row like `listCatalogMedia`. Only `isPublic`
- * couches are returned. `media` is resolved through `getCatalogMedia`, never
+ * couches that are not closed are returned. `media` is resolved through `getCatalogMedia`, never
  * from the stored id alone, so a couch whose media was taken down, made
  * inactive or is no longer authorized reports `media: null`. A cursor that
  * matches no couch throws a RangeError. Couches are never deleted, so that is
@@ -443,7 +487,7 @@ export async function listPublicCouches(
 
   // One extra row tells whether another page exists.
   const rows = await db.couch.findMany({
-    where: { AND: [{ isPublic: true }, nameFilter, afterCursor] },
+    where: { AND: [{ isPublic: true }, { isClosed: false }, nameFilter, afterCursor] },
     select: {
       id: true,
       name: true,

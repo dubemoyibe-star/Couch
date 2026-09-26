@@ -22,6 +22,7 @@ function fakeCouch(isPublic = true) {
     ownerId: "host-1",
     inviteCode: "abc123",
     isPublic,
+    isClosed: false,
     currentMediaId: null,
     createdAt: new Date(),
     updatedAt: new Date(),

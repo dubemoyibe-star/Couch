@@ -75,7 +75,7 @@ A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` 
 
 ### Model
 
-- `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: a user who owns a couch cannot be deleted), `inviteCode` (unique), `isPublic` (boolean, default false: whether the couch appears in `listPublicCouches`), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
+- `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: a user who owns a couch cannot be deleted), `inviteCode` (unique), `isPublic` (boolean, default false: whether the couch appears in `listPublicCouches`), `isClosed` (boolean, default false: whether the couch refuses new members), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
 - `CouchMember`: `id`, `couchId` (FK `Couch`, `onDelete: Cascade`), `userId` (FK `User`, `onDelete: Restrict`), `role` (`HOST` or `PARTICIPANT`), `joinedAt`. `(couchId, userId)` is unique, and both columns are indexed.
 - There is no delete function for couches or media in the MVP, and the only user delete is `deleteUnverifiedUser`: it deletes a user (and its accounts) only when the user is unverified and has no couch, membership or session, decided inside one transaction under a row lock. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
 - The database role enum (`HOST` / `PARTICIPANT`) is mapped to the lowercase contract role (`"host"` / `"participant"`) at the repository boundary; nothing outside this package sees the database enum.
@@ -91,7 +91,7 @@ A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` 
 | `createCouch(db, { ownerId, name, isPublic? })` | Validates `name` with the contracts couch name rule, then creates the couch and the owner's `HOST` membership in one transaction: both rows exist together or not at all. `isPublic` defaults to false. Retries the invite code on a real unique collision (see below). |
 | `getCouch(db, id)` | One couch by internal id, or `null`. |
 | `getCouchByInviteCode(db, code)` | One couch by invite code, or `null`. |
-| `joinCouch(db, { couchId, userId })` | Idempotent: an existing member, including the host, is returned unchanged and never downgraded, even when the couch is full. A new member is refused with `couch_full` once the couch already has `ROOM_MEMBERS_MAX` members (from `@couch/contracts`). Errors: `couch_not_found`, `couch_full`. |
+| `joinCouch(db, { couchId, userId })` | Idempotent: an existing member, including the host, is returned unchanged and never downgraded, even when the couch is full. A new member is refused with `couch_closed` when the couch is closed, then with `couch_full` once the couch already has `ROOM_MEMBERS_MAX` members (from `@couch/contracts`). Both checks come after the existing-member check, so a member can always rejoin. It does not check `isPublic`. Errors: `couch_not_found`, `couch_closed`, `couch_full`. |
 | `leaveCouch(db, { couchId, userId })` | Removes the caller's own membership. The host cannot leave (host transfer is out of scope). Errors: `not_a_member`, `host_cannot_leave`. |
 | `getMembership(db, { couchId, userId })` | One membership, or `null`. |
 | `listMembers(db, couchId)` | Every member with `userId`, `displayName` (from `User`), `role`, `joinedAt`, ordered by `joinedAt` then `userId`. Online status is not stored: that is a realtime concern. |
@@ -106,13 +106,21 @@ A couch is private unless a host makes it public. `setCouchVisibility` and `list
 | Function | What it does |
 | --- | --- |
 | `setCouchVisibility(db, { couchId, actingUserId, isPublic })` | Only a `HOST` may call this. Returns the updated couch. Errors: `couch_not_found` (checked first), `forbidden` (the actor is a participant or not a member). |
-| `listPublicCouches(db, { query?, limit, cursor? })` | One page of `isPublic` couches: `{ items, nextCursor }`, each item `{ id, name, memberCount, media: { title, posterUrl } \| null }`. Private couches never appear. |
+| `listPublicCouches(db, { query?, limit, cursor? })` | One page of `isPublic` couches: `{ items, nextCursor }`, each item `{ id, name, memberCount, media: { title, posterUrl } \| null }`. Private and closed couches never appear. |
 
 `media` is resolved through `getCatalogMedia`, never from the stored `currentMediaId` alone, so a couch whose media was taken down, made inactive or lost its license reports `media: null`, the same as a couch with no media.
 
 Pagination follows `listCatalogMedia`: order is name ascending, then id ascending, `cursor` is the id of the last row of the previous page (`nextCursor` is that value, or `null` at the end), `limit` is an integer from 1 to `MAX_CATALOG_PAGE_SIZE` (100), and anything else throws a `RangeError`. A page is never short because of media, since a missing media only nulls the field. The cursor couch does not have to be public any more: one that went private between pages does not cause another couch to be skipped. A cursor that matches no couch throws a `RangeError`.
 
 `query` matches a case-insensitive substring of the couch name, with `%`, `_` and `\` as literal text, using the same `escapeLikePattern` as the catalog search.
+
+### Closing
+
+A host can close a couch to stop new joins. Closing changes nothing for existing members.
+
+| Function | What it does |
+| --- | --- |
+| `setCouchClosed(db, { couchId, actingUserId, isClosed })` | Only a `HOST` may call this. Returns the updated couch. Errors: `couch_not_found` (checked first), `forbidden` (the actor is a participant or not a member). |
 
 ### Joining atomically at the cap
 
@@ -129,7 +137,7 @@ Invite codes are generated server-side in this package (`src/invite-code.ts`), w
 
 ### Test fixtures
 
-Couch database tests (`src/couch.db.test.ts` and `src/couch-visibility.db.test.ts`) create their own users, through `src/couch-test-support.ts`, and delete them (and anything they created) in teardown. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: emails end in `@example.test` and couch names and display names start with `TEST FIXTURE`.
+Couch database tests (`src/couch.db.test.ts`, `src/couch-visibility.db.test.ts` and `src/couch-closing.db.test.ts`) create their own users, through `src/couch-test-support.ts`, and delete them (and anything they created) in teardown. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: emails end in `@example.test` and couch names and display names start with `TEST FIXTURE`.
 
 ## Destructive commands and AI agents
 

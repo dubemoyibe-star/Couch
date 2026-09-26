@@ -14,6 +14,8 @@ export type Couch = {
   readonly inviteCode: string;
   /** Whether the couch appears in `listPublicCouches`. False unless a host set it. */
   readonly isPublic: boolean;
+  /** Whether the couch refuses new members. Existing members are unaffected. */
+  readonly isClosed: boolean;
   /** The couch's current media id, or null. Can point at media that has since
    * become unavailable: callers must resolve it through `getCatalogMedia`. */
   readonly currentMediaId: string | null;
@@ -74,6 +76,7 @@ export function toCouch(row: CouchRow): Couch {
     ownerId: row.ownerId,
     inviteCode: row.inviteCode,
     isPublic: row.isPublic,
+    isClosed: row.isClosed,
     currentMediaId: row.currentMediaId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
