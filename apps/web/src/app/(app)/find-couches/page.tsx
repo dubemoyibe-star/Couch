@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Plus } from "lucide-react";
 import { getPrismaClient, listPublicCouches, type PublicCouchPage } from "@couch/database";
 import { PublicCouchCard } from "@/components/couch-card";
 import { NoPublicCouchesEmptyState } from "@/components/no-public-couches-empty-state";
@@ -45,9 +46,18 @@ export default async function FindCouchesPage({ searchParams }: PageProps<"/find
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl font-semibold text-text">Find a couch</h1>
-        <p className="text-text-muted">Public couches where people are watching together.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-3xl font-semibold text-text">Find a couch</h1>
+          <p className="text-text-muted">Public couches where people are watching together.</p>
+        </div>
+        {/* With nothing listed, the empty state carries this action instead. */}
+        {items.length > 0 ? (
+          <Link href="/couch/create?visibility=public" className={buttonClassName("primary")}>
+            <Plus aria-hidden="true" className="size-4" />
+            Create a public couch
+          </Link>
+        ) : null}
       </div>
 
       <form action="/find-couches" role="search" aria-label="Search couches" className="flex max-w-lg gap-2">

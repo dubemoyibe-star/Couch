@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 import { Armchair } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { parseDefaultVisibility } from "@/lib/default-visibility";
 import { getCurrentUser } from "@/lib/session";
 import { CreateCouchForm } from "./create-couch-form";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Create a couch" };
 
-export default async function CreateCouchPage() {
+export default async function CreateCouchPage({ searchParams }: PageProps<"/couch/create">) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
@@ -24,7 +25,7 @@ export default async function CreateCouchPage() {
           <h1 className="font-display text-2xl font-semibold text-text">Create a couch</h1>
           <p className="text-sm text-text-muted">Give it a name, then invite friends with a link.</p>
         </div>
-        <CreateCouchForm />
+        <CreateCouchForm defaultVisibility={parseDefaultVisibility((await searchParams).visibility)} />
       </Card>
     </div>
   );

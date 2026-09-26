@@ -38,7 +38,7 @@ export function NoPublicCouchesEmptyState({ query }: { readonly query?: string }
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link href="/couch/create" className={buttonClassName("primary", "min-h-11 px-6")}>
+        <Link href="/couch/create?visibility=public" className={buttonClassName("primary", "min-h-11 px-6")}>
           <Plus aria-hidden="true" className="size-4" />
           Create a public couch
         </Link>
