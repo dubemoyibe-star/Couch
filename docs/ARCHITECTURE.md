@@ -70,6 +70,14 @@ A connection is in exactly one room at a time. `room.join` checks membership in 
 
 `room.setMedia` is host only, checked from the role cached at join. It calls `setCurrentMedia`, which owns the host re-check and the license gate (`media_unavailable` for unauthorized, inactive or nonexistent media), so nothing of that is repeated in the handler. On success the room is replaced with a fresh initial `PlaybackState` (or null playback for a clear), reading the room's current access mode first and writing it back, so a media change or clear never resets the mode. Every connection in the room, the sender included, receives `room.mediaChanged` (`media` and `playback` both null on a clear). On failure only the requester is answered and the stored room is untouched.
 
+### Public couches
+
+A public couch is a `Couch` with `isPublic` set. The flag defaults to false, is settable at creation, and afterwards only the host can change it (`setCouchVisibility`, which re-checks the host role in the database and answers `forbidden` or `couch_not_found`). Public means listed: it appears on the discovery page and can be joined from there without an invite code. It does not change what a member can do once inside.
+
+- **Listing and the license gate**: `listPublicCouches` returns only `isPublic` couches, ordered by name then id and paged by cursor like `listCatalogMedia`. Each couch's current media is resolved through `getCatalogMedia`, the same license gate as every other media read, never from the stored media id alone. A couch whose media was taken down, made inactive or is no longer authorized reports `media: null`.
+- **No realtime change**: `room.join` calls `getMembership` and attaches the connection if a membership row exists. It does not care how the row was created (invite code, or the public join action), so public couches needed no new message, handler or room state. Presence, playback and the license gate on room creation apply unchanged.
+- **`joinCouch` does not enforce `isPublic`**: `joinCouch` adds a member to any couch given its id, and it never looks at visibility, because the invite-code flow resolves the code to a couch before calling it. The public join action (`apps/web/src/app/(app)/find-couches/actions.ts`) therefore loads the couch with `getCouch` and refuses unless `couch.isPublic` before calling `joinCouch`. A private couch and an unknown id get the same `couch_not_found` answer, so the action does not reveal whether a private couch exists. Without that check, any couch id would be joinable and the invite code would stop being the gate for private couches. Any new caller that reaches `joinCouch` with a raw couch id must perform the same check itself. Do not call `joinCouch` by id without it.
+
 ## Consuming workspace packages
 
 Decision: packages export their TypeScript source directly. There is no build step and no `dist`.
