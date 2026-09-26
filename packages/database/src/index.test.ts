@@ -37,7 +37,9 @@ describe("public exports", () => {
         "listCouchesForUser",
         "loadEnvFile",
         "listMembers",
+        "listPublicCouches",
         "removeMember",
+        "setCouchVisibility",
         "setCurrentMedia",
         "toContractRole",
         "toDbRole",
@@ -71,6 +73,7 @@ describe("public exports", () => {
         "listCatalogMedia",
         "listCouchesForUser",
         "listMembers",
+        "listPublicCouches",
       ].sort(),
     );
   });

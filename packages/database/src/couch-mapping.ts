@@ -12,6 +12,8 @@ export type Couch = {
   readonly name: string;
   readonly ownerId: string;
   readonly inviteCode: string;
+  /** Whether the couch appears in `listPublicCouches`. False unless a host set it. */
+  readonly isPublic: boolean;
   /** The couch's current media id, or null. Can point at media that has since
    * become unavailable: callers must resolve it through `getCatalogMedia`. */
   readonly currentMediaId: string | null;
@@ -47,6 +49,14 @@ export type CouchListItem = {
   readonly memberCount: number;
 };
 
+/** One row of `listPublicCouches`. `media` is null when there is none or it is no longer available. */
+export type PublicCouchListItem = {
+  readonly id: string;
+  readonly name: string;
+  readonly memberCount: number;
+  readonly media: { readonly title: string; readonly posterUrl: string | null } | null;
+};
+
 /** Maps the database `CouchRole` enum to the lowercase contract role. */
 export function toContractRole(role: CouchRole): Role {
   return role === "HOST" ? "host" : "participant";
@@ -63,6 +73,7 @@ export function toCouch(row: CouchRow): Couch {
     name: row.name,
     ownerId: row.ownerId,
     inviteCode: row.inviteCode,
+    isPublic: row.isPublic,
     currentMediaId: row.currentMediaId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

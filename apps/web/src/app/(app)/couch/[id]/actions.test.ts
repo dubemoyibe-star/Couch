@@ -26,6 +26,7 @@ function fakeCouch() {
     name: "Movie night",
     ownerId: "host-1",
     inviteCode: "abc123",
+    isPublic: false,
     currentMediaId: "media-1",
     createdAt: new Date(),
     updatedAt: new Date(),

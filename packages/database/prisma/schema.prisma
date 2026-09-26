@@ -179,6 +179,10 @@ model Couch {
   owner      User   @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   inviteCode String @unique
 
+  // Whether the couch is listed for anyone to find. Private by default. Only
+  // a host changes it (`setCouchVisibility`).
+  isPublic Boolean @default(false)
+
   currentMediaId String?
   // The media the couch is currently watching, or null for none. Media has no
   // delete function either, but a takedown sets `Media.isActive` to false

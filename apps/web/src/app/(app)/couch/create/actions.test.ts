@@ -68,6 +68,7 @@ describe("runCreateCouchAction", () => {
         name: "Movie night",
         ownerId: "user-1",
         inviteCode: "abc",
+        isPublic: false,
         currentMediaId: null,
         createdAt: new Date(),
         updatedAt: new Date(),

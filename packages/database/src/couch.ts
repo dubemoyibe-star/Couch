@@ -1,5 +1,6 @@
 import { couchNameSchema, ROOM_MEMBERS_MAX } from "@couch/contracts";
-import { getCatalogMedia } from "./catalog";
+import { getCatalogMedia, MAX_CATALOG_PAGE_SIZE } from "./catalog";
+import { escapeLikePattern } from "./catalog-mapping";
 import {
   toContractRole,
   toCouch,
@@ -8,6 +9,7 @@ import {
   type CouchListItem,
   type CouchMemberListItem,
   type CouchMembership,
+  type PublicCouchListItem,
 } from "./couch-mapping";
 import { generateInviteCode, withInviteCodeRetry } from "./invite-code";
 import { Prisma, type PrismaClient } from "./generated/prisma/client";
@@ -59,6 +61,8 @@ function isUniqueConstraintOn(error: unknown, field: string): boolean {
 export type CreateCouchInput = {
   readonly ownerId: string;
   readonly name: string;
+  /** Whether the couch is publicly listed. Defaults to false. */
+  readonly isPublic?: boolean;
 };
 
 export type CreateCouchDeps = {
@@ -87,7 +91,7 @@ export async function createCouch(
     async (inviteCode) =>
       db.$transaction(async (tx) => {
         const couchRow = await tx.couch.create({
-          data: { name, ownerId: input.ownerId, inviteCode },
+          data: { name, ownerId: input.ownerId, inviteCode, isPublic: input.isPublic ?? false },
         });
         const memberRow = await tx.couchMember.create({
           data: { couchId: couchRow.id, userId: input.ownerId, role: "HOST" },
@@ -341,4 +345,127 @@ export async function setCurrentMedia(
 // Re-export the role mapper and the plain types callers need to build their
 // own values (for example a realtime layer assembling a `room.state` payload).
 export { toContractRole, toDbRole } from "./couch-mapping";
-export type { Couch, CouchMembership, CouchMemberListItem, CouchListItem } from "./couch-mapping";
+export type {
+  Couch,
+  CouchMembership,
+  CouchMemberListItem,
+  CouchListItem,
+  PublicCouchListItem,
+} from "./couch-mapping";
+
+export type SetCouchVisibilityInput = {
+  readonly couchId: string;
+  readonly actingUserId: string;
+  readonly isPublic: boolean;
+};
+
+export type SetCouchVisibilityError = "forbidden" | "couch_not_found";
+
+/**
+ * Makes a couch public or private. Only a HOST may call this: a non-host
+ * member, or a user who is not a member, gets `forbidden`, and a couch that
+ * does not exist gets `couch_not_found`.
+ */
+export async function setCouchVisibility(
+  db: PrismaClient,
+  input: SetCouchVisibilityInput,
+): Promise<RepoResult<Couch, SetCouchVisibilityError>> {
+  return db.$transaction(async (tx) => {
+    const couch = await tx.couch.findUnique({ where: { id: input.couchId }, select: { id: true } });
+    if (!couch) return err("couch_not_found");
+
+    const actor = await tx.couchMember.findUnique({
+      where: { couchId_userId: { couchId: input.couchId, userId: input.actingUserId } },
+    });
+    if (!actor || actor.role !== "HOST") return err("forbidden");
+
+    const row = await tx.couch.update({
+      where: { id: input.couchId },
+      data: { isPublic: input.isPublic },
+    });
+    return ok(toCouch(row));
+  });
+}
+
+export type ListPublicCouchesOptions = {
+  /** Case-insensitive substring of the couch name. `%`, `_` and `\` are literal text. */
+  readonly query?: string;
+  /** An integer from 1 to `MAX_CATALOG_PAGE_SIZE`. Anything else throws a RangeError. */
+  readonly limit: number;
+  /** The `nextCursor` of the previous page. */
+  readonly cursor?: string;
+};
+
+export type PublicCouchPage = {
+  readonly items: PublicCouchListItem[];
+  /** Pass it as `cursor` to get the next page. Null when there are no more rows. */
+  readonly nextCursor: string | null;
+};
+
+/**
+ * One page of public couches, ordered by name and then id, both ascending,
+ * paged by the id of the last row like `listCatalogMedia`. Only `isPublic`
+ * couches are returned. `media` is resolved through `getCatalogMedia`, never
+ * from the stored id alone, so a couch whose media was taken down, made
+ * inactive or is no longer authorized reports `media: null`. A cursor that
+ * matches no couch throws a RangeError. Couches are never deleted, so that is
+ * a cursor the caller made up.
+ */
+export async function listPublicCouches(
+  db: PrismaClient,
+  options: ListPublicCouchesOptions,
+): Promise<PublicCouchPage> {
+  const { query, limit, cursor } = options;
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_CATALOG_PAGE_SIZE) {
+    throw new RangeError(`limit must be an integer from 1 to ${MAX_CATALOG_PAGE_SIZE}`);
+  }
+
+  // Same escaping as the catalog title search: the client does not escape
+  // `%` and `_` in `contains`.
+  const nameFilter = query
+    ? { name: { contains: escapeLikePattern(query), mode: "insensitive" as const } }
+    : {};
+
+  // Keyset paging, as in `listCatalogMedia`. The cursor row is read without
+  // the public filter: it may have gone private since the last page, and that
+  // must not skip a valid row.
+  let afterCursor = {};
+  if (cursor !== undefined) {
+    const anchor = await db.couch.findUnique({
+      where: { id: cursor },
+      select: { id: true, name: true },
+    });
+    if (!anchor) throw new RangeError("cursor does not match a couch");
+    afterCursor = {
+      OR: [{ name: { gt: anchor.name } }, { name: anchor.name, id: { gt: anchor.id } }],
+    };
+  }
+
+  // One extra row tells whether another page exists.
+  const rows = await db.couch.findMany({
+    where: { AND: [{ isPublic: true }, nameFilter, afterCursor] },
+    select: {
+      id: true,
+      name: true,
+      currentMediaId: true,
+      _count: { select: { members: true } },
+    },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    take: limit + 1,
+  });
+
+  const page = rows.slice(0, limit);
+  const items: PublicCouchListItem[] = [];
+  for (const row of page) {
+    const media = row.currentMediaId ? await getCatalogMedia(db, row.currentMediaId) : null;
+    items.push({
+      id: row.id,
+      name: row.name,
+      memberCount: row._count.members,
+      media: media ? { title: media.title, posterUrl: media.posterUrl } : null,
+    });
+  }
+
+  const last = page[page.length - 1];
+  return { items, nextCursor: rows.length > limit && last ? last.id : null };
+}
