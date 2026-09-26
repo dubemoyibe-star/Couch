@@ -174,8 +174,8 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
       {inviteUrl || !isHost ? (
         <Card as="section" className="flex flex-col gap-5">
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
-          {isHost ? <CouchVisibilityForm key={String(couch.isPublic)} couchId={couch.id} isPublic={couch.isPublic} /> : null}
-          {isHost ? <CouchClosedForm key={String(couch.isClosed)} couchId={couch.id} isClosed={couch.isClosed} /> : null}
+          {isHost ? <CouchVisibilityForm key={`public-${couch.isPublic}`} couchId={couch.id} isPublic={couch.isPublic} /> : null}
+          {isHost ? <CouchClosedForm key={`closed-${couch.isClosed}`} couchId={couch.id} isClosed={couch.isClosed} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
         </Card>
       ) : null}

@@ -26,6 +26,7 @@ export function CouchVisibilityForm({ couchId, isPublic }: CouchVisibilityFormPr
   const [state, formAction, pending] = useActionState(setCouchVisibilityAction, initialState);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const Icon = isPublic ? Globe : Lock;
+  const ActionIcon = isPublic ? Lock : Globe;
   const nextLabel = isPublic ? "Make private" : "Make public";
 
   return (
@@ -43,6 +44,7 @@ export function CouchVisibilityForm({ couchId, isPublic }: CouchVisibilityFormPr
           </div>
         </div>
         <Button type="button" variant="secondary" className="min-h-10 px-4" onClick={() => dialogRef.current?.showModal()}>
+          <ActionIcon aria-hidden="true" className="size-4" />
           {nextLabel}
         </Button>
       </div>
