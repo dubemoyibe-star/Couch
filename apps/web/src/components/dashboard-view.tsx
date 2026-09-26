@@ -160,16 +160,27 @@ export function DashboardView({
                 <h2 id="your-couches" className="font-display text-2xl font-semibold text-text">
                   Your Couches
                 </h2>
-                <Link
-                  href="/couches"
-                  className={cx(
-                    "inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-medium text-primary hover:text-primary-hover",
-                    focusRing,
-                  )}
-                >
-                  View all
-                  <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
+                <div className="flex items-center gap-5">
+                  <Link
+                    href="/find-couches"
+                    className={cx(
+                      "inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:text-primary-hover",
+                      focusRing,
+                    )}
+                  >
+                    Find a couch
+                  </Link>
+                  <Link
+                    href="/couches"
+                    className={cx(
+                      "inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-medium text-primary hover:text-primary-hover",
+                      focusRing,
+                    )}
+                  >
+                    View all
+                    <ArrowRight aria-hidden="true" className="size-4" />
+                  </Link>
+                </div>
               </div>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
                 {rooms.slice(0, ROOMS_SHOWN).map((room) => (
@@ -190,7 +201,7 @@ export function DashboardView({
                 Start a movie night with your people.
               </h1>
               <p className="max-w-md text-text-muted">
-                Create a couch, join a couch, or browse the catalog to find something to watch.
+                Create a couch, join a friend&apos;s, or find something to watch.
               </p>
               <EmptyActions />
             </div>

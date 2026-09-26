@@ -3,9 +3,10 @@
 import { Armchair } from "lucide-react";
 import { ModalDialog } from "@/components/modal-dialog";
 import { CreateCouchForm } from "@/app/(app)/couch/create/create-couch-form";
+import type { DefaultVisibility } from "@/lib/default-visibility";
 
 /** The create-couch form in a modal, opened over the page the visitor was on. */
-export function CreateCouchDialog() {
+export function CreateCouchDialog({ defaultVisibility }: { readonly defaultVisibility?: DefaultVisibility }) {
   return (
     <ModalDialog labelledBy="create-couch-title" className="p-6 sm:p-8">
       <div className="flex flex-col gap-6">
@@ -21,7 +22,7 @@ export function CreateCouchDialog() {
           </h1>
           <p className="text-sm text-text-muted">Give it a name, then invite friends with a link.</p>
         </div>
-        <CreateCouchForm autoFocus />
+        <CreateCouchForm autoFocus defaultVisibility={defaultVisibility} />
       </div>
     </ModalDialog>
   );
