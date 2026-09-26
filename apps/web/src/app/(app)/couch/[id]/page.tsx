@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCatalogMedia, getCouch, getMembership, getPrismaClient, listMembers } from "@couch/database";
 import { getCurrentUser } from "@/lib/session";
 import { getBaseUrl } from "@/lib/base-url";
-import { Users } from "lucide-react";
+import { ArrowLeftRight, Square, Users } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
@@ -116,9 +116,11 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
               {isHost ? (
                 <div className="flex flex-wrap items-start justify-center gap-3 sm:justify-start">
                   <Link href={pickHref} className={buttonClassName("secondary", "px-5")}>
+                    <ArrowLeftRight aria-hidden="true" className="size-4" />
                     Change
                   </Link>
                   <SetCurrentMediaForm couchId={couch.id} variant="secondary">
+                    <Square aria-hidden="true" className="size-4" />
                     Stop watching
                   </SetCurrentMediaForm>
                 </div>
@@ -173,7 +175,7 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
         <Card as="section" className="flex flex-col gap-5">
           {inviteUrl ? <CopyInviteLink url={inviteUrl} /> : null}
           {isHost ? <CouchVisibilityForm key={String(couch.isPublic)} couchId={couch.id} isPublic={couch.isPublic} /> : null}
-          {isHost ? <CouchClosedForm couchId={couch.id} isClosed={couch.isClosed} /> : null}
+          {isHost ? <CouchClosedForm key={String(couch.isClosed)} couchId={couch.id} isClosed={couch.isClosed} /> : null}
           {!isHost ? <LeaveCouchForm couchId={couch.id} /> : null}
         </Card>
       ) : null}

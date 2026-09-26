@@ -6,6 +6,7 @@ import { NewCouchTile, RoomTile } from "@/components/couch-card";
 import { DiscoverTabs, type DiscoverItem } from "@/components/discover-tabs";
 import { EmptyActions } from "@/components/empty-actions";
 import { Greeting } from "@/components/greeting";
+import { JoinByCode } from "@/components/join-by-code";
 import { LivingRoomScene } from "@/components/living-room-scene";
 import { Poster } from "@/components/poster";
 import { buttonClassName } from "@/components/ui/button";
@@ -188,6 +189,7 @@ export function DashboardView({
                 ))}
                 <NewCouchTile />
               </ul>
+              <JoinByCode className="w-full max-w-md" />
             </section>
           </>
         ) : (
