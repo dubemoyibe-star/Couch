@@ -119,7 +119,15 @@ export default async function CouchPage({ params }: PageProps<"/couch/[id]">) {
                     <ArrowLeftRight aria-hidden="true" className="size-4" />
                     Change
                   </Link>
-                  <SetCurrentMediaForm couchId={couch.id} variant="secondary">
+                  <SetCurrentMediaForm
+                    couchId={couch.id}
+                    variant="secondary"
+                    confirm={{
+                      title: "Stop watching?",
+                      description: "This clears what is on the screen for everyone. You can pick something again at any time.",
+                      confirmLabel: "Stop watching",
+                    }}
+                  >
                     <Square aria-hidden="true" className="size-4" />
                     Stop watching
                   </SetCurrentMediaForm>
