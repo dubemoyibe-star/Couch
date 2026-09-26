@@ -201,7 +201,7 @@ export function DashboardView({
                 Start a movie night with your people.
               </h1>
               <p className="max-w-md text-text-muted">
-                Create a couch, join a couch, or browse the catalog to find something to watch.
+                Create a couch, join one with an invite, find a public couch, or browse the catalog to find something to watch.
               </p>
               <EmptyActions />
             </div>

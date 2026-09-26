@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Search, Users } from "lucide-react";
 import { getPrismaClient, listPublicCouches, type PublicCouchPage } from "@couch/database";
-import { Poster } from "@/components/poster";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { PublicCouchCard } from "@/components/couch-card";
+import { NoPublicCouchesEmptyState } from "@/components/no-public-couches-empty-state";
 import { buttonClassName } from "@/components/ui/button";
 import { cx, inputFocus } from "@/components/ui/cx";
 import { getCurrentUser } from "@/lib/session";
@@ -70,57 +68,12 @@ export default async function FindCouchesPage({ searchParams }: PageProps<"/find
       </form>
 
       {items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
-          <Card as="section" className="flex w-full max-w-md flex-col items-center gap-3 p-8 text-center">
-            <span
-              aria-hidden="true"
-              className="flex size-12 items-center justify-center rounded-full border border-border bg-surface-muted text-primary"
-            >
-              <Search className="size-6" />
-            </span>
-            <h2 className="font-display text-2xl font-semibold text-text">
-              {query ? "No matches" : "No public couches yet"}
-            </h2>
-            <p className="text-text-muted">
-              {query
-                ? "Try a different search."
-                : "Couches their hosts make public will show up here."}
-            </p>
-          </Card>
-        </div>
+        <NoPublicCouchesEmptyState query={query} />
       ) : (
         <>
-          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {items.map((couch) => (
-              <Card as="li" key={couch.id} className="flex items-center gap-4 p-4">
-                <Poster
-                  url={couch.media?.posterUrl ?? null}
-                  seed={couch.id}
-                  name={couch.name}
-                  className="aspect-[2/3] w-16 rounded-media"
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <Badge tone="primary" className="self-start">
-                    Public couch
-                  </Badge>
-                  <h2 className="line-clamp-2 break-words font-display text-xl font-semibold leading-tight text-text">
-                    {couch.name}
-                  </h2>
-                  <p className="inline-flex items-center gap-1.5 text-sm text-text-muted">
-                    <Users aria-hidden="true" className="size-4" />
-                    {couch.memberCount} {couch.memberCount === 1 ? "member" : "members"}
-                  </p>
-                  <p className="line-clamp-2 text-sm text-text-muted">
-                    {couch.media ? (
-                      <>
-                        <span className="text-text">On the screen:</span> {couch.media.title}
-                      </>
-                    ) : (
-                      "Nothing on yet"
-                    )}
-                  </p>
-                </div>
-              </Card>
+              <PublicCouchCard key={couch.id} {...couch} />
             ))}
           </ul>
           {loadMoreHref ? (
