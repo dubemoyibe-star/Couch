@@ -6,7 +6,7 @@ describe("public exports", () => {
   // exported function returns unauthorized, malformed or inactive media, and none
   // deletes media, so a new read or delete has to be a visible change. The same goes
   // for couches and users: there is no delete function for any of the three,
-  // except the single guarded user delete described below.
+  // except the two deliberate, guarded ones described below.
   it("lists exactly the intended runtime exports", () => {
     expect(Object.keys(database).sort()).toEqual(
       [
@@ -24,6 +24,7 @@ describe("public exports", () => {
         "createCouch",
         "createPrismaClient",
         "deactivateMissing",
+        "deleteCouch",
         "deleteUnverifiedUser",
         "generateInviteCode",
         "getCatalogMedia",
@@ -60,7 +61,11 @@ describe("public exports", () => {
     // only when that user is unverified and has no couch, membership or session,
     // re-checked in the same transaction, so a user who owns anything is never
     // deleted. Any other user delete still has to be added here on purpose.
-    const nonDeleteExceptions = new Set(["removeMember", "deleteUnverifiedUser"]);
+    //
+    // `deleteCouch` is the one deliberate couch delete: only the couch's host
+    // may call it, and it removes the couch and its memberships, never media or
+    // license rows. Any other couch delete still has to be added here on purpose.
+    const nonDeleteExceptions = new Set(["removeMember", "deleteUnverifiedUser", "deleteCouch"]);
     const deleteLike = names.filter((name) => /delete|remove|destroy|purge|truncate/i.test(name));
     expect(deleteLike.filter((name) => !nonDeleteExceptions.has(name))).toEqual([]);
     // The only catalog reads are the two gated ones.

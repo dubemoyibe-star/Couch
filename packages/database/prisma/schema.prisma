@@ -167,8 +167,9 @@ model Media {
 // resets when that process restarts. Only the couch's durable identity and
 // membership are in the database.
 //
-// Deletes: there is no couch delete function in the MVP, so a delete's
-// downstream effect is a schema decision, not a runtime one.
+// Deletes: the only couch delete is `deleteCouch`, which only the host may
+// call. It removes the couch and, through the foreign key below, its
+// memberships. It never touches Media or LicenseRecord rows.
 model Couch {
   id         String @id @default(uuid(7))
   name       String
@@ -212,8 +213,8 @@ enum CouchRole {
 // keeps exactly the host it was created with for the life of this schema.
 //
 // Deletes: a membership has no existence apart from its couch, so removing a
-// couch removes its memberships (`onDelete: Cascade` on `couchId`), even
-// though no couch delete function exists yet. A user cannot be deleted while
+// couch removes its memberships (`onDelete: Cascade` on `couchId`), which is
+// what `deleteCouch` relies on. A user cannot be deleted while
 // they still hold a membership (`onDelete: Restrict` on `userId`), so the only
 // user delete (`deleteUnverifiedUser`) refuses a user that holds one.
 model CouchMember {

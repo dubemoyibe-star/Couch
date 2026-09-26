@@ -77,7 +77,7 @@ A couch is a watch party: `Couch` holds its durable identity, and `CouchMember` 
 
 - `Couch`: `id`, `name`, `ownerId` (FK `User`, `onDelete: Restrict`: a user who owns a couch cannot be deleted), `inviteCode` (unique), `isPublic` (boolean, default false: whether the couch appears in `listPublicCouches`), `isClosed` (boolean, default false: whether the couch refuses new members), `currentMediaId` (nullable FK `Media`, `onDelete: SetNull`), `createdAt`, `updatedAt`.
 - `CouchMember`: `id`, `couchId` (FK `Couch`, `onDelete: Cascade`), `userId` (FK `User`, `onDelete: Restrict`), `role` (`HOST` or `PARTICIPANT`), `joinedAt`. `(couchId, userId)` is unique, and both columns are indexed.
-- There is no delete function for couches or media in the MVP, and the only user delete is `deleteUnverifiedUser`: it deletes a user (and its accounts) only when the user is unverified and has no couch, membership or session, decided inside one transaction under a row lock. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
+- There is no delete function for media. The only couch delete is `deleteCouch`, which only the host may call and which removes the couch and its memberships (see "Deleting"). The only user delete is `deleteUnverifiedUser`: it deletes a user (and its accounts) only when the user is unverified and has no couch, membership or session, decided inside one transaction under a row lock. `src/index.test.ts` names both as the only exceptions to its no-delete check. See the schema comments on each relation for the reasoning behind its `onDelete` choice.
 - The database role enum (`HOST` / `PARTICIPANT`) is mapped to the lowercase contract role (`"host"` / `"participant"`) at the repository boundary; nothing outside this package sees the database enum.
 
 ### `currentMediaId` can go stale
@@ -122,6 +122,16 @@ A host can close a couch to stop new joins. Closing changes nothing for existing
 | --- | --- |
 | `setCouchClosed(db, { couchId, actingUserId, isClosed })` | Only a `HOST` may call this. Returns the updated couch. Errors: `couch_not_found` (checked first), `forbidden` (the actor is a participant or not a member). |
 
+### Deleting
+
+A host can permanently delete their couch. This is deliberate and irreversible.
+
+| Function | What it does |
+| --- | --- |
+| `deleteCouch(db, { couchId, actingUserId })` | Only a `HOST` may call this. Deletes the couch, and its `CouchMember` rows go with it through the `onDelete: Cascade` foreign key. `Media` and `LicenseRecord` rows are never touched: they belong to the catalog, not to a couch. Returns nothing on success. Errors: `couch_not_found` (checked first), `forbidden` (the actor is a participant or not a member, and nothing is deleted). |
+
+The host check and the delete run in one transaction. This function only changes the database: it does not close connections or clear room state held by the realtime service.
+
 ### Joining atomically at the cap
 
 `joinCouch` locks the couch row (`SELECT ... FOR UPDATE`, inside the same transaction as the membership count and insert) before it decides whether there is room. A second, concurrent join on the same couch blocks on that lock until the first transaction commits or rolls back, so the count it then reads already accounts for the first join's outcome. Two simultaneous joins therefore can never both observe room under the cap and both insert. `src/couch.db.test.ts` drives many simultaneous joins at the cap and checks that exactly the free slots succeed.
@@ -137,7 +147,7 @@ Invite codes are generated server-side in this package (`src/invite-code.ts`), w
 
 ### Test fixtures
 
-Couch database tests (`src/couch.db.test.ts`, `src/couch-visibility.db.test.ts` and `src/couch-closing.db.test.ts`) create their own users, through `src/couch-test-support.ts`, and delete them (and anything they created) in teardown. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: emails end in `@example.test` and couch names and display names start with `TEST FIXTURE`.
+Couch database tests (`src/couch.db.test.ts`, `src/couch-visibility.db.test.ts`, `src/couch-closing.db.test.ts` and `src/couch-deletion.db.test.ts`) create their own users, through `src/couch-test-support.ts`, and delete them (and anything they created) in teardown. That helper deletes rows, so it is not exported from the package. Fixtures are obviously fake: emails end in `@example.test` and couch names and display names start with `TEST FIXTURE`.
 
 ## Destructive commands and AI agents
 

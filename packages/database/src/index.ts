@@ -32,6 +32,7 @@ export {
 export type { ExclusionReason } from "./catalog-mapping";
 export {
   createCouch,
+  deleteCouch,
   getCouch,
   getCouchByInviteCode,
   getMembership,
@@ -59,6 +60,8 @@ export {
   type SetCouchVisibilityInput,
   type CreateCouchDeps,
   type CreateCouchInput,
+  type DeleteCouchError,
+  type DeleteCouchInput,
   type JoinCouchError,
   type JoinCouchInput,
   type LeaveCouchError,

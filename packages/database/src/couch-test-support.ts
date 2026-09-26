@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "./generated/prisma/client";
 
 // Helpers for the couch database tests. This file is NOT exported from the
-// package. `cleanupTestCouches` deletes rows, and the package exports no
-// delete for couches (its only user delete refuses users that own anything).
+// package. `cleanupTestCouches` deletes rows in bulk, including users, which
+// the package's guarded deletes (`deleteCouch`, `deleteUnverifiedUser`) do not.
 // Every fixture is obviously fake: emails end in `@example.test` and couch
 // names and display names start with "TEST FIXTURE".
 

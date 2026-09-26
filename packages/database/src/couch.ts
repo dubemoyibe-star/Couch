@@ -431,6 +431,44 @@ export async function setCouchClosed(
   });
 }
 
+export type DeleteCouchInput = {
+  readonly couchId: string;
+  readonly actingUserId: string;
+};
+
+export type DeleteCouchError = "forbidden" | "couch_not_found";
+
+/**
+ * Permanently deletes a couch. Only a HOST may call this: a non-host member,
+ * or a user who is not a member, gets `forbidden`, and a couch that does not
+ * exist gets `couch_not_found`. The couch's memberships go with it
+ * (`CouchMember.couchId` is `onDelete: Cascade`). Media and license rows
+ * belong to the catalog, not to a couch, and are never touched.
+ *
+ * This is the one deliberate couch delete. The host check and the delete run
+ * in one transaction, and `deleteMany` keeps a concurrent delete of the same
+ * couch from throwing: the loser sees a count of zero and answers
+ * `couch_not_found`.
+ */
+export async function deleteCouch(
+  db: PrismaClient,
+  input: DeleteCouchInput,
+): Promise<RepoResult<void, DeleteCouchError>> {
+  return db.$transaction(async (tx) => {
+    const couch = await tx.couch.findUnique({ where: { id: input.couchId }, select: { id: true } });
+    if (!couch) return err("couch_not_found");
+
+    const actor = await tx.couchMember.findUnique({
+      where: { couchId_userId: { couchId: input.couchId, userId: input.actingUserId } },
+    });
+    if (!actor || actor.role !== "HOST") return err("forbidden");
+
+    const { count } = await tx.couch.deleteMany({ where: { id: input.couchId } });
+    if (count === 0) return err("couch_not_found");
+    return ok(undefined);
+  });
+}
+
 export type ListPublicCouchesOptions = {
   /** Case-insensitive substring of the couch name. `%`, `_` and `\` are literal text. */
   readonly query?: string;
@@ -452,8 +490,8 @@ export type PublicCouchPage = {
  * couches that are not closed are returned. `media` is resolved through `getCatalogMedia`, never
  * from the stored id alone, so a couch whose media was taken down, made
  * inactive or is no longer authorized reports `media: null`. A cursor that
- * matches no couch throws a RangeError. Couches are never deleted, so that is
- * a cursor the caller made up.
+ * matches no couch throws a RangeError, whether the caller made it up or the
+ * couch was deleted between pages.
  */
 export async function listPublicCouches(
   db: PrismaClient,
