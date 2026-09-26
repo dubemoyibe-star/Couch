@@ -211,6 +211,9 @@ describe("couch room teardown with real connections", () => {
   });
 
   it("a teardown for a couch with no room and no connections is a safe no-op", async () => {
+    // Sockets the previous test had closed may still be finishing their close
+    // handshake, so wait for the count to stop moving before measuring.
+    await settle();
     const before = server.connectionCount;
     expect(await teardown(randomUUID())).toEqual({ status: 204, body: "" });
     expect(server.connectionCount).toBe(before);
