@@ -19,13 +19,16 @@ export type RoomState = {
 
 /**
  * Storage for room state, keyed by couch id. Synchronous, because the only implementation
- * is in memory. Rooms live for the life of the process, so there is no eviction or delete.
+ * is in memory. Rooms live for the life of the process. The one exception is `delete`, which
+ * is for a couch that no longer exists at all.
  */
 export interface RoomStore {
   /** The room for a couch, or undefined when it has none. */
   get(couchId: string): RoomState | undefined;
   /** Create the room or replace it, keyed by `room.couchId`. */
   set(room: RoomState): void;
+  /** Remove the room for a couch. Does nothing when it has none. */
+  delete(couchId: string): void;
 }
 
 /** A Map-backed {@link RoomStore}. Rooms are stored as given and returned as stored. */
@@ -35,6 +38,9 @@ export function createInMemoryRoomStore(): RoomStore {
     get: (couchId) => rooms.get(couchId),
     set: (room) => {
       rooms.set(room.couchId, room);
+    },
+    delete: (couchId) => {
+      rooms.delete(couchId);
     },
   };
 }

@@ -149,6 +149,16 @@ export const roomKickedEvent = defineEvent({
   payload: { reason: trimmedText(KICK_REASON_MAX_LENGTH).optional() },
 });
 
+/**
+ * Server to client: the couch was deleted, so the room no longer exists. The connection is
+ * closed right after, and there is nothing to rejoin.
+ */
+export const roomDeletedEvent = defineEvent({
+  type: "room.deleted",
+  direction: "server",
+  payload: {},
+});
+
 /** Every room event the server accepts, in the shape parseMessage takes. */
 export const roomClientEvents = [
   roomJoinEvent,
@@ -165,6 +175,7 @@ export const roomServerEvents = [
   roomMemberLeftEvent,
   presenceUpdateEvent,
   roomKickedEvent,
+  roomDeletedEvent,
 ] as const;
 
 export type RoomJoin = MessageOf<typeof roomJoinEvent>;
@@ -177,3 +188,4 @@ export type RoomMemberJoined = MessageOf<typeof roomMemberJoinedEvent>;
 export type RoomMemberLeft = MessageOf<typeof roomMemberLeftEvent>;
 export type PresenceUpdate = MessageOf<typeof presenceUpdateEvent>;
 export type RoomKicked = MessageOf<typeof roomKickedEvent>;
+export type RoomDeleted = MessageOf<typeof roomDeletedEvent>;

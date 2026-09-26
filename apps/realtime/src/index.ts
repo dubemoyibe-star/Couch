@@ -37,11 +37,17 @@ async function main(): Promise<void> {
       console.error(`[realtime] ${error instanceof Error ? error.message : "unexpected error"}`);
     },
   });
+  // Shared with apps/web, which presents it to the internal endpoints. Required, so
+  // the internal endpoints can never be left open by a missing value.
+  const internalSecret = process.env.REALTIME_INTERNAL_SECRET;
+  if (!internalSecret) throw new Error("REALTIME_INTERNAL_SECRET is required");
+
   const server = createRealtimeServer({
     authenticate: authenticateSession,
     allowedOrigins: trusted,
     onMessage: rooms.onMessage,
     onClose: rooms.onClose,
+    internal: { secret: internalSecret, onTeardown: rooms.teardown },
     onHandlerError: (error) => {
       console.error(`[realtime] ${error instanceof Error ? error.message : "unexpected error"}`);
     },

@@ -94,4 +94,29 @@ describe("room connections", () => {
     expect(rooms.attachment(elsewhere)).toEqual({ couchId: "c2", userId: "u1", role: "participant" });
     expect(rooms.detachUser("c1", "u1")).toEqual([]);
   });
+
+  it("detachRoom detaches every user's connections in that room only, and leaves them open", () => {
+    const rooms = createRoomConnections<object>();
+    const a = conn();
+    const b = conn();
+    const c = conn();
+    const elsewhere = conn();
+    for (const [x, couch, user] of [
+      [a, "c1", "u1"],
+      [b, "c1", "u2"],
+      [c, "c1", "u2"],
+      [elsewhere, "c2", "u1"],
+    ] as const) {
+      rooms.begin(x);
+      rooms.attach(x, couch, user, "participant");
+    }
+    expect(new Set(rooms.detachRoom("c1"))).toEqual(new Set([a, b, c]));
+    expect(rooms.peers("c1")).toEqual([]);
+    expect(rooms.isOnline("c1", "u1")).toBe(false);
+    expect(rooms.attachment(a)).toBeNull();
+    expect(rooms.isOpen(a)).toBe(true);
+    expect(rooms.attachment(elsewhere)).toEqual({ couchId: "c2", userId: "u1", role: "participant" });
+    expect(rooms.detachRoom("c1")).toEqual([]);
+    expect(rooms.detachRoom("unknown")).toEqual([]);
+  });
 });

@@ -132,7 +132,7 @@ Env vars: `BETTER_AUTH_SECRET` (generate with `openssl rand -base64 32`) and `BE
 
 The database adapter, secret, base URL, session and cookie settings, trusted origins and the `name` field mapping come from `createAuthCoreOptions()` (`@couch/database/auth-core`, see [ARCHITECTURE.md](ARCHITECTURE.md)), which `apps/web/src/lib/auth.ts` spreads into its own `betterAuth()` call. The core refuses to build when `BETTER_AUTH_SECRET` or `BETTER_AUTH_URL` is missing, so a process never falls back to Better Auth's built-in default secret. `apps/realtime/src/lib/auth.ts` builds its own instance from the same core with nothing else, and only calls `auth.api.getSession({ headers })`. `getSession` is not Next.js specific: it needs a `Headers` object carrying the session cookie, and returns `null` when there is no valid session. Both processes must use the same `BETTER_AUTH_SECRET` (it signs the cookie) and the same `BETTER_AUTH_URL` (an https URL gives the cookie a `__Secure-` name prefix, so a different scheme means a different cookie name).
 
-`apps/realtime` needs `DATABASE_URL`, `DIRECT_URL`, `COUCH_DB_ENV`, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`. It does not need `RESEND_API_KEY` or the Google variables. Its auth instance and Prisma client are built on first use, never at import time.
+`apps/realtime` needs `DATABASE_URL`, `DIRECT_URL`, `COUCH_DB_ENV`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` and `REALTIME_INTERNAL_SECRET` (shared with `apps/web`, generate with `openssl rand -base64 32`). It does not need `RESEND_API_KEY` or the Google variables. Its auth instance and Prisma client are built on first use, never at import time.
 
 ## Realtime service
 
