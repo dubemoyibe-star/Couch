@@ -418,6 +418,19 @@ describe("presence.update", () => {
   });
 });
 
+describe("room.deleted", () => {
+  it("round-trips with an empty payload", () => {
+    expect(parseServer("room.deleted", {})).toEqual({
+      ok: true,
+      data: { v: 1, type: "room.deleted", payload: {} },
+    });
+  });
+
+  it("cannot be sent by a client", () => {
+    expect(code(parseClient("room.deleted", {}))).toBe("unknown_type");
+  });
+});
+
 describe("room.kicked", () => {
   it("round-trips with and without a reason", () => {
     expect(parseServer("room.kicked", {})).toEqual({

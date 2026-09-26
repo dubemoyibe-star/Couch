@@ -15,7 +15,7 @@ From the repo root:
 | `pnpm --filter @couch/realtime test` | Unit tests, against a real ws server with a stand-in session lookup. No database. |
 | `pnpm --filter @couch/realtime test:db` | The same server against real sessions in the `testing` database. Needs `.env.test`. |
 
-It loads `.env.local` from the repo root when present, and hosting providers inject the variables instead. It needs `DATABASE_URL`, `DIRECT_URL`, `COUCH_DB_ENV`, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`, and the secret and URL must match the ones `apps/web` uses. `PORT` sets the port (default `3001`).
+It loads `.env.local` from the repo root when present, and hosting providers inject the variables instead. It needs `DATABASE_URL`, `DIRECT_URL`, `COUCH_DB_ENV`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` and `REALTIME_INTERNAL_SECRET`. The auth secret and URL must match the ones `apps/web` uses, and so must the internal secret, which guards the internal teardown endpoint (see docs/ARCHITECTURE.md). The service refuses to start without it. `PORT` sets the port (default `3001`).
 
 ## Layout
 

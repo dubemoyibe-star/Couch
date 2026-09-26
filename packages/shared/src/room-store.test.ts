@@ -30,6 +30,15 @@ describe("in-memory RoomStore", () => {
     expect(store.get("a")?.mediaId).toBe("m1");
     expect(store.get("b")?.mediaId).toBe("m2");
   });
+  it("delete removes only that room, and is a no-op for an unknown couch", () => {
+    const store = createInMemoryRoomStore();
+    store.set(room("a"));
+    store.set(room("b"));
+    store.delete("a");
+    store.delete("nope");
+    expect(store.get("a")).toBeUndefined();
+    expect(store.get("b")).toEqual(room("b"));
+  });
   it("stores are independent of each other", () => {
     const one = createInMemoryRoomStore();
     one.set(room("a"));

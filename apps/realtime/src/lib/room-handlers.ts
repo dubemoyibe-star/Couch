@@ -41,6 +41,8 @@ export type RoomHandlerDeps = {
 export type RoomHandlers = {
   onMessage(identity: Authenticated, message: ClientMessage, connection: Connection): void;
   onClose(connection: Connection): void;
+  // Tears down a couch's live room because the couch no longer exists.
+  teardown(couchId: string): void;
 };
 
 const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
@@ -59,6 +61,8 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
 // 1008: policy violation. The user was removed from the only room the socket
 // could be in, so the socket has no further purpose.
 const CLOSE_REMOVED = 1008;
+// 1000: normal closure. The couch was deleted, so the room ended and nothing went wrong.
+const CLOSE_ROOM_DELETED = 1000;
 
 function sendError(connection: Connection, code: ErrorCode, replyTo: string | undefined): void {
   connection.send({
@@ -316,6 +320,27 @@ export function createRoomHandlers(deps: RoomHandlerDeps): RoomHandlers {
         // In the contracts catalog but with no handler yet (chat.send). Refused,
         // never silently dropped.
         sendError(connection, "unknown_type", message.id);
+      }
+    },
+
+    // The one place a room is removed from the store. Rooms otherwise persist for the
+    // life of the process, even with their media cleared, because the couch still
+    // exists. Here the couch itself is gone, so keeping the room would keep state for
+    // something that can never be joined again.
+    //
+    // Every connection attached to the couch is told and closed, whether or not a
+    // room was ever stored: a couch that never had media has connections and no room.
+    // Nothing here awaits, so no command can interleave. The detached connections
+    // close later without announcing presence, because nobody is left to hear it.
+    //
+    // TODO: once local streaming exists, this teardown must also stop any active
+    // LiveKit stream for the room, before the connections are closed.
+    teardown(couchId) {
+      const attached = connections.detachRoom(couchId);
+      deps.store.delete(couchId);
+      for (const connection of attached) {
+        connection.send({ v: PROTOCOL_VERSION, type: "room.deleted", payload: {} });
+        connection.close(CLOSE_ROOM_DELETED, "couch deleted");
       }
     },
 

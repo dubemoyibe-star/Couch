@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ServerMessage } from "@couch/contracts";
 import type { PrismaClient } from "@couch/database";
-import { createInMemoryRoomStore } from "@couch/shared";
+import { createInMemoryRoomStore, createInitialPlaybackState } from "@couch/shared";
 import { createRoomHandlers } from "./room-handlers";
 import type { Connection } from "./server";
 
@@ -42,6 +42,26 @@ describe("room.join when the database fails", () => {
     // The second attempt is judged again, not refused as already_joined.
     expect(sent).toEqual([expected, expected]);
     expect(errors).toHaveLength(2);
+  });
+});
+
+describe("teardown", () => {
+  const room = (couchId: string) => ({
+    couchId,
+    mediaId: "m1",
+    playback: createInitialPlaybackState(0),
+    playbackAccess: "open" as const,
+  });
+
+  it("removes only that couch's room from the store, and is safe when there is none", () => {
+    const store = createInMemoryRoomStore();
+    store.set(room("a"));
+    store.set(room("b"));
+    const rooms = createRoomHandlers({ db: failingDb, store, now: () => 0 });
+    rooms.teardown("a");
+    rooms.teardown("never-existed");
+    expect(store.get("a")).toBeUndefined();
+    expect(store.get("b")).toEqual(room("b"));
   });
 });
 

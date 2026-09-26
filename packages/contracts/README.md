@@ -306,6 +306,7 @@ Exported as `MEDIA_LIMITS`. String lengths count Unicode code points, which is h
 | server    | `presence.update`   | `{ userId, online }`                                             | An existing member went online or offline.                 | Server only.                                          |
 | server    | `chat.message`      | `{ id, userId, displayName, text, sentAt }`                      | A chat message, with the sender and time set by the server. | Server only.                                          |
 | server    | `room.kicked`       | `{ reason? }`                                                    | The recipient was removed from the room.                   | Server only.                                          |
+| server    | `room.deleted`      | `{}`                                                             | The couch was deleted. The connection is closed right after. | Server only.                                          |
 | client    | `playback.setAccess` | `{ mode }` | Set who may send playback commands: `"open"` (everyone) or `"host"` (host only). | Host only. The server enforces it and answers a non-host with `forbidden`. |
 | server    | `playback.accessChanged` | `{ mode }` | The host changed who may send playback commands. `mode` is `"open"` or `"host"`. | Server only. |
 | server    | `playback.sync`     | `{ state }`                                                      | The authoritative playback state.                          | Server only.                                          |
@@ -328,7 +329,7 @@ A client keeps its member list current from four server messages. Each has one j
 | A member opens a further connection, or drops their last one       | `presence.update`   | Online when a member who is already connected opens another connection (a second tab). Offline when their last connection closes. It changes `online` and nothing else. It never adds or removes a member. |
 | A member is removed for good, because they left or were kicked     | `room.memberLeft`   | Remove them from the list. A member who only disconnects is not removed: that is a `presence.update`.                       |
 
-A kicked member also receives `room.kicked`, and the others receive `room.memberLeft` for them.
+A kicked member also receives `room.kicked`, and the others receive `room.memberLeft` for them. When a couch is deleted, every connection in its room receives `room.deleted` and is closed. No `room.memberLeft` is sent, because the room itself is gone.
 
 ### `room.state`
 

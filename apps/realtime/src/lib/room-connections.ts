@@ -36,6 +36,9 @@ export type RoomConnections<C extends object> = {
   // Detaches every connection of the user in the room, and returns them. They
   // stay open and may join again. Used when the user stops being a member.
   detachUser(couchId: string, userId: string): C[];
+  // Detaches every connection in the room, whoever they are, and returns them.
+  // They stay open. Used when the couch itself is gone.
+  detachRoom(couchId: string): C[];
   // Removes the connection, whether attached, joining, or neither, and marks it
   // closed. Returns what it was attached to, or null.
   close(connection: C): Detached | null;
@@ -86,6 +89,19 @@ export function createRoomConnections<C extends object>(): RoomConnections<C> {
       }
       users?.delete(userId);
       if (users && users.size === 0) rooms.delete(couchId);
+      return detached;
+    },
+
+    detachRoom(couchId) {
+      const detached: C[] = [];
+      for (const set of rooms.get(couchId)?.values() ?? []) {
+        for (const connection of set) {
+          attachments.delete(connection);
+          claimed.delete(connection);
+          detached.push(connection);
+        }
+      }
+      rooms.delete(couchId);
       return detached;
     },
 

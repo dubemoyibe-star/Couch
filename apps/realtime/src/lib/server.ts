@@ -1,7 +1,8 @@
-import { createServer, type IncomingMessage, type Server } from "node:http";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import type { AddressInfo } from "node:net";
-import type { ClientMessage, ServerMessage } from "@couch/contracts";
+import { couchIdSchema, type ClientMessage, type ServerMessage } from "@couch/contracts";
 import { WebSocketServer, type WebSocket } from "ws";
 import { MAX_FRAME_BYTES, interpretFrame } from "./inbound";
 
@@ -18,6 +19,15 @@ export type Authenticate = (headers: Headers) => Promise<Authenticated | null>;
 // no longer open. `close` starts the close handshake with the client.
 export type Connection = { send(message: ServerMessage): void; close(code: number, reason: string): void };
 
+// Service-to-service endpoints for apps/web. Internal only: never expose them
+// publicly. Every request must carry the shared secret in the `x-internal-secret`
+// header, and the secret is checked before anything else is looked at.
+export type InternalOptions = {
+  secret: string;
+  // Tears down the live room of a couch that no longer exists.
+  onTeardown: (couchId: string) => void;
+};
+
 export type RealtimeServerOptions = {
   authenticate: Authenticate;
   // Exact origins (scheme, host and port) allowed to open a connection.
@@ -32,6 +42,8 @@ export type RealtimeServerOptions = {
   // How long close() waits for clients to finish the close handshake before
   // dropping them.
   closeTimeoutMs?: number;
+  // When absent, the internal endpoints are not served at all.
+  internal?: InternalOptions;
 };
 
 export type RealtimeServer = {
@@ -63,15 +75,60 @@ function reject(socket: Duplex, status: keyof typeof REJECTIONS): void {
   );
 }
 
+const INTERNAL_PREFIX = "/internal/";
+const INTERNAL_SECRET_HEADER = "x-internal-secret";
+const TEARDOWN_PATH = /^\/internal\/couches\/([^/]+)\/teardown$/;
+
+// Hashing first gives both sides the same length, so timingSafeEqual accepts
+// them and the comparison does not leak the secret's length or content.
+function secretMatches(expected: string, given: string | string[] | undefined): boolean {
+  if (typeof given !== "string") return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(expected), digest(given));
+}
+
+function respond(res: ServerResponse, status: number, headers: Record<string, string | number> = {}): void {
+  res.writeHead(status, { Connection: "close", "Content-Length": 0, ...headers }).end();
+}
+
 export function createRealtimeServer(options: RealtimeServerOptions): RealtimeServer {
   const allowed = new Set(options.allowedOrigins);
   const closeTimeoutMs = options.closeTimeoutMs ?? DEFAULT_CLOSE_TIMEOUT_MS;
   const identities = new WeakMap<WebSocket, Authenticated>();
 
-  const http: Server = createServer((_req, res) => {
-    // Plain HTTP requests are not served: this process only speaks WebSocket.
-    res.writeHead(426, { Connection: "close", "Content-Length": 0, Upgrade: "websocket" }).end();
+  const http: Server = createServer((req, res) => {
+    const url = new URL(req.url ?? "/", "http://internal.invalid");
+    if (options.internal && url.pathname.startsWith(INTERNAL_PREFIX)) {
+      handleInternal(options.internal, req, res, url.pathname);
+      return;
+    }
+    // Other plain HTTP requests are not served: this process only speaks WebSocket.
+    respond(res, 426, { Upgrade: "websocket" });
   });
+
+  // The secret comes first, for every path under /internal/, so a caller without it
+  // learns nothing: an unknown path, a wrong method and a valid route all get the
+  // same 401. Only a caller holding the secret is told anything more.
+  function handleInternal(internal: InternalOptions, req: IncomingMessage, res: ServerResponse, path: string): void {
+    if (!secretMatches(internal.secret, req.headers[INTERNAL_SECRET_HEADER])) return respond(res, 401);
+    const match = TEARDOWN_PATH.exec(path);
+    if (!match) return respond(res, 404);
+    if (req.method !== "POST") return respond(res, 405, { Allow: "POST" });
+    let couchId: string;
+    try {
+      couchId = decodeURIComponent(match[1] as string);
+    } catch {
+      return respond(res, 400);
+    }
+    if (!couchIdSchema.safeParse(couchId).success) return respond(res, 400);
+    try {
+      internal.onTeardown(couchId);
+    } catch {
+      return respond(res, 500);
+    }
+    // The same answer whether a room existed or not.
+    respond(res, 204);
+  }
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });
 
   wss.on("connection", (ws: WebSocket) => {

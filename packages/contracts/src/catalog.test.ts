@@ -63,6 +63,7 @@ describe("the message catalog", () => {
         "presence.update",
         "chat.message",
         "room.kicked",
+        "room.deleted",
         "playback.sync",
         "playback.accessChanged",
         "error",

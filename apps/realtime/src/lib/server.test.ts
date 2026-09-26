@@ -1,4 +1,6 @@
+import { randomBytes } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
+import { WebSocket } from "ws";
 import { MAX_CLIENT_MESSAGE_BYTES, type ClientMessage } from "@couch/contracts";
 import { MAX_FRAME_BYTES } from "./inbound";
 import { createRealtimeServer, type Authenticated, type RealtimeServer } from "./server";
@@ -214,6 +216,99 @@ describe("a message handler that throws", () => {
     expect(failures).toHaveLength(1);
     expect(calls).toBe(2);
     expect(ws.readyState).toBe(ws.OPEN);
+    ws.close();
+  });
+});
+
+describe("internal teardown endpoint", () => {
+  // A throwaway value per run. Never printed or asserted on in a message.
+  const secret = randomBytes(24).toString("base64");
+  const HEADER = "x-internal-secret";
+
+  async function startInternal(withInternal = true) {
+    const torn: string[] = [];
+    server = createRealtimeServer({
+      authenticate,
+      allowedOrigins: [ORIGIN],
+      closeTimeoutMs: 1000,
+      ...(withInternal ? { internal: { secret, onTeardown: (couchId: string) => void torn.push(couchId) } } : {}),
+    });
+    const port = await server.listen(0, "127.0.0.1");
+    const call = async (path: string, init: { method?: string; secret?: string | null } = {}) => {
+      const headers: Record<string, string> = {};
+      if (init.secret !== null) headers[HEADER] = init.secret ?? secret;
+      const res = await fetch(`http://127.0.0.1:${port}${path}`, { method: init.method ?? "POST", headers });
+      return { status: res.status, body: await res.text(), allow: res.headers.get("allow") };
+    };
+    return { port, torn, call };
+  }
+
+  it("tears down with a valid secret, answering 204 and calling the teardown once", async () => {
+    const { torn, call } = await startInternal();
+    expect(await call("/internal/couches/couch-9/teardown")).toEqual({ status: 204, body: "", allow: null });
+    expect(torn).toEqual(["couch-9"]);
+  });
+
+  it("refuses a missing or wrong secret with the same 401, whatever the path, and never tears down", async () => {
+    const { torn, call } = await startInternal();
+    const paths = ["/internal/couches/couch-9/teardown", "/internal/couches/other/teardown", "/internal/nothing", "/internal/"];
+    const answers = [];
+    for (const path of paths) {
+      answers.push(await call(path, { secret: null }));
+      answers.push(await call(path, { secret: "wrong" }));
+      answers.push(await call(path, { secret: `${secret}x` }));
+      answers.push(await call(path, { secret: "", method: "GET" }));
+    }
+    for (const answer of answers) expect(answer).toEqual({ status: 401, body: "", allow: null });
+    expect(torn).toEqual([]);
+  });
+
+  it("answers a valid secret with 404 for an unknown internal path, 405 for a wrong method and 400 for a bad id", async () => {
+    const { torn, call } = await startInternal();
+    expect((await call("/internal/nothing")).status).toBe(404);
+    expect((await call("/internal/couches/c/teardown/extra")).status).toBe(404);
+    expect(await call("/internal/couches/c/teardown", { method: "GET" })).toMatchObject({ status: 405, allow: "POST" });
+    expect((await call("/internal/couches/%E0%A4%A/teardown")).status).toBe(400);
+    expect((await call(`/internal/couches/${"a".repeat(500)}/teardown`)).status).toBe(400);
+    expect(torn).toEqual([]);
+  });
+
+  it("answers 500 when the teardown throws, and keeps serving", async () => {
+    server = createRealtimeServer({
+      authenticate,
+      allowedOrigins: [ORIGIN],
+      closeTimeoutMs: 1000,
+      internal: {
+        secret,
+        onTeardown: () => {
+          throw new Error("boom");
+        },
+      },
+    });
+    const port = await server.listen(0, "127.0.0.1");
+    const res = await fetch(`http://127.0.0.1:${port}/internal/couches/c/teardown`, { method: "POST", headers: { [HEADER]: secret } });
+    expect(res.status).toBe(500);
+    await res.arrayBuffer();
+    const ws = await connect(port);
+    ws.close();
+  });
+
+  it("is not served when no internal options are given", async () => {
+    const { call } = await startInternal(false);
+    expect((await call("/internal/couches/c/teardown")).status).toBe(426);
+  });
+
+  it("is not reachable through the WebSocket upgrade: an upgrade to that path is an ordinary connection", async () => {
+    const { port, torn } = await startInternal();
+    const ws = new WebSocket(`ws://127.0.0.1:${port}/internal/couches/c/teardown`, {
+      headers: { origin: ORIGIN, cookie: "session=good", [HEADER]: secret },
+    });
+    await new Promise((resolve, reject) => {
+      ws.once("open", resolve);
+      ws.once("error", reject);
+    });
+    await settle();
+    expect(torn).toEqual([]);
     ws.close();
   });
 });

@@ -81,6 +81,7 @@ export const validPayloads: Record<string, unknown> = {
     sentAt: 1_700_000_000_000,
   },
   "room.kicked": { reason: "Removed by the host" },
+  "room.deleted": {},
   "playback.sync": { state: playbackState },
   "playback.accessChanged": { mode: "host" },
   error: { code: "forbidden", message: "Not allowed.", replyTo: "c-1" },

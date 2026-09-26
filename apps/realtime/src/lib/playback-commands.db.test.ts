@@ -84,6 +84,7 @@ describe("playback commands and access mode with real connections", () => {
       if (storeBroken) throw new Error("store down");
       inner.set(state);
     },
+    delete: (couchId) => inner.delete(couchId),
   };
   const sockets: WebSocket[] = [];
 
