@@ -183,6 +183,10 @@ model Couch {
   // a host changes it (`setCouchVisibility`).
   isPublic Boolean @default(false)
 
+  // Whether the couch refuses new members. Existing members are unaffected.
+  // Only a host changes it (`setCouchClosed`).
+  isClosed Boolean @default(false)
+
   currentMediaId String?
   // The media the couch is currently watching, or null for none. Media has no
   // delete function either, but a takedown sets `Media.isActive` to false

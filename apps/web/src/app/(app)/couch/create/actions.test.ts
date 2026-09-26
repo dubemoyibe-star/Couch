@@ -69,6 +69,7 @@ describe("runCreateCouchAction", () => {
         ownerId: "user-1",
         inviteCode: "abc",
         isPublic: false,
+        isClosed: false,
         currentMediaId: null,
         createdAt: new Date(),
         updatedAt: new Date(),

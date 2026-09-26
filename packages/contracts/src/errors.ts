@@ -30,6 +30,7 @@ export type ParseErrorCode = (typeof PARSE_ERROR_CODES)[number];
  *   A connection is in at most one room.
  * - `host_cannot_leave`: `room.leave` from the host. Host transfer is not supported.
  * - `cannot_remove_self`: `room.kick` naming the sender.
+ * - `couch_closed`: a new member tried to join a couch the host has closed.
  */
 export const ERROR_CODES = [
   ...PARSE_ERROR_CODES,
@@ -42,6 +43,7 @@ export const ERROR_CODES = [
   "internal_error",
   "host_cannot_leave",
   "cannot_remove_self",
+  "couch_closed",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

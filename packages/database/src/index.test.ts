@@ -39,6 +39,7 @@ describe("public exports", () => {
         "listMembers",
         "listPublicCouches",
         "removeMember",
+        "setCouchClosed",
         "setCouchVisibility",
         "setCurrentMedia",
         "toContractRole",

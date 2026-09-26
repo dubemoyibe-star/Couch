@@ -402,6 +402,7 @@ Sent by the server as the `error` event (server direction): `payload: { code, me
 | `already_joined`      | `room.join` on a connection that has already joined, or is joining, a couch. A connection is in at most one room, and the join is refused, never moved.    |
 | `host_cannot_leave`   | `room.leave` from the host. Host transfer is not supported, so the host cannot leave. The connection stays in the room.                                    |
 | `cannot_remove_self`  | `room.kick` naming the sender. The host cannot remove themselves.                                                                                          |
+| `couch_closed`        | A new member tried to join a couch the host has closed. Existing members are never refused.                                                                |
 
 The first five come from `parseMessage` (`PARSE_ERROR_CODES`). The rest are sent after a message parsed, when the server cannot act on it. New codes are added to `ERROR_CODES`. Never rename or remove a code.
 
