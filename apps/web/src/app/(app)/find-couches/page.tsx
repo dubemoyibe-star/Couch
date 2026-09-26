@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { getPrismaClient, listPublicCouches, type PublicCouchPage } from "@couch/database";
+import { getPrismaClient, listCouchesForUser, listPublicCouches, type PublicCouchPage } from "@couch/database";
 import { PublicCouchCard } from "@/components/couch-card";
 import { NoPublicCouchesEmptyState } from "@/components/no-public-couches-empty-state";
 import { buttonClassName } from "@/components/ui/button";
@@ -26,9 +26,10 @@ export default async function FindCouchesPage({ searchParams }: PageProps<"/find
   const query = rawQuery?.trim() ? rawQuery.trim() : undefined;
   const cursor = firstParam(params.cursor);
 
+  const db = getPrismaClient();
   let page: PublicCouchPage;
   try {
-    page = await listPublicCouches(getPrismaClient(), { query, limit: PAGE_SIZE, cursor });
+    page = await listPublicCouches(db, { query, limit: PAGE_SIZE, cursor });
   } catch (error) {
     // A cursor that matches no couch was typed or edited by hand. Start over
     // rather than failing the page; anything else is a real error.
@@ -38,6 +39,7 @@ export default async function FindCouchesPage({ searchParams }: PageProps<"/find
     throw error;
   }
   const { items, nextCursor } = page;
+  const memberOf = new Set((await listCouchesForUser(db, user.id)).map((entry) => entry.couch.id));
 
   const loadMoreParams = new URLSearchParams();
   if (query) loadMoreParams.set("q", query);
@@ -83,7 +85,7 @@ export default async function FindCouchesPage({ searchParams }: PageProps<"/find
         <>
           <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {items.map((couch) => (
-              <PublicCouchCard key={couch.id} {...couch} />
+              <PublicCouchCard key={couch.id} {...couch} isMember={memberOf.has(couch.id)} />
             ))}
           </ul>
           {loadMoreHref ? (

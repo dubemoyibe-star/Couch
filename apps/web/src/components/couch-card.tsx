@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Globe, Plus, Users } from "lucide-react";
+import { JoinPublicCouchForm } from "@/app/(app)/find-couches/join-public-couch-form";
 import { Poster } from "@/components/poster";
 import { Badge } from "@/components/ui/badge";
 import { calmTransition, cx, focusRing } from "@/components/ui/cx";
@@ -60,7 +61,7 @@ export function RoomTile({ couch, memberCount, media }: CouchRoom) {
         />
         <span className="flex w-full items-end justify-between gap-2 p-4 text-[#F4EEE7]">
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-display text-lg font-semibold">{couch.name}</span>
+            <span className="truncate font-display text-lg font-semibold" title={couch.name}>{couch.name}</span>
             <span className="truncate text-xs text-[#E4D8CA]">
               {memberCount} {memberCount === 1 ? "member" : "members"} ·{" "}
               {media ? media.title : "Nothing on yet"}
@@ -112,8 +113,8 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
         </span>
         <span className="flex items-end justify-between gap-3">
           <span className="flex min-w-0 flex-col gap-1.5">
-            <span className="line-clamp-2 break-words font-display text-2xl font-semibold leading-tight">{couch.name}</span>
-            <span className="line-clamp-2 text-sm text-[#E4D8CA]">
+            <span className="line-clamp-2 [overflow-wrap:anywhere] font-display text-2xl font-semibold leading-tight" title={couch.name}>{couch.name}</span>
+            <span className="line-clamp-2 [overflow-wrap:anywhere] text-sm text-[#E4D8CA]" title={media?.title}>
               {media ? (
                 <>
                   <span className="text-[#F4EEE7]">On the screen:</span> {media.title}
@@ -133,71 +134,91 @@ export function CouchCard({ couch, role, memberCount, media }: CouchRoom) {
   );
 }
 
-/** A public couch in discovery: the same cinematic card, marked as open to everyone rather than as the visitor's own. */
+/**
+ * A public couch in discovery: the same cinematic card, marked as open to everyone rather than as the visitor's own.
+ * A member gets a link into the couch ("Open couch"). A non-member gets a join button instead, and the card is not a
+ * link, since a button cannot sit inside one and the couch page is for members.
+ */
 export function PublicCouchCard({
   id,
   name,
   memberCount,
   media,
+  isMember,
 }: {
   readonly id: string;
   readonly name: string;
   readonly memberCount: number;
   readonly media: { readonly title: string; readonly posterUrl: string | null } | null;
+  readonly isMember: boolean;
 }) {
-  return (
-    <li>
-      <Link
-        href={`/couch/${id}`}
-        className={cx(
-          "group relative isolate flex h-full min-h-72 flex-col justify-between overflow-hidden rounded-media border border-border bg-surface p-5 text-[#F4EEE7]",
-          calmTransition,
-          focusRing,
-        )}
-      >
-        <span aria-hidden="true" className="absolute inset-0 -z-10">
-          <Poster
-            url={media?.posterUrl ?? null}
-            seed={id}
-            name={media?.title ?? name}
-            bordered={false}
-            monogram={false}
-            className="size-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
-          />
-        </span>
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-black/65 to-black/5"
+  const cardClass = cx(
+    "group relative isolate flex h-full min-h-72 flex-col justify-between overflow-hidden rounded-media border border-border bg-surface p-5 text-[#F4EEE7]",
+    calmTransition,
+  );
+  const body = (
+    <>
+      <span aria-hidden="true" className="absolute inset-0 -z-10">
+        <Poster
+          url={media?.posterUrl ?? null}
+          seed={id}
+          name={media?.title ?? name}
+          bordered={false}
+          monogram={false}
+          className="size-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
         />
-        <span className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-            <Globe aria-hidden="true" className="size-3.5" />
-            Public couch
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-xs backdrop-blur-sm">
-            <Users aria-hidden="true" className="size-3.5" />
-            {memberCount} {memberCount === 1 ? "member" : "members"}
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-black/65 to-black/5"
+      />
+      <span className="flex items-start justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
+          <Globe aria-hidden="true" className="size-3.5" />
+          Public couch
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-xs backdrop-blur-sm">
+          <Users aria-hidden="true" className="size-3.5" />
+          {memberCount} {memberCount === 1 ? "member" : "members"}
+        </span>
+      </span>
+      <span className="flex items-end justify-between gap-3">
+        <span className="flex min-w-0 flex-col gap-1.5">
+          <span className="line-clamp-2 [overflow-wrap:anywhere] font-display text-2xl font-semibold leading-tight" title={name}>{name}</span>
+          <span className="line-clamp-2 [overflow-wrap:anywhere] text-sm text-[#E4D8CA]" title={media?.title}>
+            {media ? (
+              <>
+                <span className="text-[#F4EEE7]">On the screen:</span> {media.title}
+              </>
+            ) : (
+              "Nothing on yet"
+            )}
           </span>
         </span>
-        <span className="flex items-end justify-between gap-3">
-          <span className="flex min-w-0 flex-col gap-1.5">
-            <span className="line-clamp-2 break-words font-display text-2xl font-semibold leading-tight">{name}</span>
-            <span className="line-clamp-2 text-sm text-[#E4D8CA]">
-              {media ? (
-                <>
-                  <span className="text-[#F4EEE7]">On the screen:</span> {media.title}
-                </>
-              ) : (
-                "Nothing on yet"
-              )}
-            </span>
+        {isMember ? (
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium">
+            Open couch
+            <ChevronRight
+              aria-hidden="true"
+              className="size-5 text-[#E4D8CA] motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
+            />
           </span>
-          <ChevronRight
-            aria-hidden="true"
-            className="size-6 shrink-0 text-[#E4D8CA] motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
-          />
-        </span>
-      </Link>
+        ) : (
+          <JoinPublicCouchForm couchId={id} />
+        )}
+      </span>
+    </>
+  );
+
+  return (
+    <li className="min-w-0">
+      {isMember ? (
+        <Link href={`/couch/${id}`} className={cx(cardClass, focusRing)}>
+          {body}
+        </Link>
+      ) : (
+        <div className={cardClass}>{body}</div>
+      )}
     </li>
   );
 }
